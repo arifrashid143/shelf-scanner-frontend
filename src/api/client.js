@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-vs-scanner-be.aiiotgeeks.tech/api'
 
 export class ApiError extends Error {
   constructor(message, status, data) {
@@ -12,6 +12,7 @@ async function request(endpoint, options = {}) {
   const token = localStorage.getItem('shelf_scanner_token')
 
   const headers = {
+    'accept': '*/*',
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   }
@@ -33,26 +34,25 @@ async function request(endpoint, options = {}) {
   }
 
   if (!response.ok) {
-    throw new ApiError(
-      responseData?.error || `Request failed with status ${response.status}`,
-      response.status,
-      responseData
-    )
+    const errorMsg =
+      responseData?.detail ||
+      responseData?.message ||
+      responseData?.error ||
+      `Request failed with status ${response.status}`
+    throw new ApiError(errorMsg, response.status, responseData)
   }
 
   return responseData
 }
 
 export const api = {
-  // Auth API Endpoints (Swagger Compliant)
-  // POST /api/auth/login - Authenticates Superadmin, Tenant Admins, and Store Staff. Returns signed JWT Bearer token.
+  // Auth API Endpoints (Connected to https://ai-vs-scanner-be.aiiotgeeks.tech)
   login: (email, password) =>
     request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
 
-  // GET /api/auth/me - Get Current User Profile with Bearer token
   getMe: () =>
     request('/auth/me', {
       method: 'GET',
@@ -64,53 +64,37 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  logout: () =>
-    request('/auth/logout', {
-      method: 'POST',
-    }),
+  logout: () => {
+    localStorage.removeItem('shelf_scanner_token')
+    return Promise.resolve({ success: true })
+  },
 
   // Inventory
   getInventory: () => request('/inventory'),
 
-  // Admin only inventory actions
-  updateInventory: (data) =>
-    request('/inventory/update', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  addInventoryProduct: (data) =>
-    request('/inventory/add', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
   // Purchase Orders
-  getOrders: () => request('/orders'),
+  getOrders: () => request('/purchase-orders'),
 
   generateOrder: (data = {}) =>
-    request('/orders/generate', {
+    request('/purchase-orders/draft', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  // Admin only PO approval/rejection actions
-  approveOrder: (id) =>
-    request(`/orders/${id}/approve`, {
+  approveOrder: (poId) =>
+    request(`/purchase-orders/${poId}/approve`, {
       method: 'POST',
     }),
 
-  rejectOrder: (id) =>
-    request(`/orders/${id}/reject`, {
+  cancelOrder: (poId) =>
+    request(`/purchase-orders/${poId}/cancel`, {
       method: 'POST',
     }),
 
   // Scans
-  getScans: () => request('/scans'),
-
-  analyzeScan: (shelfName = 'Aisle 3 · Shelf B') =>
-    request('/scans/analyze', {
-      method: 'POST',
-      body: JSON.stringify({ shelfName }),
+  getScans: () =>
+    request('/scans').catch((err) => {
+      console.warn('Scans fetch fallback:', err.message)
+      return { recentScans: [] }
     }),
 }

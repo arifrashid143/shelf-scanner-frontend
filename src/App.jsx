@@ -41,15 +41,36 @@ function MainApp() {
     async function loadData() {
       try {
         const [invData, ordersData, scansData] = await Promise.all([
-          api.getInventory(),
-          api.getOrders(),
-          api.getScans(),
+          api.getInventory().catch(() => null),
+          api.getOrders().catch(() => null),
+          api.getScans().catch(() => null),
         ])
-        if (invData?.inventory) setInventory(invData.inventory)
-        if (ordersData?.purchaseOrders) {
-          setPurchaseOrders(ordersData.purchaseOrders)
-          setSelectedOrder(ordersData.purchaseOrders[0])
+
+        if (invData?.items || invData?.inventory) {
+          const rawItems = invData.items || invData.inventory
+          const normalized = rawItems.map((item) => ({
+            id: String(item.id || item.sku),
+            sku: item.sku || `SKU-${item.id}`,
+            name: item.name,
+            current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
+            target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 10,
+            price: item.unit_price || item.price || 0,
+            status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
+            history: item.history || [item.current_stock || item.current || 0, item.current_stock || item.current || 0],
+          }))
+          setInventory(normalized)
         }
+
+        if (ordersData) {
+          const rawOrders = Array.isArray(ordersData)
+            ? ordersData
+            : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
+          if (rawOrders.length > 0) {
+            setPurchaseOrders(rawOrders)
+            setSelectedOrder(rawOrders[0])
+          }
+        }
+
         if (scansData?.recentScans) setRecentScans(scansData.recentScans)
       } catch (err) {
         console.error('Error fetching initial API data:', err)

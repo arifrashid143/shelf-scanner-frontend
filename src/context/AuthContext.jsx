@@ -3,7 +3,7 @@ import { api } from '../api/client'
 
 const AuthContext = createContext(null)
 
-// Helper to safely parse JWT token payload claims (role, tenant_id, sub)
+// Helper to safely parse JWT token payload claims (role, sub, exp)
 function parseJwt(token) {
   try {
     if (!token || typeof token !== 'string') return null
@@ -39,28 +39,26 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        // Calls GET /api/auth/me with Bearer token
         const data = await api.getMe()
-        let currentUser = data?.user || data?.data?.user || data?.data || data
-        
-        // Merge with JWT payload claims (embedded role & tenant identity)
+        const rawUser = data?.user || data?.data?.user || data
         const jwtClaims = parseJwt(token)
-        if (jwtClaims && currentUser) {
-          currentUser = {
-            ...jwtClaims,
-            ...currentUser,
-            role: currentUser.role || jwtClaims.role || 'user',
-            tenant: currentUser.tenant || jwtClaims.tenant || jwtClaims.tenant_id,
-            tenant_id: currentUser.tenant_id || jwtClaims.tenant_id,
-          }
+
+        const currentUser = {
+          ...rawUser,
+          name: rawUser.full_name || rawUser.name || rawUser.email?.split('@')[0] || 'User',
+          role: String(rawUser.role || jwtClaims?.role || 'user').toLowerCase(),
+          tenant_id: rawUser.tenant_id ?? jwtClaims?.tenant_id ?? null,
         }
         setUser(currentUser)
       } catch (err) {
         console.warn('Session verification via GET /api/auth/me failed:', err.message)
-        // Check if token is still valid locally
         const jwtClaims = parseJwt(token)
         if (jwtClaims && jwtClaims.exp && jwtClaims.exp * 1000 > Date.now()) {
-          setUser(jwtClaims)
+          setUser({
+            ...jwtClaims,
+            name: jwtClaims.name || jwtClaims.full_name || jwtClaims.sub || 'User',
+            role: String(jwtClaims.role || 'user').toLowerCase(),
+          })
         } else {
           localStorage.removeItem('shelf_scanner_token')
           setUser(null)
@@ -73,44 +71,47 @@ export function AuthProvider({ children }) {
     loadUser()
   }, [])
 
-  // POST /api/auth/login - Authenticates Superadmin, Tenant Admins, and Store Staff
+  // POST /api/auth/login - Authenticates with https://ai-vs-scanner-be.aiiotgeeks.tech/api/auth/login
   const login = async (email, password) => {
     setError(null)
     try {
       const data = await api.login(email, password)
       
-      // Extract Bearer token from response (supports token, access_token, accessToken, jwt)
-      const token = data.token || data.access_token || data.accessToken || data.jwt
+      // Extract Bearer token (API returns access_token)
+      const token = data.access_token || data.token || data.accessToken || data.jwt
       if (!token) {
         throw new Error('No authentication token received in response.')
       }
 
       localStorage.setItem('shelf_scanner_token', token)
 
-      // Retrieve user profile from login body, /api/auth/me, or embedded JWT claims
-      let currentUser = data.user || data.data?.user || data.profile
+      const rawUser = data.user || data.data?.user || data.profile
       const jwtClaims = parseJwt(token)
 
-      if (!currentUser) {
+      let currentUser = null
+      if (rawUser) {
+        currentUser = {
+          ...rawUser,
+          name: rawUser.full_name || rawUser.name || rawUser.email?.split('@')[0] || 'User',
+          role: String(rawUser.role || jwtClaims?.role || 'user').toLowerCase(),
+          tenant_id: rawUser.tenant_id ?? jwtClaims?.tenant_id ?? null,
+        }
+      } else {
         try {
           const meData = await api.getMe()
-          currentUser = meData.user || meData.data?.user || meData.data || meData
+          currentUser = {
+            ...meData,
+            name: meData.full_name || meData.name || meData.email?.split('@')[0] || 'User',
+            role: String(meData.role || jwtClaims?.role || 'user').toLowerCase(),
+            tenant_id: meData.tenant_id ?? jwtClaims?.tenant_id ?? null,
+          }
         } catch {
-          currentUser = jwtClaims
+          currentUser = jwtClaims ? {
+            ...jwtClaims,
+            name: jwtClaims.name || jwtClaims.full_name || jwtClaims.sub || 'User',
+            role: String(jwtClaims.role || 'user').toLowerCase(),
+          } : null
         }
-      }
-
-      // Merge JWT claims ensuring role and tenant are preserved
-      if (jwtClaims && currentUser) {
-        currentUser = {
-          ...jwtClaims,
-          ...currentUser,
-          role: currentUser.role || jwtClaims.role || 'user',
-          tenant: currentUser.tenant || jwtClaims.tenant || jwtClaims.tenant_id,
-          tenant_id: currentUser.tenant_id || jwtClaims.tenant_id,
-        }
-      } else if (!currentUser && jwtClaims) {
-        currentUser = jwtClaims
       }
 
       setUser(currentUser)
@@ -125,7 +126,7 @@ export function AuthProvider({ children }) {
     setError(null)
     try {
       const data = await api.signup(formData)
-      const token = data.token || data.access_token || data.accessToken
+      const token = data.access_token || data.token
       if (token) {
         localStorage.setItem('shelf_scanner_token', token)
       }
@@ -148,24 +149,24 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Normalized Role Authorization:
-  // Admin includes: Superadmin, Tenant Admins, and Store Admins
-  const roleStr = (user?.role || user?.user_role || '').toLowerCase()
+  // Normalized Role Evaluation:
+  // Superadmin, Tenant Admin, and Admin are treated as Admin
+  const roleStr = String(user?.role || user?.user_role || '').toLowerCase()
   const isAdmin =
-    roleStr === 'admin' ||
     roleStr === 'superadmin' ||
     roleStr === 'super_admin' ||
+    roleStr === 'admin' ||
     roleStr === 'tenant_admin' ||
-    roleStr === 'tenantadmin' ||
+    roleStr === 'store_admin' ||
     roleStr.includes('admin')
 
-  // User includes: Store Staff and standard Users
+  // Staff and standard users
   const isUser = !isAdmin && !!user
 
   const value = {
     user,
     role: user?.role || null,
-    tenant: user?.tenant || user?.tenant_id || null,
+    tenant_id: user?.tenant_id || null,
     isAdmin,
     isUser,
     isAuthenticated: !!user,
