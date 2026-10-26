@@ -11,6 +11,7 @@ import ScanResultView from './views/ScanResultView'
 import OrdersView from './views/OrdersView'
 import OrderDetailView from './views/OrderDetailView'
 import InventoryView from './views/InventoryView'
+import logoImg from './assets/logo.png'
 import {
   initialInventory,
   initialPurchaseOrders,
@@ -264,16 +265,14 @@ function MainApp() {
         />
       </div>
 
-      {/* Mobile Top Status Bar with Role & Sign Out */}
+      {/* Mobile Top Status Bar with Brand Logo & Sign Out */}
       <div className="md:hidden bg-white border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-              isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-            }`}
-          >
-            {user?.name?.[0] || 'U'}
-          </div>
+        <div className="flex items-center gap-2.5">
+          <img
+            src={logoImg}
+            alt="Shelf Scanner"
+            className="w-7 h-7 rounded-lg object-contain shadow-2xs"
+          />
           <div>
             <p className="text-xs font-bold text-slate-900 leading-tight">
               {user?.name?.split(' ')[0] || 'User'}
@@ -293,8 +292,8 @@ function MainApp() {
         </button>
       </div>
 
-      {/* Main Content Area */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-8 overflow-x-hidden">
+      {/* Main Content Area: Optimized for laptop displays and widescreen monitors */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-7 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-8 overflow-x-hidden">
         {renderContent()}
       </main>
 

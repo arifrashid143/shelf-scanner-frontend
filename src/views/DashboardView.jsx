@@ -11,7 +11,7 @@ export default function DashboardView({
   const pendingOrders = purchaseOrders.filter((po) => po.status === 'Draft')
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full max-w-[1550px]">
       {/* ===================== MOBILE LAYOUT (Pages 1 & 13) ===================== */}
       <div className="md:hidden space-y-5">
         {/* Top Greeting Header (Page 13) */}

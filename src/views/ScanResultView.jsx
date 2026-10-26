@@ -20,7 +20,7 @@ export default function ScanResultView({ onDone, onGeneratePO }) {
   const shelf2Items = visibleBoxes.filter((b) => b.shelf === 2)
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full max-w-[1550px]">
       {/* ===================== MOBILE LAYOUT (Pages 3 & 15) ===================== */}
       <div className="md:hidden space-y-4">
         {/* Header */}

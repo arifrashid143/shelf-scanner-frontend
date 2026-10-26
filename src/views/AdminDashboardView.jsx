@@ -12,7 +12,7 @@ export default function AdminDashboardView({
   const lowStockItems = inventory.filter((item) => item.status === 'Low')
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full max-w-[1550px]">
       {/* Top Header Row with Admin Badge */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

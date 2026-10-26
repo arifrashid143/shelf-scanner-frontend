@@ -1,4 +1,4 @@
-const API_BASE = '/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 export class ApiError extends Error {
   constructor(message, status, data) {
@@ -44,14 +44,25 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
-  // Auth
+  // Auth API Endpoints (Swagger Compliant)
+  // POST /api/auth/login - Authenticates Superadmin, Tenant Admins, and Store Staff. Returns signed JWT Bearer token.
   login: (email, password) =>
     request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
 
-  getMe: () => request('/auth/me'),
+  // GET /api/auth/me - Get Current User Profile with Bearer token
+  getMe: () =>
+    request('/auth/me', {
+      method: 'GET',
+    }),
+
+  signup: (data) =>
+    request('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   logout: () =>
     request('/auth/logout', {
@@ -97,10 +108,9 @@ export const api = {
   // Scans
   getScans: () => request('/scans'),
 
-  analyzeScan: (shelfName) =>
+  analyzeScan: (shelfName = 'Aisle 3 · Shelf B') =>
     request('/scans/analyze', {
       method: 'POST',
       body: JSON.stringify({ shelfName }),
     }),
 }
-

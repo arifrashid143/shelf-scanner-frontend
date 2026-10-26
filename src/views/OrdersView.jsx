@@ -11,7 +11,7 @@ export default function OrdersView({ purchaseOrders, onSelectOrder }) {
   })
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full max-w-[1550px]">
       {/* ===================== MOBILE LAYOUT (Pages 5 & 17) ===================== */}
       <div className="md:hidden space-y-4">
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">Orders</h1>

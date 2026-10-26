@@ -25,7 +25,7 @@ export default function NewScanView({ onScanComplete }) {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full max-w-[1550px]">
       {/* Hidden file input for mobile & desktop */}
       <input
         type="file"

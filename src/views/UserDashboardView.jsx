@@ -10,7 +10,7 @@ export default function UserDashboardView({
   const lowStockCount = inventory.filter((item) => item.status === 'Low').length
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full max-w-[1550px]">
       {/* User Welcome Header */}
       <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-4">
