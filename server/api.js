@@ -5,21 +5,51 @@ import jwt from 'jsonwebtoken'
 const JWT_SECRET = 'shelf-scanner-secret-key-2026-super-secure'
 
 // In-memory Database initialized with realistic store data
+// Supports Superadmin, Tenant Admins, and Store Staff (aligned with Swagger spec)
 const users = [
+  {
+    id: 'u-superadmin-1',
+    email: 'superadmin@shelfscanner.com',
+    password: 'superadmin123',
+    name: 'Eleanor Vance (Superadmin)',
+    role: 'superadmin',
+    tenant_id: 'tenant-global',
+    store: 'Enterprise HQ',
+  },
+  {
+    id: 'u-tenantadmin-1',
+    email: 'tenantadmin@shelfscanner.com',
+    password: 'tenantadmin123',
+    name: 'Marcus Brody (Tenant Admin)',
+    role: 'tenant_admin',
+    tenant_id: 'tenant-corp-1',
+    store: 'Metro Region',
+  },
   {
     id: 'u-admin-1',
     email: 'admin@shelfscanner.com',
     password: 'admin123',
     name: 'Sarah Connor (Admin)',
     role: 'admin',
+    tenant_id: 'tenant-corp-1',
+    store: 'Main Store',
+  },
+  {
+    id: 'u-staff-1',
+    email: 'staff@shelfscanner.com',
+    password: 'staff123',
+    name: 'Jordan Lee (Store Staff)',
+    role: 'store_staff',
+    tenant_id: 'tenant-corp-1',
     store: 'Main Store',
   },
   {
     id: 'u-user-1',
     email: 'user@shelfscanner.com',
     password: 'user123',
-    name: 'Alex Rivera (Staff)',
+    name: 'Alex Rivera (Staff User)',
     role: 'user',
+    tenant_id: 'tenant-corp-1',
     store: 'Main Store',
   },
 ]
@@ -174,9 +204,17 @@ export function authenticateToken(req, res, next) {
   })
 }
 
-// Strict Admin-only middleware: prevents non-admin users from performing restricted operations
+// Strict Admin-only middleware: checks for Superadmin, Tenant Admin, or Store Admin
 export function requireAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
+  const role = (req.user?.role || '').toLowerCase()
+  const isAdminRole =
+    role === 'admin' ||
+    role === 'superadmin' ||
+    role === 'super_admin' ||
+    role === 'tenant_admin' ||
+    role.includes('admin')
+
+  if (!req.user || !isAdminRole) {
     return res.status(403).json({
       error: 'Forbidden: Admin privileges required for this action.',
       userRole: req.user?.role || 'anonymous',
@@ -188,8 +226,14 @@ export function requireAdmin(req, res, next) {
 // ==================== AUTH ROUTES ====================
 
 // POST /api/auth/login
+// Authenticates Superadmin, Tenant Admins, and Store Staff.
+// Returns signed JWT Bearer token with embedded role and tenant identity.
 apiApp.post('/auth/login', (req, res) => {
   const { email, password } = req.body
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' })
+  }
 
   const user = users.find(
     (u) => u.email.toLowerCase() === email?.toLowerCase() && u.password === password
@@ -201,9 +245,12 @@ apiApp.post('/auth/login', (req, res) => {
 
   const tokenPayload = {
     id: user.id,
+    sub: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
+    tenant_id: user.tenant_id || 'tenant-corp-1',
+    tenant: user.tenant_id || 'Main Retail Chain',
     store: user.store,
   }
 
@@ -212,14 +259,70 @@ apiApp.post('/auth/login', (req, res) => {
   res.json({
     message: 'Login successful',
     token,
+    access_token: token,
+    token_type: 'Bearer',
     user: tokenPayload,
   })
 })
 
-// GET /api/auth/me - Verify current token and return user profile + role
+// POST /api/auth/signup
+apiApp.post('/auth/signup', (req, res) => {
+  const { name, email, password, role } = req.body
+
+  if (!email || !password || !name) {
+    return res.status(400).json({ error: 'Name, email, and password are required' })
+  }
+
+  const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
+  if (existing) {
+    return res.status(409).json({ error: 'An account with this email already exists.' })
+  }
+
+  const newUser = {
+    id: `u-${Date.now()}`,
+    name,
+    email,
+    password,
+    role: role === 'admin' ? 'admin' : 'store_staff',
+    tenant_id: 'tenant-corp-1',
+    store: 'Main Store',
+  }
+
+  users.push(newUser)
+
+  const tokenPayload = {
+    id: newUser.id,
+    sub: newUser.id,
+    email: newUser.email,
+    name: newUser.name,
+    role: newUser.role,
+    tenant_id: newUser.tenant_id,
+    tenant: newUser.tenant_id,
+    store: newUser.store,
+  }
+
+  const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '8h' })
+
+  res.status(201).json({
+    message: 'Account created successfully',
+    token,
+    access_token: token,
+    token_type: 'Bearer',
+    user: tokenPayload,
+  })
+})
+
+// GET /api/auth/me - Verify current token and return user profile + role + tenant
 apiApp.get('/auth/me', authenticateToken, (req, res) => {
   res.json({
+    message: 'Current user profile retrieved',
     user: req.user,
+    id: req.user.id,
+    email: req.user.email,
+    name: req.user.name,
+    role: req.user.role,
+    tenant_id: req.user.tenant_id,
+    tenant: req.user.tenant,
   })
 })
 

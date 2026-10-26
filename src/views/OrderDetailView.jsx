@@ -63,7 +63,7 @@ export default function OrderDetailView({
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full max-w-[1550px]">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
