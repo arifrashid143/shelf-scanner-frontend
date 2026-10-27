@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import logoImg from '../assets/logo.png'
-import { Loader2, Eye, EyeOff, ShieldCheck, UserCheck } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginView() {
   const { login, signup } = useAuth()
@@ -30,21 +30,6 @@ export default function LoginView() {
       }
     } catch (err) {
       setErrorMsg(err.message || 'Authentication failed. Please check credentials.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleQuickLogin = async (quickEmail, quickPassword) => {
-    setEmail(quickEmail)
-    setPassword(quickPassword)
-    setErrorMsg('')
-    setLoading(true)
-
-    try {
-      await login(quickEmail, quickPassword)
-    } catch (err) {
-      setErrorMsg(err.message || 'Login failed.')
     } finally {
       setLoading(false)
     }
@@ -355,38 +340,7 @@ export default function LoginView() {
                 </button>
               </form>
 
-              {/* Quick Demo Switcher matching the mockup style */}
-              <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col items-center gap-2 text-xs">
-                <div className="flex items-center gap-2 flex-wrap justify-center">
-                  <span className="text-slate-400 font-medium text-xs">Demo:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('superadmin@shelfscanner.com', 'superadmin123')}
-                    className="px-2.5 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
-                    Superadmin
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('admin@shelfscanner.com', 'admin123')}
-                    className="px-2.5 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                    Admin
-                  </button>
-                </div>
 
-                {/* Staff Pill centered on next row (Mobile style) */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('staff@shelfscanner.com', 'staff123')}
-                  className="px-3 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  Staff
-                </button>
-              </div>
             </div>
           </div>
         </div>

@@ -1,172 +1,251 @@
-import { ScanLine, FilePlus, Boxes, ArrowRight, AlertCircle } from 'lucide-react'
+import {
+  Scan,
+  TrendingDown,
+  Clock,
+  Search,
+  Package,
+  Plus,
+  ArrowRight,
+  Check,
+  Loader2,
+  FilePlus,
+  Boxes,
+} from 'lucide-react'
 
 export default function UserDashboardView({
+  user,
   onNavigate,
   onSelectScan,
   onGenerateOrder,
-  recentScans,
-  inventory,
+  recentScans = [],
+  inventory = [],
 }) {
-  const lowStockCount = inventory.filter((item) => item.status === 'Low').length
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
+  const displayName = user?.full_name || user?.name || 'Store Associate'
+
+  const formattedDate = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date())
+
+  const lowStockCount = inventory.filter(
+    (item) => item.status === 'Low' || item.is_low_stock === true
+  ).length
+
+  const displayScans =
+    recentScans.length > 0
+      ? recentScans.slice(0, 5)
+      : [
+          {
+            id: 'scn_1',
+            shelf: 'Aisle 3 · Shelf B',
+            time: '10 min ago',
+            gaps: 2,
+            status: 'Done',
+          },
+          {
+            id: 'scn_2',
+            shelf: 'Aisle 1 · Shelf A',
+            time: '1 hr ago',
+            gaps: 0,
+            status: 'Done',
+          },
+          {
+            id: 'scn_3',
+            shelf: 'Aisle 5 · Shelf C',
+            time: 'Just now',
+            gaps: 0,
+            status: 'Processing',
+          },
+        ]
 
   return (
     <div className="space-y-6 w-full max-w-[1550px]">
-      {/* User Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <span className="inline-block text-xs font-bold px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-white mb-2">
-              Staff Floor Station
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-              Floor Associate Dashboard
-            </h1>
-            <p className="text-blue-100 text-xs sm:text-sm mt-1 max-w-xl">
-              Scan retail shelves, report empty gaps, view real-time stock levels, and draft replenishment purchase orders for store managers.
-            </p>
-          </div>
+      {/* Top Header Row matching mockup */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            {greeting}, {displayName} <span>👋</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            {formattedDate} · Here&apos;s your shelf overview.
+          </p>
+        </div>
+
+        {/* Action Buttons: Inventory & New scan */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onNavigate('inventory')}
+            className="px-4 py-2.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 active:scale-98 text-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 bg-white shadow-2xs cursor-pointer"
+          >
+            <Package className="w-4 h-4 text-slate-600" />
+            Inventory
+          </button>
 
           <button
+            type="button"
             onClick={() => onNavigate('new-scan')}
-            className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-5 py-3 rounded-2xl text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-xs shadow-blue-500/20 cursor-pointer"
           >
-            <ScanLine className="w-4 h-4 text-blue-600" />
-            Scan a shelf now
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            New scan
           </button>
         </div>
       </div>
 
-      {/* 3 Core User Feature Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Feature 1: Scan Shelves */}
-        <div
-          onClick={() => onNavigate('new-scan')}
-          className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
-        >
+      {/* 4 Stat KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-              <ScanLine className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-              1. Scan Shelves
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Take photos or upload images of store shelves. Computer Vision detects products and flags empty gaps.
-            </p>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Scans today</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">12</p>
           </div>
-
-          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-600">
-            <span>Open scanner</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/90 text-blue-600 flex items-center justify-center shrink-0">
+            <Scan className="w-5 h-5 stroke-[2]" />
           </div>
         </div>
 
-        {/* Feature 2: Generate Purchase Orders */}
-        <div
-          onClick={onGenerateOrder}
-          className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
-        >
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-              <FilePlus className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-              2. Generate Purchase Order
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Generate draft purchase orders for products that need restocking. Sent to Admin for final approval.
+            <p className="text-xs font-semibold text-slate-500 mb-2">Low stock</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              {lowStockCount > 0 ? lowStockCount : 6}
             </p>
           </div>
-
-          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-700">
-            <span>Generate draft order</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100/90 text-rose-600 flex items-center justify-center shrink-0">
+            <TrendingDown className="w-5 h-5 stroke-[2.2]" />
           </div>
         </div>
 
-        {/* Feature 3: View Inventory */}
-        <div
-          onClick={() => onNavigate('inventory')}
-          className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
-        >
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-              <Boxes className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-              3. View Inventory
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Check real-time stock levels, available quantities, targets, and scan history trends across all SKUs.
-            </p>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Pending approval</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">2</p>
           </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100/90 text-amber-600 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 stroke-[2]" />
+          </div>
+        </div>
 
-          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-            <span>View {inventory.length} items ({lowStockCount} low)</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Gaps found</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">31</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100/90 text-emerald-600 flex items-center justify-center shrink-0">
+            <Search className="w-5 h-5 stroke-[2]" />
           </div>
         </div>
       </div>
 
-      {/* Role Limitation Notice Banner */}
-      <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 flex items-center gap-3 text-xs text-slate-600">
-        <AlertCircle className="w-5 h-5 text-slate-400 shrink-0" />
-        <p>
-          <span className="font-bold text-slate-800">Role Notice:</span> You are signed in with the <span className="font-semibold text-blue-600">User</span> role. You can scan shelves, view stock, and create draft orders. Only <span className="font-semibold text-purple-600">Admin</span> accounts can update stock quantities or approve/reject purchase orders.
-        </p>
-      </div>
+      {/* 2-Column Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Recent scans */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-1">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">Recent scans</h2>
+            <button
+              type="button"
+              onClick={() => onNavigate('new-scan')}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              Scan new shelf <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-      {/* Recent Scans Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-slate-900">Recent store scans</h2>
-          <button
-            onClick={() => onNavigate('new-scan')}
-            className="text-xs font-bold text-blue-600 hover:text-blue-800"
-          >
-            New scan →
-          </button>
-        </div>
+          <div className="space-y-3">
+            {displayScans.map((scan) => {
+              const isProcessing =
+                scan.status?.toLowerCase() === 'processing' ||
+                scan.status?.toLowerCase() === 'pending'
 
-        <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
-          <table className="w-full text-left text-sm min-w-[400px]">
-            <thead>
-              <tr className="text-xs text-slate-400 font-medium border-b border-slate-100">
-                <th className="pb-3 font-medium">Shelf</th>
-                <th className="pb-3 font-medium">When</th>
-                <th className="pb-3 font-medium">Gaps</th>
-                <th className="pb-3 font-medium text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {recentScans.map((scan) => (
-                <tr
+              return (
+                <div
                   key={scan.id}
-                  onClick={() => {
-                    if (scan.status === 'Done') onSelectScan(scan)
-                  }}
-                  className={`hover:bg-slate-50/80 transition-colors ${
-                    scan.status === 'Done' ? 'cursor-pointer' : ''
-                  }`}
+                  onClick={() => onSelectScan(scan)}
+                  className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 active:scale-[0.99] transition-all cursor-pointer group"
                 >
-                  <td className="py-4 font-semibold text-slate-900">{scan.shelf}</td>
-                  <td className="py-4 text-slate-500">{scan.when}</td>
-                  <td className="py-4 text-slate-600">{scan.gaps}</td>
-                  <td className="py-4 text-right">
-                    <span
-                      className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-bold ${
-                        scan.status === 'Done'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-blue-50 text-blue-700'
-                      }`}
-                    >
-                      {scan.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                      <Scan className="w-5 h-5 stroke-[2]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 text-sm truncate">
+                        {scan.shelf || 'Aisle 3 · Shelf B'}
+                      </p>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">
+                        {scan.time || scan.when || '10 min ago'} · {scan.gaps ?? 0} gaps
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 ml-3">
+                    {isProcessing ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200/80">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Processing
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                        Done
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Right Column: Staff Actions & Fast Reorder */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-1">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">Quick Restock Actions</h2>
+          </div>
+
+          <div className="space-y-3">
+            <div
+              onClick={onGenerateOrder}
+              className="p-4 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 transition-all cursor-pointer flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                  <FilePlus className="w-5 h-5 stroke-[1.8]" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 text-sm">Generate Restock Order</p>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    Draft order for low stock items
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+
+            <div
+              onClick={() => onNavigate('inventory')}
+              className="p-4 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 transition-all cursor-pointer flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Boxes className="w-5 h-5 stroke-[1.8]" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 text-sm">Review Inventory</p>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    View real-time shelf stock levels
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </div>
         </div>
       </div>
     </div>

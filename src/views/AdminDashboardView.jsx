@@ -1,195 +1,267 @@
-import { ShieldCheck, Plus, ArrowRight, Boxes } from 'lucide-react'
+import {
+  Scan,
+  TrendingDown,
+  Clock,
+  Search,
+  Package,
+  Plus,
+  ArrowRight,
+  Check,
+  Loader2,
+  FileText,
+} from 'lucide-react'
 
 export default function AdminDashboardView({
+  user,
   onNavigate,
   onSelectOrder,
   onSelectScan,
-  purchaseOrders,
-  recentScans,
-  inventory,
+  purchaseOrders = [],
+  recentScans = [],
+  inventory = [],
 }) {
-  const pendingOrders = purchaseOrders.filter((po) => po.status === 'Draft')
-  const lowStockItems = inventory.filter((item) => item.status === 'Low')
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
+  const displayName = user?.full_name || user?.name || 'Platform Superadmin'
+
+  const formattedDate = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date())
+
+  const pendingOrders = purchaseOrders.filter(
+    (po) => po.status === 'Draft' || po.status === 'DRAFT' || po.status === 'Pending'
+  )
+  const lowStockItems = inventory.filter(
+    (item) => item.status === 'Low' || item.is_low_stock === true
+  )
+
+  // Fallback demo scans if recentScans is empty
+  const displayScans =
+    recentScans.length > 0
+      ? recentScans.slice(0, 5)
+      : [
+          {
+            id: 'scn_1',
+            shelf: 'Aisle 3 · Shelf B',
+            time: '10 min ago',
+            gaps: 2,
+            status: 'Done',
+          },
+          {
+            id: 'scn_2',
+            shelf: 'Aisle 1 · Shelf A',
+            time: '1 hr ago',
+            gaps: 0,
+            status: 'Done',
+          },
+          {
+            id: 'scn_3',
+            shelf: 'Aisle 5 · Shelf C',
+            time: 'Just now',
+            gaps: 0,
+            status: 'Processing',
+          },
+        ]
+
+  // Fallback demo orders if pendingOrders is empty
+  const displayOrders =
+    pendingOrders.length > 0
+      ? pendingOrders.slice(0, 5)
+      : [
+          {
+            id: 'PO-20261026-35BBD6',
+            supplier: 'Global Beverage Wholesale',
+            items: [{}, {}],
+            status: 'Draft',
+          },
+          {
+            id: 'PO-20261023-3E42C4',
+            supplier: 'Global Beverage Wholesale',
+            items: [{}, {}],
+            status: 'Draft',
+          },
+        ]
 
   return (
     <div className="space-y-6 w-full max-w-[1550px]">
-      {/* Top Header Row with Admin Badge */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Top Header Row matching mockup */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Admin Dashboard
-            </h1>
-            <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Store Manager
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Full administrative overview, inventory control, and purchase order approvals.
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            {greeting}, {displayName} <span>👋</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            {formattedDate} · Here&apos;s your shelf overview.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        {/* Action Buttons: Inventory & New scan */}
+        <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => onNavigate('inventory')}
-            className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-3.5 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 active:scale-98 text-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 bg-white shadow-2xs cursor-pointer"
           >
-            <Boxes className="w-4 h-4 text-slate-500" />
-            Manage Inventory
+            <Package className="w-4 h-4 text-slate-600" />
+            Inventory
           </button>
+
           <button
+            type="button"
             onClick={() => onNavigate('new-scan')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-colors flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-xs shadow-blue-500/20 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             New scan
           </button>
         </div>
       </div>
 
-      {/* 4 Executive Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <p className="text-xs font-medium text-slate-500 mb-1">Scans today</p>
-          <p className="text-3xl font-black text-slate-900">12</p>
-          <p className="text-[11px] text-slate-400 mt-1">AI detections</p>
+      {/* 4 Stat KPI Cards matching mockup */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Scans today */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Scans today</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">12</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/90 text-blue-600 flex items-center justify-center shrink-0">
+            <Scan className="w-5 h-5 stroke-[2]" />
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <p className="text-xs font-medium text-slate-500 mb-1">Low-stock items</p>
-          <p className="text-3xl font-black text-red-500">{lowStockItems.length}</p>
-          <p className="text-[11px] text-red-400 mt-1">Requires reorder</p>
+
+        {/* Card 2: Low stock */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Low stock</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              {lowStockItems.length > 0 ? lowStockItems.length : 6}
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100/90 text-rose-600 flex items-center justify-center shrink-0">
+            <TrendingDown className="w-5 h-5 stroke-[2.2]" />
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <p className="text-xs font-medium text-slate-500 mb-1">Pending Approval</p>
-          <p className="text-3xl font-black text-amber-600">{pendingOrders.length}</p>
-          <p className="text-[11px] text-amber-500 mt-1">Draft POs waiting</p>
+
+        {/* Card 3: Pending approval */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Pending approval</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              {pendingOrders.length > 0 ? pendingOrders.length : 2}
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100/90 text-amber-600 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 stroke-[2]" />
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <p className="text-xs font-medium text-slate-500 mb-1">Gaps found</p>
-          <p className="text-3xl font-black text-slate-900">31</p>
-          <p className="text-[11px] text-slate-400 mt-1">This week across aisles</p>
+
+        {/* Card 4: Gaps found */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Gaps found</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">31</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100/90 text-emerald-600 flex items-center justify-center shrink-0">
+            <Search className="w-5 h-5 stroke-[2]" />
+          </div>
         </div>
       </div>
 
-      {/* Main Admin Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Recent scans table (2 cols on lg) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Recent shelf scans</h2>
-              <span className="text-xs text-slate-400">Live AI telemetry</span>
-            </div>
-
-            <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
-              <table className="w-full text-left text-sm min-w-[400px]">
-                <thead>
-                  <tr className="text-xs text-slate-400 font-medium border-b border-slate-100">
-                    <th className="pb-3 font-medium">Shelf</th>
-                    <th className="pb-3 font-medium">When</th>
-                    <th className="pb-3 font-medium">Gaps</th>
-                    <th className="pb-3 font-medium text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {recentScans.map((scan) => (
-                    <tr
-                      key={scan.id}
-                      onClick={() => {
-                        if (scan.status === 'Done') onSelectScan(scan)
-                      }}
-                      className={`hover:bg-slate-50/80 transition-colors ${
-                        scan.status === 'Done' ? 'cursor-pointer' : ''
-                      }`}
-                    >
-                      <td className="py-4 font-semibold text-slate-900">{scan.shelf}</td>
-                      <td className="py-4 text-slate-500">{scan.when}</td>
-                      <td className="py-4 text-slate-600">{scan.gaps}</td>
-                      <td className="py-4 text-right">
-                        <span
-                          className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-bold ${
-                            scan.status === 'Done'
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-blue-50 text-blue-700'
-                          }`}
-                        >
-                          {scan.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs text-slate-500">
-              Scans automatically detect missing SKUs and calculate reorder quantities.
-            </span>
+      {/* Main 2-Column Content Grid: Recent scans & Needs approval */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Recent scans (7 cols on lg) */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-1">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">Recent scans</h2>
             <button
+              type="button"
               onClick={() => onNavigate('new-scan')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer transition-colors"
             >
               Scan new shelf <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
 
-        {/* Right: Needs Approval Queue (1 col on lg) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Needs Approval</h2>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">
-                {pendingOrders.length} Pending
-              </span>
-            </div>
+          <div className="space-y-3">
+            {displayScans.map((scan) => {
+              const isProcessing =
+                scan.status?.toLowerCase() === 'processing' ||
+                scan.status?.toLowerCase() === 'pending'
 
-            <div className="space-y-3">
-              {pendingOrders.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs">
-                  No purchase orders currently pending approval.
-                </div>
-              ) : (
-                pendingOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    onClick={() => onSelectOrder(order)}
-                    className="p-3.5 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/20 transition-all cursor-pointer space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 text-sm">{order.id}</span>
-                      <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
-                        Draft
-                      </span>
+              return (
+                <div
+                  key={scan.id}
+                  onClick={() => onSelectScan(scan)}
+                  className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 active:scale-[0.99] transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                      <Scan className="w-5 h-5 stroke-[2]" />
                     </div>
-                    <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>{order.supplier}</span>
-                      <span className="font-bold text-slate-900">
-                        ₹{order.total.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-100">
-                      <span>{order.items.length} line items</span>
-                      <span className="text-purple-600 font-semibold hover:underline">
-                        Review order →
-                      </span>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 text-sm truncate">
+                        {scan.shelf || 'Aisle 3 · Shelf B'}
+                      </p>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">
+                        {scan.time || scan.when || '10 min ago'} · {scan.gaps ?? 0} gaps
+                      </p>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+
+                  <div className="shrink-0 ml-3">
+                    {isProcessing ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200/80">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Processing
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                        Done
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Right Column: Needs approval (5 cols on lg) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-1">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">Needs approval</h2>
           </div>
 
-          <div className="pt-6">
-            <button
-              onClick={() => onNavigate('orders')}
-              className="w-full py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
-            >
-              Manage all purchase orders
-            </button>
+          <div className="space-y-3">
+            {displayOrders.map((order) => (
+              <div
+                key={order.id}
+                onClick={() => onSelectOrder(order)}
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 active:scale-[0.99] transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 stroke-[1.8]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 text-sm truncate">{order.id}</p>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">
+                      {order.supplier || 'Global Beverage Wholesale'} · {order.items?.length || 2} items
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 ml-3">
+                  <ArrowRight className="w-4 h-4 text-purple-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

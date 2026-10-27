@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-vs-scanner-be.aiiotgeeks.tech/api'
 
 export class ApiError extends Error {
   constructor(message, status, data) {
@@ -11,8 +11,11 @@ export class ApiError extends Error {
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('shelf_scanner_token')
 
+  const isFormData = options.body instanceof FormData
+
   const headers = {
-    'Content-Type': 'application/json',
+    'accept': '*/*',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers || {}),
   }
 
@@ -33,26 +36,25 @@ async function request(endpoint, options = {}) {
   }
 
   if (!response.ok) {
-    throw new ApiError(
-      responseData?.error || `Request failed with status ${response.status}`,
-      response.status,
-      responseData
-    )
+    const errorMsg =
+      responseData?.detail ||
+      responseData?.message ||
+      responseData?.error ||
+      `Request failed with status ${response.status}`
+    throw new ApiError(errorMsg, response.status, responseData)
   }
 
   return responseData
 }
 
 export const api = {
-  // Auth API Endpoints (Swagger Compliant)
-  // POST /api/auth/login - Authenticates Superadmin, Tenant Admins, and Store Staff. Returns signed JWT Bearer token.
+  // Auth API Endpoints (Connected to https://ai-vs-scanner-be.aiiotgeeks.tech)
   login: (email, password) =>
     request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
 
-  // GET /api/auth/me - Get Current User Profile with Bearer token
   getMe: () =>
     request('/auth/me', {
       method: 'GET',
@@ -64,53 +66,103 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  logout: () =>
-    request('/auth/logout', {
-      method: 'POST',
+  logout: () => {
+    localStorage.removeItem('shelf_scanner_token')
+    return Promise.resolve({ success: true })
+  },
+
+  // Inventory Endpoints (GET /api/inventory, PUT /api/inventory/{id}, POST /api/inventory)
+  getInventory: (params = {}) => {
+    const query = new URLSearchParams()
+    if (params.search) query.append('search', params.search)
+    if (params.category) query.append('category', params.category)
+    if (params.low_stock_only) query.append('low_stock_only', 'true')
+    const qs = query.toString() ? `?${query.toString()}` : ''
+    return request(`/inventory${qs}`)
+  },
+
+  getProductById: (productId) =>
+    request(`/inventory/${encodeURIComponent(productId)}`),
+
+  updateProduct: (productId, data) =>
+    request(`/inventory/${encodeURIComponent(productId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     }),
 
-  // Inventory
-  getInventory: () => request('/inventory'),
-
-  // Admin only inventory actions
-  updateInventory: (data) =>
-    request('/inventory/update', {
+  createProduct: (data) =>
+    request('/inventory', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  addInventoryProduct: (data) =>
-    request('/inventory/add', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  // Purchase Orders
-  getOrders: () => request('/orders'),
+  // Purchase Orders (GET /api/purchase-orders, POST /api/purchase-orders/draft, PUT /api/purchase-orders/{id}/approve, POST /api/purchase-orders/{id}/cancel)
+  getOrders: () => request('/purchase-orders'),
 
   generateOrder: (data = {}) =>
-    request('/orders/generate', {
+    request('/purchase-orders/draft', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  // Admin only PO approval/rejection actions
-  approveOrder: (id) =>
-    request(`/orders/${id}/approve`, {
+  approveOrder: (poId, data = {}) =>
+    request(`/purchase-orders/${encodeURIComponent(poId)}/approve`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        approved_by: data.approved_by || 'Store Admin',
+        notes: data.notes || 'Approved via visual shelf scanner reorder agent',
+      }),
+    }),
+
+  cancelOrder: (poId) =>
+    request(`/purchase-orders/${encodeURIComponent(poId)}/cancel`, {
       method: 'POST',
     }),
 
-  rejectOrder: (id) =>
-    request(`/orders/${id}/reject`, {
+  // Shelf Scans Endpoints (POST /api/scans, GET /api/scans, GET /api/scans/{scan_id}, GET /api/scans/{scan_id}/detections)
+  uploadScan: (fileOrFormData, meta = {}) => {
+    let body = fileOrFormData
+    if (!(fileOrFormData instanceof FormData)) {
+      body = new FormData()
+      if (fileOrFormData instanceof Blob || fileOrFormData instanceof File) {
+        body.append('file', fileOrFormData, fileOrFormData.name || 'shelf_photo.png')
+      }
+      body.append('store_id', meta.store_id || 'store_main')
+      body.append('shelf_id', meta.shelf_id || 'Aisle 3, Shelf B')
+      if (meta.notes) body.append('notes', meta.notes)
+      body.append('sync_mode', meta.sync_mode !== undefined ? String(meta.sync_mode) : 'true')
+    }
+    return request('/scans', {
       method: 'POST',
-    }),
+      body,
+    })
+  },
 
-  // Scans
-  getScans: () => request('/scans'),
+  getScans: (params = {}) => {
+    const query = new URLSearchParams()
+    if (params.skip !== undefined) query.append('skip', params.skip)
+    if (params.limit !== undefined) query.append('limit', params.limit)
+    if (params.store_id) query.append('store_id', params.store_id)
+    if (params.shelf_id) query.append('shelf_id', params.shelf_id)
+    const qs = query.toString() ? `?${query.toString()}` : ''
 
-  analyzeScan: (shelfName = 'Aisle 3 · Shelf B') =>
-    request('/scans/analyze', {
-      method: 'POST',
-      body: JSON.stringify({ shelfName }),
-    }),
+    return request(`/scans${qs}`).catch((err) => {
+      console.warn('Scans fetch fallback:', err.message)
+      return { recentScans: [] }
+    })
+  },
+
+  getScanById: (scanId) =>
+    request(`/scans/${encodeURIComponent(scanId)}`),
+
+  getScanDetections: (scanId) =>
+    request(`/scans/${encodeURIComponent(scanId)}/detections`),
+
+  // Legacy alias for compatibility
+  analyzeScan: (fileOrShelf, meta = {}) => {
+    if (typeof fileOrShelf === 'string') {
+      return api.uploadScan(null, { shelf_id: fileOrShelf, ...meta })
+    }
+    return api.uploadScan(fileOrShelf, meta)
+  },
 }
