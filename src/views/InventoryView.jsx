@@ -114,15 +114,15 @@ export default function InventoryView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Inventory Table (2 cols on lg) */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs">
-          <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
+          <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-270px)] -mx-5 sm:mx-0 px-5 sm:px-0 scrollbar-thin">
             <table className="w-full text-left text-sm min-w-[420px]">
-              <thead>
-                <tr className="text-xs text-slate-400 font-medium border-b border-slate-100">
-                  <th className="pb-3 font-medium">Product</th>
-                  <th className="pb-3 font-medium">Stock / Target</th>
-                  <th className="pb-3 font-medium">Level</th>
-                  <th className="pb-3 font-medium text-right">Status</th>
-                  {isAdmin && <th className="pb-3 font-medium text-right">Admin</th>}
+              <thead className="sticky top-0 bg-white z-10 shadow-2xs">
+                <tr className="text-xs text-slate-400 font-medium border-b border-slate-100 bg-white">
+                  <th className="py-3 font-medium bg-white">Product</th>
+                  <th className="py-3 font-medium bg-white">Stock / Target</th>
+                  <th className="py-3 font-medium bg-white">Level</th>
+                  <th className="py-3 font-medium text-right bg-white">Status</th>
+                  {isAdmin && <th className="py-3 font-medium text-right bg-white">Admin</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

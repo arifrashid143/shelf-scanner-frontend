@@ -43,7 +43,7 @@ export default function Sidebar({
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
   return (
-    <aside className="w-64 bg-white min-h-screen border-r border-slate-200/90 p-5 flex flex-col justify-between shrink-0 select-none">
+    <aside className="w-64 bg-white h-full border-r border-slate-200/90 p-5 flex flex-col justify-between shrink-0 select-none">
       <div>
         {/* Brand Logo & Name matching mockup */}
         <div className="mb-8 flex items-center gap-3 px-1">

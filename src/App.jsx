@@ -125,7 +125,25 @@ function MainApp() {
         if (scansData?.items || scansData?.recentScans) {
           const rawScans = scansData.items || scansData.recentScans
           if (Array.isArray(rawScans) && rawScans.length > 0) {
-            setRecentScans(rawScans)
+            const normalizedScans = rawScans.map((s) => ({
+              id: s.id,
+              shelf: s.shelf_id ? s.shelf_id.replace(/_/g, ' ') : 'General Shelf',
+              shelf_id: s.shelf_id,
+              time: s.created_at
+                ? new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : 'Recently',
+              date: s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Today',
+              gaps: s.empty_gaps_count ?? 0,
+              empty_gaps_count: s.empty_gaps_count ?? 0,
+              items: s.total_detected_count ?? 0,
+              total_detected_count: s.total_detected_count ?? 0,
+              status: s.status
+                ? s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()
+                : 'Done',
+              raw_image_url: s.raw_image_url,
+              annotated_image_url: s.annotated_image_url,
+            }))
+            setRecentScans(normalizedScans)
           }
         }
       } catch (err) {
@@ -442,7 +460,7 @@ function MainApp() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans antialiased text-slate-900">
+    <div className="h-screen w-full bg-white flex flex-col md:flex-row font-sans antialiased text-slate-900 overflow-hidden">
       {/* Toast Notification Alert */}
       {toastMessage && (
         <div
@@ -468,7 +486,7 @@ function MainApp() {
       )}
 
       {/* Desktop Persistent Left Sidebar */}
-      <div className="hidden md:block">
+      <div className="hidden md:block h-full shrink-0">
         <Sidebar
           currentTab={currentTab}
           onNavigate={setCurrentTab}
@@ -479,7 +497,7 @@ function MainApp() {
       </div>
 
       {/* Mobile Top Status Bar with Brand Logo & Sign Out */}
-      <div className="md:hidden bg-white border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+      <div className="md:hidden bg-white border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs shrink-0">
         <div className="flex items-center gap-2.5">
           <img
             src={logoImg}
@@ -505,8 +523,8 @@ function MainApp() {
         </button>
       </div>
 
-      {/* Main Content Area: Optimized for laptop displays and widescreen monitors */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-7 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-8 overflow-x-hidden">
+      {/* Main Content Area: Responsive viewport fitting with independent scrolling */}
+      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden p-4 sm:p-5 lg:p-6 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-5 flex flex-col min-w-0">
         {renderContent()}
       </main>
 
