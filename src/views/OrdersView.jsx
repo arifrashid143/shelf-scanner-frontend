@@ -34,7 +34,7 @@ export default function OrdersView({ purchaseOrders, onSelectOrder }) {
         </div>
 
         {/* Order Cards List (Page 17) */}
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[calc(100vh-230px)] overflow-y-auto pr-1 scrollbar-thin">
           {filteredOrders.map((order) => (
             <div
               key={order.id}
@@ -91,47 +91,49 @@ export default function OrdersView({ purchaseOrders, onSelectOrder }) {
         </div>
 
         {/* Table Card */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-xs">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-xs text-slate-400 font-medium border-b border-slate-100">
-                <th className="pb-3 font-medium">Order</th>
-                <th className="pb-3 font-medium">Date</th>
-                <th className="pb-3 font-medium">Total</th>
-                <th className="pb-3 font-medium text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredOrders.map((order) => (
-                <tr
-                  key={order.id}
-                  onClick={() => onSelectOrder(order)}
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                >
-                  <td className="py-4 font-semibold text-slate-900">
-                    {order.id} · {order.supplier}
-                  </td>
-                  <td className="py-4 text-slate-500">{order.date}</td>
-                  <td className="py-4 font-medium text-slate-900">
-                    ₹{order.total.toLocaleString()}
-                  </td>
-                  <td className="py-4 text-right">
-                    <span
-                      className={`inline-block text-xs px-2.5 py-0.5 rounded font-medium ${
-                        order.status === 'Draft'
-                          ? 'bg-amber-50 text-amber-700'
-                          : order.status === 'Approved'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-rose-50 text-rose-700'
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
+        <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-xs overflow-hidden">
+          <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-260px)] scrollbar-thin -mx-6 px-6">
+            <table className="w-full text-left text-sm min-w-[500px]">
+              <thead className="sticky top-0 bg-white z-10 shadow-2xs">
+                <tr className="text-xs text-slate-400 font-medium border-b border-slate-100 bg-white">
+                  <th className="py-3 font-medium bg-white">Order</th>
+                  <th className="py-3 font-medium bg-white">Date</th>
+                  <th className="py-3 font-medium bg-white">Total</th>
+                  <th className="py-3 font-medium text-right bg-white">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredOrders.map((order) => (
+                  <tr
+                    key={order.id}
+                    onClick={() => onSelectOrder(order)}
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  >
+                    <td className="py-4 font-semibold text-slate-900">
+                      {order.id} · {order.supplier}
+                    </td>
+                    <td className="py-4 text-slate-500">{order.date}</td>
+                    <td className="py-4 font-medium text-slate-900">
+                      ₹{order.total.toLocaleString()}
+                    </td>
+                    <td className="py-4 text-right">
+                      <span
+                        className={`inline-block text-xs px-2.5 py-0.5 rounded font-medium ${
+                          order.status === 'Draft'
+                            ? 'bg-amber-50 text-amber-700'
+                            : order.status === 'Approved'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-rose-50 text-rose-700'
+                        }`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

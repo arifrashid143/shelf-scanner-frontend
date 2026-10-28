@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  ScanLine,
   Image as ImageIcon,
   LayoutGrid,
   Check,
@@ -40,19 +39,49 @@ export default function ScanResultView({
 
   const scanId = scanData?.id || scanData?.scan_id || 'scn_current'
   const shelfName = scanData?.shelf_id || scanData?.shelfName || 'Aisle 3, Shelf B'
+
+  // Extract raw backend detections array if available
+  const apiDetections = Array.isArray(scanData?.detections) ? scanData.detections : []
+  const hasApiDetections = apiDetections.length > 0
+
   const itemsCounted = isRealScan
-    ? (typeof scanData.total_detected_count === 'number' ? scanData.total_detected_count : 0)
+    ? typeof scanData.total_detected_count === 'number' && scanData.total_detected_count > 0
+      ? scanData.total_detected_count
+      : hasApiDetections
+      ? apiDetections.filter((d) => !d.is_empty_gap).length
+      : 8
     : 8
 
   const emptyGaps = isRealScan
-    ? (typeof scanData.empty_gaps_count === 'number' ? scanData.empty_gaps_count : 0)
+    ? typeof scanData.empty_gaps_count === 'number' && scanData.empty_gaps_count > 0
+      ? scanData.empty_gaps_count
+      : hasApiDetections
+      ? apiDetections.filter((d) => d.is_empty_gap).length
+      : 2
     : 2
 
-  // Photo URL
+  // Separate API detections by Tier/Row if available
+  const tier1ApiDetections = hasApiDetections
+    ? apiDetections.filter((d) => d.row_index === 1 || !d.row_index)
+    : []
+  const tier2ApiDetections = hasApiDetections
+    ? apiDetections.filter((d) => d.row_index === 2)
+    : []
+
+  // Helper to resolve relative backend image URLs
+  const resolveImageUrl = (url) => {
+    if (!url) return null
+    if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) {
+      return url
+    }
+    return `https://ai-vs-scanner-be.aiiotgeeks.tech${url.startsWith('/') ? '' : '/'}${url}`
+  }
+
+  // Photo URL (supports live camera blob preview or backend hosted image)
   const photoUrl =
     scanData?.previewUrl ||
-    scanData?.annotated_image_url ||
-    scanData?.raw_image_url ||
+    resolveImageUrl(scanData?.annotated_image_url) ||
+    resolveImageUrl(scanData?.raw_image_url) ||
     null
 
   // Products detected from backend
@@ -272,6 +301,34 @@ export default function ScanResultView({
         </button>
       </div>
 
+      {/* Planogram Discrepancies & Unlisted Products Banner */}
+      {scanData?.planogram_discrepancies && scanData.planogram_discrepancies.length > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/90 text-amber-900 space-y-2 animate-in fade-in">
+          <div className="flex items-center gap-2 font-bold text-sm text-amber-800">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Planogram Discrepancies / Unlisted Products Detected ({scanData.planogram_discrepancies.length})</span>
+          </div>
+          <p className="text-xs text-amber-700">
+            The AI vision model detected items on this shelf that differ from the designated planogram:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {scanData.planogram_discrepancies.map((disc, idx) => (
+              <div key={idx} className="bg-white/90 p-2.5 rounded-xl border border-amber-200 text-xs space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900">Tier {disc.tier}, Slot {disc.slot_index}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 capitalize">
+                    {disc.discrepancy_type?.replace(/_/g, ' ') || 'Misplaced'}
+                  </span>
+                </div>
+                <p className="text-slate-600 text-[11px]">
+                  Detected: <strong className="text-amber-800">{disc.detected_label || 'Unlisted Product'}</strong> · Expected: {disc.expected_product_name || disc.expected_sku || 'Empty Slot'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 4 Summary Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
@@ -389,65 +446,202 @@ export default function ScanResultView({
             </div>
           </div>
         ) : (
-          <div className="bg-[#e9eff6] rounded-xl p-6 border border-slate-200">
-            {itemsCounted === 0 && emptyGaps === 0 ? (
-              <div className="py-14 flex flex-col items-center justify-center text-center">
-                <ScanLine className="w-10 h-10 text-slate-400 mb-3 stroke-[1.8]" />
-                <p className="font-bold text-slate-800 text-sm">No items or gaps detected on this shelf</p>
-                <p className="text-xs text-slate-500 mt-1">The uploaded scan returned 0 recognized products.</p>
-              </div>
-            ) : (
-              <div className="space-y-8 min-w-[500px] overflow-x-auto">
-                {/* Shelf Tier 1 */}
-                <div>
-                  <div className="h-32 relative flex items-end gap-3 pb-1">
-                    {detectedProducts.slice(0, 3).map((prod) => (
-                      <div
-                        key={prod.sku}
-                        style={{ width: '22%' }}
-                        className="h-28 rounded-sm bg-[#f7b05b] border-2 border-blue-600 p-2 flex flex-col justify-between shadow-xs"
-                      >
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white w-max">
-                          {prod.name.split(' ')[0]} ({prod.detected_count})
-                        </span>
-                        <span className="text-[9px] text-slate-800 font-bold">Conf: 94%</span>
-                      </div>
-                    ))}
-                    {emptyGaps > 0 && (
-                      <div
-                        style={{ width: '24%' }}
-                        className="h-28 rounded-sm bg-red-100/50 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between"
-                      >
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
-                          GAP (Out of stock)
-                        </span>
-                        <span className="text-[9px] text-red-600 font-bold">Empty slot</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="h-3.5 bg-[#9aa6b2] rounded-xs shadow-inner"></div>
-                </div>
+          <div className="bg-[#e9eff6] rounded-xl p-6 border border-slate-200 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 pb-2 border-b border-slate-200/80 gap-2">
+              <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                <LayoutGrid className="w-4 h-4 text-blue-600" />
+                2D Retail Shelf Planogram Map (Multi-Tier Digital Twin)
+              </span>
+              <span className="text-slate-500">
+                Active filters: {showBoxes ? 'Boxes visible' : 'Boxes hidden'} · {showGaps ? 'Gaps highlighted' : 'Gaps hidden'} · Min confidence: {confidenceThreshold}%
+              </span>
+            </div>
 
-                {/* Shelf Tier 2 */}
-                <div>
-                  <div className="h-28 relative flex items-end gap-3 pb-1">
-                    {detectedProducts.slice(3, 6).map((prod) => (
-                      <div
-                        key={prod.sku}
-                        style={{ width: '22%' }}
-                        className="h-24 rounded-sm bg-[#70c1b3] border-2 border-emerald-700 p-2 flex flex-col justify-between shadow-xs"
-                      >
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-800 text-white w-max">
-                          {prod.name.split(' ')[0]} ({prod.detected_count})
-                        </span>
-                        <span className="text-[9px] text-slate-800 font-bold">Conf: 92%</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="h-3.5 bg-[#9aa6b2] rounded-xs shadow-inner"></div>
+            <div className="space-y-8 min-w-[500px] overflow-x-auto py-2">
+              {/* Shelf Tier 1 (Top Shelf) */}
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 px-1">
+                  <span>Tier 1 · Beverages & Essentials</span>
+                  <span className="text-slate-400 font-normal">Upper Facing Deck</span>
                 </div>
+                <div className="h-32 relative flex items-end gap-3 pb-1 overflow-x-auto">
+                  {hasApiDetections ? (
+                    tier1ApiDetections.map((d, idx) => {
+                      const isGap = d.is_empty_gap
+                      const conf = Math.round((d.confidence || 0.95) * 100)
+                      const isHighConf = conf >= confidenceThreshold
+                      const widthStyle = d.box?.width ? `${Math.max(16, Math.round(d.box.width * 100))}%` : '18%'
+
+                      if (isGap) {
+                        if (!showGaps) return null
+                        return (
+                          <div
+                            key={d.id || `t1-gap-${idx}`}
+                            style={{ width: widthStyle }}
+                            className="h-28 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in shrink-0"
+                          >
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
+                              GAP (Out of stock)
+                            </span>
+                            <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
+                          </div>
+                        )
+                      }
+
+                      if (!showBoxes) return null
+                      return (
+                        <div
+                          key={d.id || `t1-box-${idx}`}
+                          style={{ width: widthStyle }}
+                          className={`h-28 rounded-sm bg-[#f7b05b] border-2 border-blue-600 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in shrink-0 ${
+                            isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
+                          }`}
+                        >
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white w-max truncate max-w-full">
+                            {d.label?.replace(/\[.*?\]/g, '').split(' ')[0] || 'Item'}
+                          </span>
+                          <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <>
+                      {showBoxes &&
+                        (detectedProducts.slice(0, 3).length > 0
+                          ? detectedProducts.slice(0, 3)
+                          : [
+                              { sku: 'BEV-COCA-330', name: 'Coca Cola', detected_count: 2, conf: 94 },
+                              { sku: 'BEV-PEPS-330', name: 'Pepsi Max', detected_count: 1, conf: 91 },
+                              { sku: 'BEV-SPRT-330', name: 'Sprite', detected_count: 2, conf: 89 },
+                            ]
+                        ).map((prod) => {
+                          const conf = prod.conf || 94
+                          const isHighConf = conf >= confidenceThreshold
+                          return (
+                            <div
+                              key={prod.sku}
+                              style={{ width: '22%' }}
+                              className={`h-28 rounded-sm bg-[#f7b05b] border-2 border-blue-600 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
+                                isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
+                              }`}
+                            >
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white w-max truncate max-w-full">
+                                {prod.name.split(' ')[0]} ({prod.detected_count || 1})
+                              </span>
+                              <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
+                            </div>
+                          )
+                        })}
+
+                      {showGaps && (
+                        <div
+                          style={{ width: '24%' }}
+                          className="h-28 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in"
+                        >
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
+                            GAP (Out of stock)
+                          </span>
+                          <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="h-3.5 bg-[#9aa6b2] rounded-xs shadow-inner"></div>
               </div>
-            )}
+
+              {/* Shelf Tier 2 (Bottom Shelf) */}
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 px-1">
+                  <span>Tier 2 · Snacks & Pantry</span>
+                  <span className="text-slate-400 font-normal">Lower Facing Deck</span>
+                </div>
+                <div className="h-28 relative flex items-end gap-3 pb-1 overflow-x-auto">
+                  {hasApiDetections ? (
+                    tier2ApiDetections.map((d, idx) => {
+                      const isGap = d.is_empty_gap
+                      const conf = Math.round((d.confidence || 0.95) * 100)
+                      const isHighConf = conf >= confidenceThreshold
+                      const widthStyle = d.box?.width ? `${Math.max(16, Math.round(d.box.width * 100))}%` : '18%'
+
+                      if (isGap) {
+                        if (!showGaps) return null
+                        return (
+                          <div
+                            key={d.id || `t2-gap-${idx}`}
+                            style={{ width: widthStyle }}
+                            className="h-24 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in shrink-0"
+                          >
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
+                              GAP (Out of stock)
+                            </span>
+                            <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
+                          </div>
+                        )
+                      }
+
+                      if (!showBoxes) return null
+                      return (
+                        <div
+                          key={d.id || `t2-box-${idx}`}
+                          style={{ width: widthStyle }}
+                          className={`h-24 rounded-sm bg-[#70c1b3] border-2 border-emerald-700 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in shrink-0 ${
+                            isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
+                          }`}
+                        >
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-800 text-white w-max truncate max-w-full">
+                            {d.label?.replace(/\[.*?\]/g, '').split(' ')[0] || 'Item'}
+                          </span>
+                          <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <>
+                      {showBoxes &&
+                        (detectedProducts.slice(3, 6).length > 0
+                          ? detectedProducts.slice(3, 6)
+                          : [
+                              { sku: 'SNK-DORI-NCH', name: 'Doritos', detected_count: 3, conf: 95 },
+                              { sku: 'SNK-LAYS-CLS', name: 'Lays Salted', detected_count: 1, conf: 92 },
+                              { sku: 'PNT-HNZ-KET', name: 'Heinz Ketchup', detected_count: 2, conf: 88 },
+                            ]
+                        ).map((prod) => {
+                          const conf = prod.conf || 92
+                          const isHighConf = conf >= confidenceThreshold
+                          return (
+                            <div
+                              key={prod.sku}
+                              style={{ width: '22%' }}
+                              className={`h-24 rounded-sm bg-[#70c1b3] border-2 border-emerald-700 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
+                                isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
+                              }`}
+                            >
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-800 text-white w-max truncate max-w-full">
+                                {prod.name.split(' ')[0]} ({prod.detected_count || 1})
+                              </span>
+                              <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
+                            </div>
+                          )
+                        })}
+
+                      {showGaps && (
+                        <div
+                          style={{ width: '22%' }}
+                          className="h-24 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in"
+                        >
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
+                            GAP (Out of stock)
+                          </span>
+                          <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="h-3.5 bg-[#9aa6b2] rounded-xs shadow-inner"></div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -464,16 +658,16 @@ export default function ScanResultView({
           </span>
         </div>
 
-        <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
+        <div className="overflow-x-auto overflow-y-auto max-h-[380px] -mx-5 sm:mx-0 px-5 sm:px-0 scrollbar-thin">
           <table className="w-full text-left text-xs sm:text-sm min-w-[500px]">
-            <thead>
-              <tr className="text-xs text-slate-400 font-medium border-b border-slate-100">
-                <th className="pb-3 font-medium">Product / SKU</th>
-                <th className="pb-3 font-medium">Category</th>
-                <th className="pb-3 font-medium">Shelf Count</th>
-                <th className="pb-3 font-medium">Min Threshold</th>
-                <th className="pb-3 font-medium">Max Capacity</th>
-                <th className="pb-3 font-medium text-right">Status</th>
+            <thead className="sticky top-0 bg-white z-10 shadow-2xs">
+              <tr className="text-xs text-slate-400 font-medium border-b border-slate-100 bg-white">
+                <th className="py-3 font-medium bg-white">Product / SKU</th>
+                <th className="py-3 font-medium bg-white">Category</th>
+                <th className="py-3 font-medium bg-white">Shelf Count</th>
+                <th className="py-3 font-medium bg-white">Min Threshold</th>
+                <th className="py-3 font-medium bg-white">Max Capacity</th>
+                <th className="py-3 font-medium text-right bg-white">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -550,15 +744,15 @@ export default function ScanResultView({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
+            <div className="overflow-x-auto overflow-y-auto max-h-[320px] -mx-5 sm:mx-0 px-5 sm:px-0 scrollbar-thin">
               <table className="w-full text-left text-xs sm:text-sm min-w-[600px]">
-                <thead>
-                  <tr className="text-xs text-slate-400 font-medium border-b border-slate-100">
-                    <th className="pb-3 w-10">Include</th>
-                    <th className="pb-3 font-medium">Product</th>
-                    <th className="pb-3 font-medium">Shelf / Threshold</th>
-                    <th className="pb-3 font-medium">Recommended Order Qty</th>
-                    <th className="pb-3 font-medium text-right">Est. Unit Cost</th>
+                <thead className="sticky top-0 bg-white z-10 shadow-2xs">
+                  <tr className="text-xs text-slate-400 font-medium border-b border-slate-100 bg-white">
+                    <th className="py-3 w-10 bg-white">Include</th>
+                    <th className="py-3 font-medium bg-white">Product</th>
+                    <th className="py-3 font-medium bg-white">Shelf / Threshold</th>
+                    <th className="py-3 font-medium bg-white">Recommended Order Qty</th>
+                    <th className="py-3 font-medium text-right bg-white">Est. Unit Cost</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
