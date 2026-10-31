@@ -157,10 +157,10 @@ export default function UserDashboardView({
 
       {/* 2-Column Content Grid */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left Column: Recent scans */}
+        {/* Left Column: Scan history */}
         <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-xs flex flex-col h-auto lg:h-full min-h-0 overflow-visible lg:overflow-hidden">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900">Recent scans</h2>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">Scan history</h2>
           </div>
 
           <div className="flex-1 min-h-0 pt-3 space-y-2.5 overflow-y-auto no-scrollbar">
