@@ -165,4 +165,42 @@ export const api = {
     }
     return api.uploadScan(fileOrShelf, meta)
   },
+
+  // ==================== TENANT ADMINISTRATION (COMPANY WORKSPACE) ====================
+  // GET /api/tenant/users - List Company Users
+  getTenantUsers: () => request('/tenant/users'),
+
+  // POST /api/tenant/users - Create Company User
+  createTenantUser: (data) =>
+    request('/tenant/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // PUT /api/tenant/users/{user_id} - Update Company User
+  updateTenantUser: (userId, data) =>
+    request(`/tenant/users/${encodeURIComponent(userId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // DELETE /api/tenant/users/{user_id} - Deactivate Company User
+  deactivateTenantUser: (userId) =>
+    request(`/tenant/users/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    }),
+
+  // GET /api/tenant/stores - List Company Stores
+  getTenantStores: () =>
+    request('/tenant/stores').catch((err) => {
+      console.warn('Failed to fetch tenant stores:', err.message)
+      return []
+    }),
+
+  // POST /api/tenant/stores - Create Company Store
+  createTenantStore: (data) =>
+    request('/tenant/stores', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 }

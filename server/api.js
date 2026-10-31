@@ -520,3 +520,128 @@ apiApp.post('/scans/analyze', authenticateToken, (req, res) => {
   })
 })
 
+// ==================== TENANT ADMINISTRATION (COMPANY WORKSPACE) ====================
+let tenantStores = [
+  { id: 'store_main', name: 'Main Store', code: 'STORE-01', address: '123 Market St', city: 'Metro' },
+  { id: 'store_north', name: 'North Branch', code: 'STORE-02', address: '456 North Ave', city: 'Metro' },
+]
+
+// GET /api/tenant/users - List Company Users
+apiApp.get('/tenant/users', authenticateToken, (req, res) => {
+  const companyUsers = users.map((u, idx) => ({
+    id: typeof u.id === 'number' ? u.id : idx + 1,
+    email: u.email,
+    full_name: u.full_name || u.name,
+    role: (u.role || 'USER').toUpperCase(),
+    store_id: u.store_id || u.store || 'store_main',
+    is_active: u.is_active !== undefined ? u.is_active : true,
+    tenant_id: u.tenant_id || 'tenant-corp-1',
+    created_at: u.created_at || '2026-03-15T10:00:00Z',
+  }))
+  res.json(companyUsers)
+})
+
+// POST /api/tenant/users - Create Company User
+apiApp.post('/tenant/users', authenticateToken, requireAdmin, (req, res) => {
+  const { email, password, full_name, role, store_id } = req.body
+  if (!email || !password || !full_name) {
+    return res.status(400).json({ detail: 'Email, password, and full_name are required' })
+  }
+
+  const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
+  if (existing) {
+    return res.status(400).json({ detail: 'A user with this email already exists' })
+  }
+
+  const newUser = {
+    id: users.length + 1,
+    email,
+    password,
+    name: full_name,
+    full_name,
+    role: (role || 'USER').toUpperCase(),
+    store_id: store_id || 'store_main',
+    store: store_id || 'Main Store',
+    is_active: true,
+    tenant_id: req.user.tenant_id || 'tenant-corp-1',
+    created_at: new Date().toISOString(),
+  }
+
+  users.push(newUser)
+
+  res.status(201).json({
+    id: newUser.id,
+    email: newUser.email,
+    full_name: newUser.full_name,
+    role: newUser.role,
+    store_id: newUser.store_id,
+    is_active: newUser.is_active,
+    tenant_id: newUser.tenant_id,
+    created_at: newUser.created_at,
+  })
+})
+
+// PUT /api/tenant/users/:user_id - Update Company User
+apiApp.put('/tenant/users/:user_id', authenticateToken, requireAdmin, (req, res) => {
+  const userId = req.params.user_id
+  const user = users.find((u, idx) => String(u.id) === String(userId) || String(idx + 1) === String(userId))
+
+  if (!user) {
+    return res.status(404).json({ detail: 'User not found' })
+  }
+
+  const { full_name, role, store_id, is_active, password } = req.body
+  if (full_name !== undefined) {
+    user.name = full_name
+    user.full_name = full_name
+  }
+  if (role !== undefined) user.role = role
+  if (store_id !== undefined) {
+    user.store_id = store_id
+    user.store = store_id
+  }
+  if (is_active !== undefined) user.is_active = is_active
+  if (password) user.password = password
+
+  res.json({
+    id: user.id,
+    email: user.email,
+    full_name: user.full_name || user.name,
+    role: user.role,
+    store_id: user.store_id,
+    is_active: user.is_active !== undefined ? user.is_active : true,
+    tenant_id: user.tenant_id,
+    created_at: user.created_at || '2026-03-15T10:00:00Z',
+  })
+})
+
+// DELETE /api/tenant/users/:user_id - Deactivate Company User
+apiApp.delete('/tenant/users/:user_id', authenticateToken, requireAdmin, (req, res) => {
+  const userId = req.params.user_id
+  const user = users.find((u, idx) => String(u.id) === String(userId) || String(idx + 1) === String(userId))
+
+  if (!user) {
+    return res.status(404).json({ detail: 'User not found' })
+  }
+
+  user.is_active = false
+  res.json({ message: 'User deactivated successfully', id: user.id, is_active: false })
+})
+
+// GET /api/tenant/stores - List Company Stores
+apiApp.get('/tenant/stores', authenticateToken, (req, res) => {
+  res.json(tenantStores)
+})
+
+// POST /api/tenant/stores - Create Company Store
+apiApp.post('/tenant/stores', authenticateToken, requireAdmin, (req, res) => {
+  const { id, name, code, address, city } = req.body
+  if (!id || !name) {
+    return res.status(400).json({ detail: 'Store id and name are required' })
+  }
+
+  const newStore = { id, name, code: code || id, address: address || '', city: city || '' }
+  tenantStores.push(newStore)
+  res.status(201).json(newStore)
+})
+

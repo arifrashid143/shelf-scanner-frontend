@@ -11,16 +11,44 @@ import ScanResultView from './views/ScanResultView'
 import OrdersView from './views/OrdersView'
 import OrderDetailView from './views/OrderDetailView'
 import InventoryView from './views/InventoryView'
+import UserManagementView from './views/UserManagementView'
 import logoImg from './assets/logo.png'
 import {
   initialInventory,
   initialPurchaseOrders,
   initialRecentScans,
 } from './data/mockData'
-import { LogOut, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 function MainApp() {
   const { user, isAdmin, isAuthenticated, loading: authLoading, logout } = useAuth()
+
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const displayName = user?.full_name || user?.name || 'Main Store'
+  const initial = displayName.charAt(0).toUpperCase() || 'P'
+
+  // Tailored page backgrounds that suit each view's theme and purpose
+  const getPageBg = () => {
+    switch (currentTab) {
+      case 'dashboard':
+        return 'bg-slate-100/80' // Clean, neutral slate for primary KPI overview
+      case 'new-scan':
+        return 'bg-blue-50/70' // Modern camera studio blue for scanning & photo capture
+      case 'scan-result':
+        return 'bg-indigo-50/60' // AI analytics indigo for gap visualizer & bounding boxes
+      case 'orders':
+        return 'bg-purple-50/60' // Refined purple for purchase orders ledger
+      case 'order-detail':
+        return 'bg-amber-50/50' // Warm document amber for order approval desk
+      case 'inventory':
+        return 'bg-emerald-50/50' // Fresh emerald for warehouse stock & product catalog
+      case 'users':
+        return 'bg-sky-50/50' // Clean workspace sky blue for user management
+      default:
+        return 'bg-slate-50'
+    }
+  }
 
   const [currentTab, setCurrentTab] = useState('dashboard')
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -454,13 +482,22 @@ function MainApp() {
           />
         )
 
+      case 'users':
+        return (
+          <UserManagementView
+            isAdmin={isAdmin}
+            currentUser={user}
+            onShowToast={showToast}
+          />
+        )
+
       default:
         return null
     }
   }
 
   return (
-    <div className="h-screen w-full bg-white flex flex-col md:flex-row font-sans antialiased text-slate-900 overflow-hidden">
+    <div className={`h-screen w-full flex flex-col md:flex-row font-sans antialiased text-slate-900 overflow-hidden transition-colors duration-300 ${getPageBg()}`}>
       {/* Toast Notification Alert */}
       {toastMessage && (
         <div
@@ -485,8 +522,8 @@ function MainApp() {
         </div>
       )}
 
-      {/* Desktop Persistent Left Sidebar */}
-      <div className="hidden md:block h-full shrink-0">
+      {/* Desktop Persistent Left Sidebar with Margins and Out-of-Navbar Logo */}
+      <div className="hidden md:flex h-full shrink-0">
         <Sidebar
           currentTab={currentTab}
           onNavigate={setCurrentTab}
@@ -496,40 +533,57 @@ function MainApp() {
         />
       </div>
 
-      {/* Mobile Top Status Bar with Brand Logo & Sign Out */}
-      <div className="md:hidden bg-white border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs shrink-0">
-        <div className="flex items-center gap-2.5">
-          <img
-            src={logoImg}
-            alt="Shelf Scanner"
-            className="w-7 h-7 rounded-lg object-contain shadow-2xs"
-          />
-          <div>
-            <p className="text-xs font-bold text-slate-900 leading-tight">
-              {user?.name?.split(' ')[0] || 'User'}
-            </p>
-            <span className="text-[10px] font-bold text-slate-400">
-              {isAdmin ? 'Store Admin' : 'Staff Associate'}
+      {/* Right Column Content Area */}
+      <div className="flex-1 flex flex-col h-full min-w-0">
+        {/* Mobile Top Status Bar with Brand Logo & Greeting Header */}
+        <div className="md:hidden bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <img
+              src={logoImg}
+              alt="Shelf Scanner"
+              className="w-8 h-8 rounded-xl object-contain shadow-2xs shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-slate-500 leading-tight truncate">
+                {currentTab === 'dashboard' ? greeting : 'Shelf Scanner'}
+              </p>
+              <h2 className="text-sm font-black text-slate-900 tracking-tight leading-tight truncate">
+                {currentTab === 'dashboard'
+                  ? displayName
+                  : currentTab === 'new-scan'
+                  ? 'Scan Shelf'
+                  : currentTab === 'orders'
+                  ? 'Purchase Orders'
+                  : currentTab === 'order-detail'
+                  ? 'Order Details'
+                  : currentTab === 'inventory'
+                  ? 'Inventory'
+                  : currentTab === 'users'
+                  ? 'User Management'
+                  : 'Shelf Scanner'}
+              </h2>
+            </div>
+          </div>
+
+          {/* User Avatar Initial & Role Badge (No logout option on mobile screen) */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+              {isAdmin ? 'Admin' : 'Staff'}
             </span>
+            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shadow-2xs border border-blue-200">
+              {initial}
+            </div>
           </div>
         </div>
 
-        <button
-          onClick={logout}
-          className="text-xs font-bold text-slate-500 hover:text-rose-600 flex items-center gap-1 py-1 px-2.5 rounded-lg border border-slate-200"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Sign out
-        </button>
+        {/* Main Content Area: Responsive viewport fitting with in-table scrolling */}
+        <main className="flex-1 h-full min-h-0 overflow-y-auto md:overflow-hidden px-4 sm:px-5 md:pl-2 md:pr-4 lg:pr-6 pt-3 md:pt-4 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-4 flex flex-col">
+          {renderContent()}
+        </main>
       </div>
 
-      {/* Main Content Area: Responsive viewport fitting with independent scrolling */}
-      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden p-4 sm:p-5 lg:p-6 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-5 flex flex-col min-w-0">
-        {renderContent()}
-      </main>
-
       {/* Mobile Bottom Navigation */}
-      <BottomNav currentTab={currentTab} onNavigate={setCurrentTab} />
+      <BottomNav currentTab={currentTab} onNavigate={setCurrentTab} isAdmin={isAdmin} />
     </div>
   )
 }

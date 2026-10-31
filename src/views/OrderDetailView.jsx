@@ -63,9 +63,9 @@ export default function OrderDetailView({
   }
 
   return (
-    <div className="space-y-6 w-full max-w-[1550px]">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4 w-full max-w-[1550px]">
+      {/* Header matching Sidebar logo height */}
+      <div className="flex items-center justify-between shrink-0 h-10">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
@@ -73,7 +73,7 @@ export default function OrderDetailView({
           >
             ← Back
           </button>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
             {order.id}
           </h1>
           <span
