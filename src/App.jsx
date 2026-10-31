@@ -13,11 +13,6 @@ import OrderDetailView from './views/OrderDetailView'
 import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import logoImg from './assets/logo.png'
-import {
-  initialInventory,
-  initialPurchaseOrders,
-  initialRecentScans,
-} from './data/mockData'
 import { Loader2 } from 'lucide-react'
 
 function MainApp() {
@@ -53,9 +48,11 @@ function MainApp() {
   const [currentTab, setCurrentTab] = useState('dashboard')
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [currentScan, setCurrentScan] = useState(null)
-  const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders)
-  const [inventory, setInventory] = useState(initialInventory)
-  const [recentScans, setRecentScans] = useState(initialRecentScans)
+  const [purchaseOrders, setPurchaseOrders] = useState([])
+  const [inventory, setInventory] = useState([])
+  const [recentScans, setRecentScans] = useState([])
+  const [dataLoading, setDataLoading] = useState(false)
+  const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
 
   const showToast = (msg, type = 'info') => {
@@ -91,94 +88,96 @@ function MainApp() {
   }
 
   // Fetch real data from backend API when authenticated
+  const loadData = async () => {
+    setDataLoading(true)
+    setDataError(null)
+    try {
+      const [invData, ordersData, scansData] = await Promise.all([
+        api.getInventory().catch(() => null),
+        api.getOrders().catch(() => null),
+        api.getScans().catch(() => null),
+      ])
+
+      if (invData?.items || invData?.inventory) {
+        const rawItems = invData.items || invData.inventory
+        const normalized = rawItems.map((item) => ({
+          id: String(item.id || item.sku),
+          productId: item.id,
+          sku: item.sku || `SKU-${item.id}`,
+          name: item.name,
+          category: item.category || 'General',
+          current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
+          target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 10,
+          minThreshold: item.min_stock_threshold || 5,
+          price: item.unit_price || item.price || 0,
+          costPrice: item.cost_price || 0,
+          status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
+          history: item.history || [item.current_stock || item.current || 0, item.current_stock || item.current || 0],
+        }))
+        setInventory(normalized)
+      }
+
+      if (ordersData) {
+        const rawOrders = Array.isArray(ordersData)
+          ? ordersData
+          : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
+        if (rawOrders.length > 0) {
+          const normalizedOrders = rawOrders.map((order) => {
+            const rawStatus = (order.status || 'Draft').toUpperCase()
+            let formattedStatus = 'Draft'
+            if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
+            else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
+
+            return {
+              id: order.id,
+              supplier: order.supplier_name || order.supplier || 'N/A',
+              date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || ''),
+              total: typeof order.total_cost === 'number' ? order.total_cost : (order.total || 0),
+              status: formattedStatus,
+              items: Array.isArray(order.items) ? order.items : [],
+              notes: order.notes || '',
+            }
+          })
+          setPurchaseOrders(normalizedOrders)
+          setSelectedOrder(normalizedOrders[0])
+        }
+      }
+
+      if (scansData?.items || scansData?.recentScans) {
+        const rawScans = scansData.items || scansData.recentScans
+        if (Array.isArray(rawScans) && rawScans.length > 0) {
+          const normalizedScans = rawScans.map((s) => ({
+            id: s.id,
+            shelf: s.shelf_id ? s.shelf_id.replace(/_/g, ' ') : 'General Shelf',
+            shelf_id: s.shelf_id,
+            time: s.created_at
+              ? new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : 'Recently',
+            date: s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Today',
+            gaps: s.empty_gaps_count ?? 0,
+            empty_gaps_count: s.empty_gaps_count ?? 0,
+            items: s.total_detected_count ?? 0,
+            total_detected_count: s.total_detected_count ?? 0,
+            status: s.status
+              ? s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()
+              : 'Done',
+            raw_image_url: s.raw_image_url,
+            annotated_image_url: s.annotated_image_url,
+          }))
+          setRecentScans(normalizedScans)
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching initial API data:', err)
+      setDataError(err.message || 'Failed to connect to backend APIs.')
+    } finally {
+      setDataLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!isAuthenticated) return
-
-    async function loadData() {
-      try {
-        const [invData, ordersData, scansData] = await Promise.all([
-          api.getInventory().catch(() => null),
-          api.getOrders().catch(() => null),
-          api.getScans().catch(() => null),
-        ])
-
-        if (invData?.items || invData?.inventory) {
-          const rawItems = invData.items || invData.inventory
-          const normalized = rawItems.map((item) => ({
-            id: String(item.id || item.sku),
-            productId: item.id,
-            sku: item.sku || `SKU-${item.id}`,
-            name: item.name,
-            category: item.category || 'General',
-            current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
-            target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 10,
-            minThreshold: item.min_stock_threshold || 5,
-            price: item.unit_price || item.price || 0,
-            costPrice: item.cost_price || 0,
-            status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
-            history: item.history || [item.current_stock || item.current || 0, item.current_stock || item.current || 0],
-          }))
-          setInventory(normalized)
-        }
-
-        if (ordersData) {
-          const rawOrders = Array.isArray(ordersData)
-            ? ordersData
-            : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
-          if (rawOrders.length > 0) {
-            const normalizedOrders = rawOrders.map((order) => {
-              const rawStatus = (order.status || 'Draft').toUpperCase()
-              let formattedStatus = 'Draft'
-              if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
-              else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
-
-              return {
-                id: order.id,
-                supplier: order.supplier_name || order.supplier || 'Global Beverage Wholesale Ltd',
-                date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || 'Today'),
-                total: typeof order.total_cost === 'number' ? order.total_cost : (order.total || 0),
-                status: formattedStatus,
-                items: (order.items && order.items.length > 0) ? order.items : [
-                  { id: '1', name: 'Coca Cola 330ml Can', qty: 20, unitPrice: 1.75 },
-                  { id: '2', name: 'Heinz Tomato Ketchup 400g', qty: 10, unitPrice: 3.50 }
-                ],
-                notes: order.notes || 'Auto-generated draft purchase order from shelf scan',
-              }
-            })
-            setPurchaseOrders(normalizedOrders)
-            setSelectedOrder(normalizedOrders[0])
-          }
-        }
-
-        if (scansData?.items || scansData?.recentScans) {
-          const rawScans = scansData.items || scansData.recentScans
-          if (Array.isArray(rawScans) && rawScans.length > 0) {
-            const normalizedScans = rawScans.map((s) => ({
-              id: s.id,
-              shelf: s.shelf_id ? s.shelf_id.replace(/_/g, ' ') : 'General Shelf',
-              shelf_id: s.shelf_id,
-              time: s.created_at
-                ? new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                : 'Recently',
-              date: s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Today',
-              gaps: s.empty_gaps_count ?? 0,
-              empty_gaps_count: s.empty_gaps_count ?? 0,
-              items: s.total_detected_count ?? 0,
-              total_detected_count: s.total_detected_count ?? 0,
-              status: s.status
-                ? s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()
-                : 'Done',
-              raw_image_url: s.raw_image_url,
-              annotated_image_url: s.annotated_image_url,
-            }))
-            setRecentScans(normalizedScans)
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching initial API data:', err)
-      }
-    }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData()
   }, [isAuthenticated])
 
@@ -218,15 +217,12 @@ function MainApp() {
 
             return {
               id: order.id,
-              supplier: order.supplier_name || order.supplier || 'Global Beverage Wholesale Ltd',
-              date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || 'Today'),
+              supplier: order.supplier_name || order.supplier || 'N/A',
+              date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || ''),
               total: typeof order.total_cost === 'number' ? order.total_cost : (order.total || 0),
               status: formattedStatus,
-              items: (order.items && order.items.length > 0) ? order.items : [
-                { id: '1', name: 'Coca Cola 330ml Can', qty: 20, unitPrice: 1.75 },
-                { id: '2', name: 'Heinz Tomato Ketchup 400g', qty: 10, unitPrice: 3.50 }
-              ],
-              notes: order.notes || 'Auto-generated draft purchase order from shelf scan',
+              items: Array.isArray(order.items) ? order.items : [],
+              notes: order.notes || '',
             }
           })
           setPurchaseOrders(normalizedOrders)
@@ -424,6 +420,7 @@ function MainApp() {
             purchaseOrders={purchaseOrders}
             recentScans={recentScans}
             inventory={inventory}
+            isLoading={dataLoading}
             onQuickApproveOrder={handleApprovePO}
           />
         ) : (
@@ -434,6 +431,8 @@ function MainApp() {
             onGenerateOrder={() => handleGeneratePO()}
             recentScans={recentScans}
             inventory={inventory}
+            purchaseOrders={purchaseOrders}
+            isLoading={dataLoading}
           />
         )
 
@@ -458,6 +457,7 @@ function MainApp() {
           <OrdersView
             purchaseOrders={purchaseOrders}
             onSelectOrder={handleSelectOrder}
+            isLoading={dataLoading}
           />
         )
 
@@ -479,6 +479,7 @@ function MainApp() {
             isAdmin={isAdmin}
             onUpdateProduct={handleUpdateProduct}
             onAddProduct={handleAddProduct}
+            isLoading={dataLoading}
           />
         )
 
@@ -576,8 +577,23 @@ function MainApp() {
           </div>
         </div>
 
-        {/* Main Content Area: Responsive viewport fitting with in-table scrolling */}
-        <main className="flex-1 h-full min-h-0 overflow-y-auto md:overflow-hidden px-4 sm:px-5 md:pl-2 md:pr-4 lg:pr-6 pt-3 md:pt-4 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-4 flex flex-col">
+        {/* Main Content Area: Responsive viewport fitting with scroll support */}
+        <main className="flex-1 h-full min-h-0 overflow-y-auto px-4 sm:px-5 md:pl-2 md:pr-4 lg:pr-6 pt-3 md:pt-4 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-8 flex flex-col">
+          {dataError && (
+            <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                <span>{dataError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={loadData}
+                className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           {renderContent()}
         </main>
       </div>

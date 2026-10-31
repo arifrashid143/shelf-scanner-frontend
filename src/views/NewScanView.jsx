@@ -32,18 +32,15 @@ export default function NewScanView({ onScanComplete }) {
   const mobileVideoRef = useRef(null)
   const desktopVideoRef = useRef(null)
 
-  // Clean up camera stream and object URLs on unmount
+  // Clean up camera stream on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop())
         streamRef.current = null
       }
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl)
-      }
     }
-  }, [previewUrl])
+  }, [])
 
   // Stop active camera stream
   const stopCamera = () => {

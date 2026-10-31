@@ -274,7 +274,7 @@ export default function ScanResultView({
   }
 
   return (
-    <div className="space-y-4 w-full max-w-[1550px] pb-12">
+    <div className="space-y-4 w-full max-w-[1550px] pb-24">
       {/* Top Header matching Sidebar logo height */}
       <div className="flex items-center justify-between shrink-0 h-10">
         <div className="flex items-baseline gap-3">
@@ -505,14 +505,7 @@ export default function ScanResultView({
                   ) : (
                     <>
                       {showBoxes &&
-                        (detectedProducts.slice(0, 3).length > 0
-                          ? detectedProducts.slice(0, 3)
-                          : [
-                              { sku: 'BEV-COCA-330', name: 'Coca Cola', detected_count: 2, conf: 94 },
-                              { sku: 'BEV-PEPS-330', name: 'Pepsi Max', detected_count: 1, conf: 91 },
-                              { sku: 'BEV-SPRT-330', name: 'Sprite', detected_count: 2, conf: 89 },
-                            ]
-                        ).map((prod) => {
+                        detectedProducts.slice(0, 3).map((prod) => {
                           const conf = prod.conf || 94
                           const isHighConf = conf >= confidenceThreshold
                           return (
@@ -597,14 +590,7 @@ export default function ScanResultView({
                   ) : (
                     <>
                       {showBoxes &&
-                        (detectedProducts.slice(3, 6).length > 0
-                          ? detectedProducts.slice(3, 6)
-                          : [
-                              { sku: 'SNK-DORI-NCH', name: 'Doritos', detected_count: 3, conf: 95 },
-                              { sku: 'SNK-LAYS-CLS', name: 'Lays Salted', detected_count: 1, conf: 92 },
-                              { sku: 'PNT-HNZ-KET', name: 'Heinz Ketchup', detected_count: 2, conf: 88 },
-                            ]
-                        ).map((prod) => {
+                        detectedProducts.slice(3, 6).map((prod) => {
                           const conf = prod.conf || 92
                           const isHighConf = conf >= confidenceThreshold
                           return (

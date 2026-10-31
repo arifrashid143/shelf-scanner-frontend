@@ -19,6 +19,8 @@ export default function UserDashboardView({
   onGenerateOrder,
   recentScans = [],
   inventory = [],
+  purchaseOrders = [],
+  isLoading = false,
 }) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -34,6 +36,13 @@ export default function UserDashboardView({
 
   const lowStockCount = inventory.filter(
     (item) => item.status === 'Low' || item.is_low_stock === true
+  ).length
+
+  const pendingApprovalCount = purchaseOrders.filter(
+    (po) =>
+      po.status?.toLowerCase() === 'draft' ||
+      po.status?.toLowerCase() === 'pending' ||
+      po.status?.toLowerCase() === 'needs_approval'
   ).length
 
   const totalGaps = recentScans.reduce(
@@ -83,9 +92,13 @@ export default function UserDashboardView({
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 mb-2">Scans today</p>
-            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              {recentScans.length}
-            </p>
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400 mt-1" />
+            ) : (
+              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {recentScans.length}
+              </p>
+            )}
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/90 text-blue-600 flex items-center justify-center shrink-0">
             <Scan className="w-5 h-5 stroke-[2]" />
@@ -95,9 +108,13 @@ export default function UserDashboardView({
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 mb-2">Low stock</p>
-            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              {lowStockCount}
-            </p>
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400 mt-1" />
+            ) : (
+              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {lowStockCount}
+              </p>
+            )}
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100/90 text-rose-600 flex items-center justify-center shrink-0">
             <TrendingDown className="w-5 h-5 stroke-[2.2]" />
@@ -107,9 +124,13 @@ export default function UserDashboardView({
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 mb-2">Pending approval</p>
-            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              {inventory.filter((i) => i.status === 'Low').length > 0 ? 'Pending' : '0'}
-            </p>
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400 mt-1" />
+            ) : (
+              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {pendingApprovalCount}
+              </p>
+            )}
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100/90 text-amber-600 flex items-center justify-center shrink-0">
             <Clock className="w-5 h-5 stroke-[2]" />
@@ -119,9 +140,13 @@ export default function UserDashboardView({
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 mb-2">Gaps found</p>
-            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              {totalGaps}
-            </p>
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400 mt-1" />
+            ) : (
+              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {totalGaps}
+              </p>
+            )}
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100/90 text-emerald-600 flex items-center justify-center shrink-0">
             <Search className="w-5 h-5 stroke-[2]" />
@@ -138,9 +163,15 @@ export default function UserDashboardView({
           </div>
 
           <div className="flex-1 min-h-0 pt-3 space-y-2.5 overflow-y-auto no-scrollbar">
-            {recentScans.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 text-xs">
-                No scans recorded yet.
+            {isLoading ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                <span>Loading shelf scans...</span>
+              </div>
+            ) : recentScans.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
+                <Package className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                <span>No scans recorded yet.</span>
               </div>
             ) : (
               visibleScans.map((scan) => {
