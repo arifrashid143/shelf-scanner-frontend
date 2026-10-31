@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { api } from '../api/client'
 import {
   Plus,
   Edit2,
@@ -79,8 +80,35 @@ export default function InventoryView({
     }
   }
 
+  const [historyData, setHistoryData] = useState([])
+
+  // Fetch real stock telemetry history from backend API for selected product
+  useEffect(() => {
+    let isSubscribed = true
+    if (!selectedProduct?.id) return
+
+    api
+      .getProductHistory(selectedProduct.id)
+      .then((res) => {
+        if (!isSubscribed) return
+        if (Array.isArray(res) && res.length > 0) {
+          // Take the last 7 chronological stock readings
+          const recentReadings = res.slice(-7).map((entry) => entry.remaining_stock ?? 0)
+          setHistoryData(recentReadings)
+        } else {
+          setHistoryData([])
+        }
+      })
+      .catch(() => {
+        if (isSubscribed) setHistoryData([])
+      })
+
+    return () => {
+      isSubscribed = false
+    }
+  }, [selectedProduct?.id])
+
   // Calculate telemetry values for selected product chart
-  const historyData = selectedProduct?.history || []
   const maxVal = Math.max(selectedProduct?.target || 1, ...historyData, 1)
   const targetPercent = Math.min(100, Math.round(((selectedProduct?.target || 0) / maxVal) * 100))
   const capacityPercent = selectedProduct?.target

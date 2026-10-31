@@ -96,6 +96,19 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  deleteProduct: (productId) =>
+    request(`/inventory/${encodeURIComponent(productId)}`, {
+      method: 'DELETE',
+    }),
+
+  getProductHistory: (productId) =>
+    request(`/inventory/${encodeURIComponent(productId)}/history`),
+
+  restoreProduct: (productId) =>
+    request(`/inventory/${encodeURIComponent(productId)}/restore`, {
+      method: 'PUT',
+    }),
+
   // Purchase Orders (GET /api/purchase-orders, POST /api/purchase-orders/draft, GET /api/purchase-orders/{id}, PUT /api/purchase-orders/{id}/approve, POST /api/purchase-orders/{id}/cancel)
   getOrders: () => request('/purchase-orders'),
 
