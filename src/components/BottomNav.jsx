@@ -1,11 +1,12 @@
-import { Home, Scan, ShoppingBag, Package } from 'lucide-react'
+import { Home, Scan, ShoppingBag, Package, Users } from 'lucide-react'
 
-export default function BottomNav({ currentTab, onNavigate }) {
+export default function BottomNav({ currentTab, onNavigate, isAdmin }) {
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home },
     { id: 'new-scan', label: 'Scan', icon: Scan },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'inventory', label: 'Stock', icon: Package },
+    ...(isAdmin ? [{ id: 'users', label: 'Users', icon: Users }] : []),
   ]
 
   return (

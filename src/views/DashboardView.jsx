@@ -234,7 +234,7 @@ export default function DashboardView({
             <div>
               <h2 className="text-base font-bold text-slate-900 mb-4">Needs approval</h2>
               <div className="space-y-4">
-                {pendingOrders.slice(0, 2).map((order) => (
+                {pendingOrders.map((order) => (
                   <div
                     key={order.id}
                     onClick={() => onSelectOrder(order)}

@@ -274,21 +274,19 @@ export default function ScanResultView({
   }
 
   return (
-    <div className="space-y-6 w-full max-w-[1550px] pb-12">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Scan result · {shelfName}
-            </h1>
-            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-              {scanId}
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Visual object recognition, stock count validation, and automated replenishment recommendations.
-          </p>
+    <div className="space-y-4 w-full max-w-[1550px] pb-12">
+      {/* Top Header matching Sidebar logo height */}
+      <div className="flex items-center justify-between shrink-0 h-10">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+            Scan result · {shelfName}
+          </h1>
+          <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+            {scanId}
+          </span>
+          <span className="hidden xl:inline text-xs font-medium text-slate-500">
+            Visual object recognition & stock count validation
+          </span>
         </div>
 
         <button
