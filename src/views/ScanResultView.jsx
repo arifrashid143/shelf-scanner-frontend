@@ -35,30 +35,34 @@ export default function ScanResultView({
   const [adminUpdateSuccess, setAdminUpdateSuccess] = useState(null)
   const [adminUpdateError, setAdminUpdateError] = useState(null)
 
-  const isRealScan = scanData !== null && scanData !== undefined
-
-  const scanId = scanData?.id || scanData?.scan_id || 'scn_current'
-  const shelfName = scanData?.shelf_id || scanData?.shelfName || 'Aisle 3, Shelf B'
+  const scanId = scanData?.id || scanData?.scan_id || 'Scan'
+  const shelfName = scanData?.shelf_id || scanData?.shelfName || 'Shelf Section 1'
 
   // Extract raw backend detections array if available
   const apiDetections = Array.isArray(scanData?.detections) ? scanData.detections : []
   const hasApiDetections = apiDetections.length > 0
 
-  const itemsCounted = isRealScan
-    ? typeof scanData.total_detected_count === 'number' && scanData.total_detected_count > 0
+  // Total detected items and empty gaps from real API response
+  const itemsCounted =
+    typeof scanData?.total_detected_count === 'number' && scanData.total_detected_count > 0
       ? scanData.total_detected_count
       : hasApiDetections
       ? apiDetections.filter((d) => !d.is_empty_gap).length
-      : 8
-    : 8
+      : (scanData?.total_detected_count ?? 0)
 
-  const emptyGaps = isRealScan
-    ? typeof scanData.empty_gaps_count === 'number' && scanData.empty_gaps_count > 0
+  const emptyGaps =
+    typeof scanData?.empty_gaps_count === 'number' && scanData.empty_gaps_count > 0
       ? scanData.empty_gaps_count
       : hasApiDetections
       ? apiDetections.filter((d) => d.is_empty_gap).length
-      : 2
-    : 2
+      : (scanData?.empty_gaps_count ?? 0)
+
+  // Average confidence score from detections
+  const avgConfidence = hasApiDetections
+    ? Math.round(
+        (apiDetections.reduce((sum, d) => sum + (d.confidence || 0.95), 0) / apiDetections.length) * 100
+      )
+    : scanData?.accuracy || 98
 
   // Separate API detections by Tier/Row if available
   const tier1ApiDetections = hasApiDetections
@@ -85,64 +89,93 @@ export default function ScanResultView({
     null
 
   // Products detected from backend
-  const rawProducts = scanData?.product_counts || []
-  const rawLowStock = scanData?.low_stock_summary || []
+  const rawProducts = Array.isArray(scanData?.product_counts) ? scanData.product_counts : []
+  const rawLowStock = Array.isArray(scanData?.low_stock_summary) ? scanData.low_stock_summary : []
 
-  // Combine product counts with inventory data if available
-  const detectedProducts =
-    rawProducts.length > 0
-      ? rawProducts.map((p) => {
-          const invItem = inventory.find((i) => String(i.productId || i.id) === String(p.product_id))
-          return {
-            product_id: p.product_id,
-            sku: p.sku || invItem?.sku || `SKU-${p.product_id}`,
-            name: p.name || invItem?.name || `Product #${p.product_id}`,
-            category: p.category || invItem?.category || 'General',
-            detected_count: p.detected_count !== undefined ? p.detected_count : 0,
-            current_stock: invItem?.current !== undefined ? invItem.current : (p.detected_count || 0),
-            min_stock_threshold: p.min_stock_threshold || invItem?.minThreshold || 5,
-            max_shelf_capacity: p.max_shelf_capacity || invItem?.target || 20,
-            unit_price: invItem?.price || 2.5,
-            cost_price: invItem?.costPrice || 1.2,
-            is_low_stock: p.is_low_stock || (p.detected_count < (p.min_stock_threshold || 5)),
-            reorder_recommended_qty: p.reorder_recommended_qty || Math.max(0, (p.max_shelf_capacity || 20) - (p.detected_count || 0)),
+  // Build counts mapping from rawProducts or apiDetections
+  const detectedCountsByProductId = {}
+  const detectedCountsByName = {}
+
+  if (rawProducts.length > 0) {
+    rawProducts.forEach((p) => {
+      if (p.product_id != null) detectedCountsByProductId[String(p.product_id)] = p.detected_count ?? 0
+      if (p.name) detectedCountsByName[p.name.toLowerCase().trim()] = p.detected_count ?? 0
+    })
+  } else if (hasApiDetections) {
+    apiDetections.forEach((d) => {
+      if (d.is_empty_gap) return
+      if (d.product_id != null) {
+        const idStr = String(d.product_id)
+        detectedCountsByProductId[idStr] = (detectedCountsByProductId[idStr] || 0) + 1
+      }
+      if (d.label) {
+        const cleanLabel = d.label.replace(/\[.*?\]/g, '').toLowerCase().trim()
+        detectedCountsByName[cleanLabel] = (detectedCountsByName[cleanLabel] || 0) + 1
+      }
+    })
+  }
+
+  // Combine product counts with inventory data for complete shelf-to-inventory audit
+  const detectedProducts = inventory.length > 0
+    ? inventory.map((invItem) => {
+        const prodId = String(invItem.productId || invItem.id)
+        const nameKey = (invItem.name || '').toLowerCase().trim()
+
+        let detectedCount = 0
+        if (detectedCountsByProductId[prodId] !== undefined) {
+          detectedCount = detectedCountsByProductId[prodId]
+        } else if (detectedCountsByName[nameKey] !== undefined) {
+          detectedCount = detectedCountsByName[nameKey]
+        } else {
+          const matchingKey = Object.keys(detectedCountsByName).find(
+            (k) => nameKey.includes(k) || k.includes(nameKey)
+          )
+          if (matchingKey) {
+            detectedCount = detectedCountsByName[matchingKey]
           }
-        })
-      : itemsCounted > 0
-      ? [
-          {
-            product_id: 1,
-            sku: 'BEV-COCA-330',
-            name: 'Coca Cola 330ml Can',
-            category: 'Beverages',
-            detected_count: 4,
-            current_stock: 4,
-            min_stock_threshold: 6,
-            max_shelf_capacity: 24,
-            unit_price: 1.75,
-            cost_price: 0.85,
-            is_low_stock: true,
-            reorder_recommended_qty: 20,
-          },
-          {
-            product_id: 2,
-            sku: 'SNK-DORI-NCH',
-            name: 'Doritos Nacho Cheese 150g',
-            category: 'Snacks',
-            detected_count: 12,
-            current_stock: 12,
-            min_stock_threshold: 5,
-            max_shelf_capacity: 16,
-            unit_price: 2.8,
-            cost_price: 1.3,
-            is_low_stock: false,
-            reorder_recommended_qty: 0,
-          },
-        ]
-      : []
+        }
 
-  // Items for Purchase Order selection
-  const lowStockCandidates =
+        const minThreshold = invItem.minThreshold || invItem.min_stock_threshold || 5
+        const maxCapacity = invItem.target || invItem.max_shelf_capacity || 20
+        const isLow = detectedCount < minThreshold
+        const isMissing = detectedCount === 0
+
+        return {
+          product_id: invItem.productId || invItem.id,
+          sku: invItem.sku || `SKU-${invItem.id}`,
+          name: invItem.name,
+          category: invItem.category || 'General',
+          detected_count: detectedCount,
+          current_stock: invItem.current !== undefined ? invItem.current : 0,
+          min_stock_threshold: minThreshold,
+          max_shelf_capacity: maxCapacity,
+          unit_price: invItem.price || 0,
+          cost_price: invItem.costPrice || (invItem.price ? invItem.price * 0.6 : 1.25),
+          is_low_stock: isLow,
+          is_missing: isMissing,
+          reorder_recommended_qty: Math.max(0, maxCapacity - detectedCount),
+        }
+      })
+    : rawProducts.length > 0
+    ? rawProducts.map((p) => ({
+        product_id: p.product_id,
+        sku: p.sku || `SKU-${p.product_id}`,
+        name: p.name || `Product #${p.product_id}`,
+        category: p.category || 'General',
+        detected_count: p.detected_count !== undefined ? p.detected_count : 0,
+        current_stock: p.detected_count || 0,
+        min_stock_threshold: p.min_stock_threshold || 5,
+        max_shelf_capacity: p.max_shelf_capacity || 20,
+        unit_price: 2.5,
+        cost_price: 1.25,
+        is_low_stock: p.is_low_stock || ((p.detected_count || 0) < (p.min_stock_threshold || 5)),
+        is_missing: (p.detected_count || 0) === 0,
+        reorder_recommended_qty: p.reorder_recommended_qty || Math.max(0, (p.max_shelf_capacity || 20) - (p.detected_count || 0)),
+      }))
+    : []
+
+  // Items for Purchase Order selection (low stock or zero detected)
+  const lowStockCandidates = detectedProducts.filter((p) => p.is_low_stock || p.detected_count === 0)
     rawLowStock.length > 0
       ? rawLowStock
       : detectedProducts.filter((p) => p.is_low_stock || p.detected_count === 0)
@@ -353,7 +386,7 @@ export default function ScanResultView({
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             Verified
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Computer vision confidence 98%</p>
+          <p className="text-[11px] text-slate-400 mt-1">Computer vision confidence {avgConfidence}%</p>
         </div>
       </div>
 
@@ -673,7 +706,11 @@ export default function ScanResultView({
                     <td className="py-3 text-slate-500">{p.min_stock_threshold}</td>
                     <td className="py-3 text-slate-500">{p.max_shelf_capacity}</td>
                     <td className="py-3 text-right">
-                      {p.is_low_stock ? (
+                      {p.detected_count === 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                          <AlertTriangle className="w-3 h-3 text-red-600" /> Out of Stock (0)
+                        </span>
+                      ) : p.is_low_stock ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
                           <AlertTriangle className="w-3 h-3 text-rose-600" /> Low Stock
                         </span>
