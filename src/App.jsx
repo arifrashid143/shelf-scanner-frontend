@@ -73,12 +73,12 @@ function MainApp() {
           name: item.name,
           category: item.category || 'General',
           current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
-          target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 10,
-          minThreshold: item.min_stock_threshold || 5,
+          target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 0,
+          minThreshold: item.min_stock_threshold || 0,
           price: item.unit_price || item.price || 0,
           costPrice: item.cost_price || 0,
           status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
-          history: item.history || [item.current_stock || item.current || 0, item.current_stock || item.current || 0],
+          history: item.history || [],
         }))
         setInventory(normalized)
       }
@@ -107,12 +107,12 @@ function MainApp() {
           name: item.name,
           category: item.category || 'General',
           current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
-          target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 10,
-          minThreshold: item.min_stock_threshold || 5,
+          target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 0,
+          minThreshold: item.min_stock_threshold || 0,
           price: item.unit_price || item.price || 0,
           costPrice: item.cost_price || 0,
           status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
-          history: item.history || [item.current_stock || item.current || 0, item.current_stock || item.current || 0],
+          history: item.history || [],
         }))
         setInventory(normalized)
       }
@@ -152,8 +152,8 @@ function MainApp() {
             shelf_id: s.shelf_id,
             time: s.created_at
               ? new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : 'Recently',
-            date: s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Today',
+              : '',
+            date: s.created_at ? new Date(s.created_at).toLocaleDateString() : '',
             gaps: s.empty_gaps_count ?? 0,
             empty_gaps_count: s.empty_gaps_count ?? 0,
             items: s.total_detected_count ?? 0,
@@ -292,15 +292,20 @@ function MainApp() {
 
   const handleAddProduct = async (productData) => {
     try {
+      const price = parseFloat(productData.price || 0)
+      const target = parseInt(productData.target || 0, 10)
+      const current = parseInt(productData.current || 0, 10)
+      const minThreshold = productData.minThreshold ? parseInt(productData.minThreshold, 10) : Math.max(1, Math.round(target * 0.25))
+
       await api.createProduct({
         name: productData.name,
-        category: 'General',
-        sku: `SKU-${Date.now()}`,
-        current_stock: productData.current || 0,
-        min_stock_threshold: 5,
-        max_shelf_capacity: productData.target || 20,
-        unit_price: productData.price || 2.5,
-        cost_price: (productData.price || 2.5) * 0.6,
+        category: productData.category || 'General',
+        sku: productData.sku || `SKU-${Date.now()}`,
+        current_stock: current,
+        min_stock_threshold: minThreshold,
+        max_shelf_capacity: target,
+        unit_price: price,
+        cost_price: productData.costPrice || (price ? price * 0.7 : 0),
       })
       await refreshInventory()
       showToast(`Product "${productData.name}" added to inventory`, 'success')
@@ -315,8 +320,8 @@ function MainApp() {
     try {
       showToast('Uploading shelf scan to AI engine...', 'info')
       const res = await api.uploadScan(scanData.file, {
-        shelf_id: scanData.shelfName || 'Aisle 3, Shelf B',
-        store_id: 'store_main',
+        shelf_id: scanData.shelfName || 'Shelf Section 1',
+        store_id: user?.store_id || 'store_main',
         sync_mode: true,
       })
 
@@ -342,12 +347,12 @@ function MainApp() {
       setRecentScans((prev) => [
         {
           id: fullScan.id || `scn_${Date.now()}`,
-          date: 'Just now',
-          shelf: fullScan.shelf_id || scanData.shelfName || 'Aisle 3 · Shelf B',
-          time: 'Just now',
+          date: fullScan.created_at ? new Date(fullScan.created_at).toLocaleDateString() : 'Just now',
+          shelf: fullScan.shelf_id || scanData.shelfName || 'Shelf Section 1',
+          time: fullScan.created_at ? new Date(fullScan.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
           items: typeof fullScan.total_detected_count === 'number' ? fullScan.total_detected_count : 0,
           gaps: typeof fullScan.empty_gaps_count === 'number' ? fullScan.empty_gaps_count : 0,
-          accuracy: 98,
+          accuracy: fullScan.accuracy ?? fullScan.confidence ?? null,
           status: fullScan.status || 'completed',
           raw_image_url: fullScan.raw_image_url,
           annotated_image_url: fullScan.annotated_image_url,
@@ -362,8 +367,7 @@ function MainApp() {
       )
     } catch (err) {
       console.error('Scan API error:', err)
-      showToast(err.message || 'Shelf scan analyzed with local fallback.', 'info')
-      setCurrentTab('scan-result')
+      showToast(err.message || 'Failed to upload shelf scan to backend API.', 'error')
     }
   }
 

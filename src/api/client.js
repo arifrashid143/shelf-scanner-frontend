@@ -127,8 +127,8 @@ export const api = {
       if (fileOrFormData instanceof Blob || fileOrFormData instanceof File) {
         body.append('file', fileOrFormData, fileOrFormData.name || 'shelf_photo.png')
       }
-      body.append('store_id', meta.store_id || 'store_main')
-      body.append('shelf_id', meta.shelf_id || 'Aisle 3, Shelf B')
+      if (meta.store_id) body.append('store_id', meta.store_id)
+      if (meta.shelf_id) body.append('shelf_id', meta.shelf_id)
       if (meta.notes) body.append('notes', meta.notes)
       body.append('sync_mode', meta.sync_mode !== undefined ? String(meta.sync_mode) : 'true')
     }
@@ -146,10 +146,7 @@ export const api = {
     if (params.shelf_id) query.append('shelf_id', params.shelf_id)
     const qs = query.toString() ? `?${query.toString()}` : ''
 
-    return request(`/scans${qs}`).catch((err) => {
-      console.warn('Scans fetch fallback:', err.message)
-      return { recentScans: [] }
-    })
+    return request(`/scans${qs}`)
   },
 
   getScanById: (scanId) =>
@@ -191,11 +188,7 @@ export const api = {
     }),
 
   // GET /api/tenant/stores - List Company Stores
-  getTenantStores: () =>
-    request('/tenant/stores').catch((err) => {
-      console.warn('Failed to fetch tenant stores:', err.message)
-      return []
-    }),
+  getTenantStores: () => request('/tenant/stores'),
 
   // POST /api/tenant/stores - Create Company Store
   createTenantStore: (data) =>

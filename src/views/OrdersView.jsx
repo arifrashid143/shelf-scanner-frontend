@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { Loader2 } from 'lucide-react'
 
-export default function OrdersView({ purchaseOrders, onSelectOrder }) {
+export default function OrdersView({ purchaseOrders = [], onSelectOrder, isLoading = false }) {
   const [statusFilter, setStatusFilter] = useState('All')
 
   const filterTabs = ['All', 'Draft', 'Approved', 'Rejected']
@@ -35,7 +36,12 @@ export default function OrdersView({ purchaseOrders, onSelectOrder }) {
 
         {/* Order Cards List */}
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-3 pb-2">
-          {filteredOrders.length === 0 ? (
+          {isLoading ? (
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-8 text-center text-slate-400 text-xs shadow-xs flex flex-col items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+              <span>Loading purchase orders from server...</span>
+            </div>
+          ) : filteredOrders.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-200/90 p-8 text-center text-slate-400 text-xs shadow-xs">
               No {statusFilter !== 'All' ? statusFilter.toLowerCase() : ''} purchase orders found.
             </div>
@@ -112,7 +118,16 @@ export default function OrdersView({ purchaseOrders, onSelectOrder }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredOrders.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="py-14 text-center text-slate-400 text-sm">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                        <span className="text-xs">Loading purchase orders from server...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-14 text-center text-slate-400 text-sm">
                       No {statusFilter !== 'All' ? statusFilter.toLowerCase() : ''} purchase orders found.

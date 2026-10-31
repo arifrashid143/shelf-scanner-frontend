@@ -8,10 +8,28 @@ export default function OrderDetailView({
   onApprove,
   onReject,
 }) {
-  const [items, setItems] = useState(order.items)
-  const [status, setStatus] = useState(order.status)
+  const [items, setItems] = useState(order?.items || [])
+  const [status, setStatus] = useState(order?.status || 'Draft')
   const [actionError, setActionError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  if (!order) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-12 text-center text-slate-500 shadow-xs space-y-4 max-w-[1550px] w-full">
+        <h2 className="text-lg font-bold text-slate-900">No Purchase Order Selected</h2>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          Please select an order from the purchase orders list to view its line items and details.
+        </p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 transition-all cursor-pointer"
+        >
+          Back to Orders
+        </button>
+      </div>
+    )
+  }
 
   const handleManualQtyChange = (id, newQty) => {
     if (!isAdmin || status !== 'Draft') return
@@ -23,8 +41,8 @@ export default function OrderDetailView({
     )
   }
 
-  const calculatedTotal = items.reduce(
-    (sum, item) => sum + item.qty * (item.unitPrice || 600),
+  const calculatedTotal = (items || []).reduce(
+    (sum, item) => sum + (item.qty || 0) * (item.unitPrice || item.unit_price || item.unit_cost || item.price || 0),
     0
   )
 
@@ -89,7 +107,7 @@ export default function OrderDetailView({
           </span>
         </div>
         <p className="text-xs text-slate-500 font-medium">
-          Created from scan · {order.scanSource || 'Aisle 3, Shelf B'}
+          Created from scan · {order.scanSource || order.shelf_id || 'Shelf Scan'}
         </p>
       </div>
 
@@ -114,25 +132,33 @@ export default function OrderDetailView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="py-4 font-semibold text-slate-900">{item.name}</td>
-                    <td className="py-4 text-slate-600">{item.stock}</td>
-                    <td className="py-4 text-slate-600">{item.target}</td>
-                    <td className="py-4 text-right">
-                      {isAdmin && status === 'Draft' ? (
-                        <input
-                          type="number"
-                          value={item.qty}
-                          onChange={(e) => handleManualQtyChange(item.id, e.target.value)}
-                          className="w-16 px-3 py-1.5 text-center text-sm font-semibold border border-slate-300 rounded-lg focus:outline-blue-500"
-                        />
-                      ) : (
-                        <span className="font-semibold text-slate-900">{item.qty} units</span>
-                      )}
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-slate-400 text-xs">
+                      No line items recorded for this purchase order.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  items.map((item) => (
+                    <tr key={item.id}>
+                      <td className="py-4 font-semibold text-slate-900">{item.name}</td>
+                      <td className="py-4 text-slate-600">{item.stock ?? '-'}</td>
+                      <td className="py-4 text-slate-600">{item.target ?? '-'}</td>
+                      <td className="py-4 text-right">
+                        {isAdmin && status === 'Draft' ? (
+                          <input
+                            type="number"
+                            value={item.qty}
+                            onChange={(e) => handleManualQtyChange(item.id, e.target.value)}
+                            className="w-16 px-3 py-1.5 text-center text-sm font-semibold border border-slate-300 rounded-lg focus:outline-blue-500"
+                          />
+                        ) : (
+                          <span className="font-semibold text-slate-900">{item.qty} units</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

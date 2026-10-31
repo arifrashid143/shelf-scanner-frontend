@@ -12,12 +12,15 @@ import {
 } from 'lucide-react'
 
 export default function InventoryView({
-  inventory,
+  inventory = [],
   isAdmin,
   onUpdateProduct,
   onAddProduct,
+  isLoading = false,
 }) {
-  const [selectedProduct, setSelectedProduct] = useState(inventory[0] || null)
+  const [selectedProductId, setSelectedProductId] = useState(null)
+  const selectedProduct = inventory.find((i) => i.id === selectedProductId) || inventory[0] || null
+
   const [editingItem, setEditingItem] = useState(null)
   const [editCurrent, setEditCurrent] = useState('')
   const [editTarget, setEditTarget] = useState('')
@@ -63,7 +66,7 @@ export default function InventoryView({
         name: newProdName,
         current: parseInt(newProdCurrent || 0, 10),
         target: parseInt(newProdTarget, 10),
-        price: parseFloat(newProdPrice || 400),
+        price: parseFloat(newProdPrice || 0),
       })
       setIsAddModalOpen(false)
       setNewProdName('')
@@ -78,8 +81,8 @@ export default function InventoryView({
 
   // Calculate telemetry values for selected product chart
   const historyData = selectedProduct?.history || []
-  const maxVal = Math.max(selectedProduct?.target || 10, ...historyData, 1)
-  const targetPercent = Math.min(100, Math.round(((selectedProduct?.target || 10) / maxVal) * 100))
+  const maxVal = Math.max(selectedProduct?.target || 1, ...historyData, 1)
+  const targetPercent = Math.min(100, Math.round(((selectedProduct?.target || 0) / maxVal) * 100))
   const capacityPercent = selectedProduct?.target
     ? Math.min(100, Math.round((selectedProduct.current / selectedProduct.target) * 100))
     : 0
@@ -133,136 +136,153 @@ export default function InventoryView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {inventory.map((item) => {
-                  const percentage = Math.min(100, Math.round((item.current / item.target) * 100))
-                  const isLow = item.status === 'Low' || percentage < 35
-                  const isSelected = selectedProduct?.id === item.id
-                  const isEditingThis = editingItem === item.id
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={isAdmin ? 5 : 4} className="py-14 text-center text-slate-400 text-xs">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Package className="w-6 h-6 animate-pulse text-blue-600" />
+                        <span>Loading inventory from server...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : inventory.length === 0 ? (
+                  <tr>
+                    <td colSpan={isAdmin ? 5 : 4} className="py-14 text-center text-slate-400 text-xs">
+                      No inventory products found in database.
+                    </td>
+                  </tr>
+                ) : (
+                  inventory.map((item) => {
+                    const percentage = item.target > 0 ? Math.min(100, Math.round((item.current / item.target) * 100)) : 0
+                    const isLow = item.status === 'Low' || percentage < 35
+                    const isSelected = selectedProduct?.id === item.id
+                    const isEditingThis = editingItem === item.id
 
-                  return (
-                    <tr
-                      key={item.id}
-                      onClick={() => setSelectedProduct(item)}
-                      className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${
-                        isSelected ? 'bg-blue-50/40' : ''
-                      }`}
-                    >
-                      <td className="px-5 py-4 font-semibold text-slate-900">
-                        <div className="flex flex-col">
-                          <span
-                            className={`font-bold transition-colors ${
-                              isSelected
-                                ? 'text-blue-700'
-                                : 'text-slate-900 group-hover:text-blue-600'
-                            }`}
-                          >
-                            {item.name}
-                          </span>
-                          <span className="text-xs text-slate-400 font-normal mt-0.5">
-                            ₹{item.price} / unit
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4 text-slate-600">
-                        {isEditingThis ? (
-                          <div
-                            className="flex items-center gap-1.5"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="number"
-                              value={editCurrent}
-                              onChange={(e) => setEditCurrent(e.target.value)}
-                              className="w-14 px-2 py-1 text-xs border rounded-lg font-bold border-blue-400 focus:outline-blue-600"
-                            />
-                            <span className="text-slate-400">/</span>
-                            <input
-                              type="number"
-                              value={editTarget}
-                              onChange={(e) => setEditTarget(e.target.value)}
-                              className="w-14 px-2 py-1 text-xs border rounded-lg font-bold border-blue-400 focus:outline-blue-600"
-                            />
-                          </div>
-                        ) : (
-                          <span className="font-bold text-slate-900">
-                            {item.current}{' '}
-                            <span className="text-slate-400 font-normal">/ {item.target}</span>
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="px-4 py-4 w-36 sm:w-44">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-300 ${
-                                isLow ? 'bg-rose-500' : 'bg-emerald-600'
+                    return (
+                      <tr
+                        key={item.id}
+                        onClick={() => setSelectedProductId(item.id)}
+                        className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${
+                          isSelected ? 'bg-blue-50/40' : ''
+                        }`}
+                      >
+                        <td className="px-5 py-4 font-semibold text-slate-900">
+                          <div className="flex flex-col">
+                            <span
+                              className={`font-bold transition-colors ${
+                                isSelected
+                                  ? 'text-blue-700'
+                                  : 'text-slate-900 group-hover:text-blue-600'
                               }`}
-                              style={{ width: `${percentage}%` }}
-                            ></div>
+                            >
+                              {item.name}
+                            </span>
+                            <span className="text-xs text-slate-400 font-normal mt-0.5">
+                              ₹{item.price} / unit
+                            </span>
                           </div>
-                          <span className="text-[11px] font-bold text-slate-400 w-8 text-right">
-                            {percentage}%
-                          </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="px-4 py-4 text-right">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
-                            isLow
-                              ? 'bg-rose-50 text-rose-700 border-rose-200/80'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-
-                      {isAdmin && (
-                        <td className="px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4 py-4 text-slate-600">
                           {isEditingThis ? (
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={(e) => handleSaveEdit(item.id, e)}
-                                className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
-                                title="Save changes"
-                              >
-                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setEditingItem(null)
-                                }}
-                                className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
-                                title="Cancel"
-                              >
-                                <X className="w-3.5 h-3.5 stroke-[2.5]" />
-                              </button>
+                            <div
+                              className="flex items-center gap-1.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="number"
+                                value={editCurrent}
+                                onChange={(e) => setEditCurrent(e.target.value)}
+                                className="w-14 px-2 py-1 text-xs border rounded-lg font-bold border-blue-400 focus:outline-blue-600"
+                              />
+                              <span className="text-slate-400">/</span>
+                              <input
+                                type="number"
+                                value={editTarget}
+                                onChange={(e) => setEditTarget(e.target.value)}
+                                className="w-14 px-2 py-1 text-xs border rounded-lg font-bold border-blue-400 focus:outline-blue-600"
+                              />
                             </div>
                           ) : (
-                            <button
-                              onClick={(e) => startEdit(item, e)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                              title="Edit stock quantities (Admin)"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
+                            <span className="font-bold text-slate-900">
+                              {item.current}{' '}
+                              <span className="text-slate-400 font-normal">/ {item.target}</span>
+                            </span>
                           )}
                         </td>
-                      )}
-                    </tr>
-                  )
-                })}
+
+                        <td className="px-4 py-4 w-36 sm:w-44">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  isLow ? 'bg-rose-500' : 'bg-emerald-600'
+                                }`}
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-400 w-8 text-right">
+                              {percentage}%
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4 text-right">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
+                              isLow
+                                ? 'bg-rose-50 text-rose-700 border-rose-200/80'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+
+                        {isAdmin && (
+                          <td className="px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            {isEditingThis ? (
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  onClick={(e) => handleSaveEdit(item.id, e)}
+                                  className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
+                                  title="Save changes"
+                                >
+                                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditingItem(null)
+                                  }}
+                                  className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={(e) => startEdit(item, e)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                title="Edit stock quantities (Admin)"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
         {/* Right Column: Upgraded Product Information Chart & Telemetry Card */}
-        {selectedProduct && (
+        {selectedProduct ? (
           <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5 w-full h-full min-h-0 overflow-y-auto no-scrollbar">
             {/* Header: Product Identity & Status Badge */}
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
@@ -360,56 +380,62 @@ export default function InventoryView({
                   </span>
                 </div>
 
-                {/* 7 Vertical Bar Columns */}
-                <div className="relative z-10 flex items-end justify-between gap-2 sm:gap-3 h-full w-full">
-                  {historyData.map((val, idx) => {
-                    const heightPercent = Math.max(12, Math.min(100, Math.round((val / maxVal) * 100)))
-                    const isLast = idx === historyData.length - 1
-                    const isLowVal = val <= Math.max(2, Math.round((selectedProduct.target || 10) * 0.35))
+                {/* Vertical Bar Columns or Empty State */}
+                {historyData.length === 0 ? (
+                  <div className="relative z-10 flex items-center justify-center h-full w-full text-slate-400 text-xs font-medium">
+                    No historical scan telemetry recorded yet.
+                  </div>
+                ) : (
+                  <div className="relative z-10 flex items-end justify-between gap-2 sm:gap-3 h-full w-full">
+                    {historyData.map((val, idx) => {
+                      const heightPercent = Math.max(12, Math.min(100, Math.round((val / maxVal) * 100)))
+                      const isLast = idx === historyData.length - 1
+                      const isLowVal = val <= Math.max(1, Math.round((selectedProduct.minThreshold || selectedProduct.target || 0) * 0.35))
 
-                    return (
-                      <div
-                        key={idx}
-                        className="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
-                        title={`Scan ${idx + 1}: ${val} units on shelf`}
-                      >
-                        {/* Value Label Above Bar */}
-                        <span
-                          className={`text-[11px] font-bold mb-1.5 transition-all ${
-                            isLast
-                              ? 'text-slate-900 scale-105'
-                              : 'text-slate-500 group-hover:text-blue-600 group-hover:font-extrabold'
-                          }`}
-                        >
-                          {val}
-                        </span>
-
-                        {/* Bar Pillar */}
+                      return (
                         <div
-                          style={{ height: `${heightPercent}%` }}
-                          className={`w-full max-w-[32px] sm:max-w-[36px] rounded-t-lg transition-all duration-300 shadow-2xs ${
-                            isLast
-                              ? isLowVal
-                                ? 'bg-gradient-to-t from-rose-600 to-rose-400 ring-2 ring-rose-200'
-                                : 'bg-gradient-to-t from-emerald-600 to-emerald-400 ring-2 ring-emerald-200'
-                              : 'bg-gradient-to-t from-blue-600 to-indigo-500 group-hover:from-blue-500 group-hover:to-indigo-400'
-                          }`}
-                        ></div>
-
-                        {/* X-Axis Scan Label Below Bar */}
-                        <span
-                          className={`text-[10px] font-semibold mt-2 transition-colors ${
-                            isLast
-                              ? 'text-blue-700 font-bold'
-                              : 'text-slate-400 group-hover:text-slate-700'
-                          }`}
+                          key={idx}
+                          className="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
+                          title={`Scan ${idx + 1}: ${val} units on shelf`}
                         >
-                          {isLast ? 'Latest' : `S${idx + 1}`}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
+                          {/* Value Label Above Bar */}
+                          <span
+                            className={`text-[11px] font-bold mb-1.5 transition-all ${
+                              isLast
+                                ? 'text-slate-900 scale-105'
+                                : 'text-slate-500 group-hover:text-blue-600 group-hover:font-extrabold'
+                            }`}
+                          >
+                            {val}
+                          </span>
+
+                          {/* Bar Pillar */}
+                          <div
+                            style={{ height: `${heightPercent}%` }}
+                            className={`w-full max-w-[32px] sm:max-w-[36px] rounded-t-lg transition-all duration-300 shadow-2xs ${
+                              isLast
+                                ? isLowVal
+                                  ? 'bg-gradient-to-t from-rose-600 to-rose-400 ring-2 ring-rose-200'
+                                  : 'bg-gradient-to-t from-emerald-600 to-emerald-400 ring-2 ring-emerald-200'
+                                : 'bg-gradient-to-t from-blue-600 to-indigo-500 group-hover:from-blue-500 group-hover:to-indigo-400'
+                            }`}
+                          ></div>
+
+                          {/* X-Axis Scan Label Below Bar */}
+                          <span
+                            className={`text-[10px] font-semibold mt-2 transition-colors ${
+                              isLast
+                                ? 'text-blue-700 font-bold'
+                                : 'text-slate-400 group-hover:text-slate-700'
+                            }`}
+                          >
+                            {isLast ? 'Latest' : `S${idx + 1}`}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -434,6 +460,14 @@ export default function InventoryView({
                 )}
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-8 shadow-xs flex flex-col items-center justify-center text-center text-slate-400 gap-2 h-full">
+            <Package className="w-10 h-10 text-slate-300 stroke-[1.5]" />
+            <p className="text-sm font-semibold text-slate-700">No Product Selected</p>
+            <p className="text-xs text-slate-400 max-w-xs">
+              Select a product from the inventory list to view stock telemetry and capacity analytics.
+            </p>
           </div>
         )}
       </div>

@@ -20,6 +20,7 @@ export default function NewScanView({ onScanComplete }) {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [scanMode, setScanMode] = useState('check') // 'check' | 'baseline'
+  const [shelfName, setShelfName] = useState('Shelf Section 1')
   const [analysisStatus, setAnalysisStatus] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -132,7 +133,7 @@ export default function NewScanView({ onScanComplete }) {
       await onScanComplete({
         file: fileToUpload,
         previewUrl: localPreview,
-        shelfName: 'Aisle 3, Shelf B',
+        shelfName: shelfName.trim() || 'Shelf Section 1',
         scanMode,
       })
     } catch (err) {
@@ -269,6 +270,18 @@ export default function NewScanView({ onScanComplete }) {
       {/* ===================== MOBILE LAYOUT ===================== */}
       <div className="md:hidden space-y-3.5 flex-1 flex flex-col min-h-0">
         <h1 className="text-2xl font-black text-slate-900 tracking-tight shrink-0">New scan</h1>
+
+        {/* Shelf location input & Tab switcher */}
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200/90 shadow-2xs shrink-0">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Location:</span>
+          <input
+            type="text"
+            value={shelfName}
+            onChange={(e) => setShelfName(e.target.value)}
+            placeholder="e.g. Shelf Section 1"
+            className="flex-1 text-xs font-semibold text-slate-900 bg-transparent focus:outline-none"
+          />
+        </div>
 
         {/* Tab switcher: Check shelf vs Set baseline */}
         <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/80 shrink-0">
@@ -505,30 +518,43 @@ export default function NewScanView({ onScanComplete }) {
             </span>
           </div>
 
-          {/* Mode Switcher */}
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/80">
-            <button
-              type="button"
-              onClick={() => setScanMode('check')}
-              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                scanMode === 'check'
-                  ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Check shelf
-            </button>
-            <button
-              type="button"
-              onClick={() => setScanMode('baseline')}
-              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                scanMode === 'baseline'
-                  ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Set baseline
-            </button>
+          {/* Shelf Location & Mode Switcher */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200/90 shadow-2xs">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Location:</span>
+              <input
+                type="text"
+                value={shelfName}
+                onChange={(e) => setShelfName(e.target.value)}
+                placeholder="e.g. Shelf Section 1"
+                className="w-36 text-xs font-semibold text-slate-900 bg-transparent focus:outline-none"
+              />
+            </div>
+
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+              <button
+                type="button"
+                onClick={() => setScanMode('check')}
+                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  scanMode === 'check'
+                    ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Check shelf
+              </button>
+              <button
+                type="button"
+                onClick={() => setScanMode('baseline')}
+                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  scanMode === 'baseline'
+                    ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Set baseline
+              </button>
+            </div>
           </div>
         </div>
 

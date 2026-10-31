@@ -60,9 +60,11 @@ export default function ScanResultView({
   // Average confidence score from detections
   const avgConfidence = hasApiDetections
     ? Math.round(
-        (apiDetections.reduce((sum, d) => sum + (d.confidence || 0.95), 0) / apiDetections.length) * 100
+        (apiDetections.reduce((sum, d) => sum + (d.confidence != null ? d.confidence : 0), 0) /
+          Math.max(1, apiDetections.length)) *
+          100
       )
-    : scanData?.accuracy || 98
+    : (scanData?.accuracy ?? scanData?.confidence ?? null)
 
   // Separate API detections by Tier/Row if available
   const tier1ApiDetections = hasApiDetections
@@ -135,9 +137,9 @@ export default function ScanResultView({
           }
         }
 
-        const minThreshold = invItem.minThreshold || invItem.min_stock_threshold || 5
-        const maxCapacity = invItem.target || invItem.max_shelf_capacity || 20
-        const isLow = detectedCount < minThreshold
+        const minThreshold = invItem.minThreshold ?? invItem.min_stock_threshold ?? 0
+        const maxCapacity = invItem.target ?? invItem.max_shelf_capacity ?? 0
+        const isLow = minThreshold > 0 ? detectedCount < minThreshold : false
         const isMissing = detectedCount === 0
 
         return {
@@ -150,32 +152,37 @@ export default function ScanResultView({
           min_stock_threshold: minThreshold,
           max_shelf_capacity: maxCapacity,
           unit_price: invItem.price || 0,
-          cost_price: invItem.costPrice || (invItem.price ? invItem.price * 0.6 : 1.25),
+          cost_price: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : 0),
           is_low_stock: isLow,
           is_missing: isMissing,
-          reorder_recommended_qty: Math.max(0, maxCapacity - detectedCount),
+          reorder_recommended_qty: maxCapacity > detectedCount ? maxCapacity - detectedCount : (minThreshold > detectedCount ? minThreshold - detectedCount : 0),
         }
       })
     : rawProducts.length > 0
-    ? rawProducts.map((p) => ({
-        product_id: p.product_id,
-        sku: p.sku || `SKU-${p.product_id}`,
-        name: p.name || `Product #${p.product_id}`,
-        category: p.category || 'General',
-        detected_count: p.detected_count !== undefined ? p.detected_count : 0,
-        current_stock: p.detected_count || 0,
-        min_stock_threshold: p.min_stock_threshold || 5,
-        max_shelf_capacity: p.max_shelf_capacity || 20,
-        unit_price: 2.5,
-        cost_price: 1.25,
-        is_low_stock: p.is_low_stock || ((p.detected_count || 0) < (p.min_stock_threshold || 5)),
-        is_missing: (p.detected_count || 0) === 0,
-        reorder_recommended_qty: p.reorder_recommended_qty || Math.max(0, (p.max_shelf_capacity || 20) - (p.detected_count || 0)),
-      }))
+    ? rawProducts.map((p) => {
+        const minThresh = p.min_stock_threshold ?? 0
+        const maxCap = p.max_shelf_capacity ?? 0
+        const detected = p.detected_count !== undefined ? p.detected_count : 0
+        return {
+          product_id: p.product_id,
+          sku: p.sku || `SKU-${p.product_id}`,
+          name: p.name || `Product #${p.product_id}`,
+          category: p.category || 'General',
+          detected_count: detected,
+          current_stock: detected,
+          min_stock_threshold: minThresh,
+          max_shelf_capacity: maxCap,
+          unit_price: p.unit_price || p.price || 0,
+          cost_price: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 0),
+          is_low_stock: p.is_low_stock || (minThresh > 0 && detected < minThresh),
+          is_missing: detected === 0,
+          reorder_recommended_qty: p.reorder_recommended_qty || (maxCap > detected ? maxCap - detected : 0),
+        }
+      })
     : []
 
   // Items for Purchase Order selection (low stock or zero detected)
-  const lowStockCandidates = detectedProducts.filter((p) => p.is_low_stock || p.detected_count === 0)
+  const lowStockCandidates =
     rawLowStock.length > 0
       ? rawLowStock
       : detectedProducts.filter((p) => p.is_low_stock || p.detected_count === 0)
@@ -186,7 +193,7 @@ export default function ScanResultView({
     lowStockCandidates.forEach((item) => {
       initial[item.product_id] = {
         selected: true,
-        qty: item.reorder_recommended_qty || Math.max(10, (item.min_stock_threshold || 5) * 2),
+        qty: item.reorder_recommended_qty || Math.max(1, (item.min_stock_threshold || item.max_shelf_capacity || 1) - (item.detected_count || 0)),
       }
     })
     return initial
@@ -237,7 +244,7 @@ export default function ScanResultView({
       .map((p) => ({
         product_id: p.product_id,
         quantity: selectedPoItems[p.product_id].qty,
-        unit_cost: p.cost_price || 1.25,
+        unit_cost: p.cost_price || p.unit_price || 0,
         recommended_reason: 'Low stock identified during visual shelf scan',
       }))
 
@@ -386,7 +393,9 @@ export default function ScanResultView({
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             Verified
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Computer vision confidence {avgConfidence}%</p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            {avgConfidence != null ? `Computer vision confidence ${avgConfidence}%` : 'Stock count verification complete'}
+          </p>
         </div>
       </div>
 
@@ -538,26 +547,29 @@ export default function ScanResultView({
                   ) : (
                     <>
                       {showBoxes &&
-                        detectedProducts.slice(0, 3).map((prod) => {
-                          const conf = prod.conf || 94
-                          const isHighConf = conf >= confidenceThreshold
-                          return (
-                            <div
-                              key={prod.sku}
-                              style={{ width: '22%' }}
-                              className={`h-28 rounded-sm bg-[#f7b05b] border-2 border-blue-600 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
-                                isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
-                              }`}
-                            >
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white w-max truncate max-w-full">
-                                {prod.name.split(' ')[0]} ({prod.detected_count || 1})
-                              </span>
-                              <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
-                            </div>
-                          )
-                        })}
+                        detectedProducts
+                          .filter((prod) => (prod.detected_count || 0) > 0)
+                          .slice(0, 3)
+                          .map((prod) => {
+                            const conf = avgConfidence != null ? avgConfidence : 100
+                            const isHighConf = conf >= confidenceThreshold
+                            return (
+                              <div
+                                key={prod.sku}
+                                style={{ width: '22%' }}
+                                className={`h-28 rounded-sm bg-[#f7b05b] border-2 border-blue-600 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
+                                  isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
+                                }`}
+                              >
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white w-max truncate max-w-full">
+                                  {prod.name.split(' ')[0]} ({prod.detected_count})
+                                </span>
+                                <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
+                              </div>
+                            )
+                          })}
 
-                      {showGaps && (
+                      {showGaps && emptyGaps > 0 && (
                         <div
                           style={{ width: '24%' }}
                           className="h-28 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in"
@@ -566,6 +578,12 @@ export default function ScanResultView({
                             GAP (Out of stock)
                           </span>
                           <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
+                        </div>
+                      )}
+
+                      {detectedProducts.filter((p) => (p.detected_count || 0) > 0).length === 0 && (!showGaps || emptyGaps === 0) && (
+                        <div className="w-full text-center text-slate-400 text-xs py-8">
+                          No product detections recorded for Tier 1
                         </div>
                       )}
                     </>
@@ -623,26 +641,29 @@ export default function ScanResultView({
                   ) : (
                     <>
                       {showBoxes &&
-                        detectedProducts.slice(3, 6).map((prod) => {
-                          const conf = prod.conf || 92
-                          const isHighConf = conf >= confidenceThreshold
-                          return (
-                            <div
-                              key={prod.sku}
-                              style={{ width: '22%' }}
-                              className={`h-24 rounded-sm bg-[#70c1b3] border-2 border-emerald-700 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
-                                isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
-                              }`}
-                            >
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-800 text-white w-max truncate max-w-full">
-                                {prod.name.split(' ')[0]} ({prod.detected_count || 1})
-                              </span>
-                              <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
-                            </div>
-                          )
-                        })}
+                        detectedProducts
+                          .filter((prod) => (prod.detected_count || 0) > 0)
+                          .slice(3, 6)
+                          .map((prod) => {
+                            const conf = avgConfidence != null ? avgConfidence : 100
+                            const isHighConf = conf >= confidenceThreshold
+                            return (
+                              <div
+                                key={prod.sku}
+                                style={{ width: '22%' }}
+                                className={`h-24 rounded-sm bg-[#70c1b3] border-2 border-emerald-700 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
+                                  isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
+                                }`}
+                              >
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-800 text-white w-max truncate max-w-full">
+                                  {prod.name.split(' ')[0]} ({prod.detected_count})
+                                </span>
+                                <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
+                              </div>
+                            )
+                          })}
 
-                      {showGaps && (
+                      {showGaps && emptyGaps > 1 && (
                         <div
                           style={{ width: '22%' }}
                           className="h-24 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in"
@@ -651,6 +672,12 @@ export default function ScanResultView({
                             GAP (Out of stock)
                           </span>
                           <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
+                        </div>
+                      )}
+
+                      {detectedProducts.filter((p) => (p.detected_count || 0) > 0).slice(3).length === 0 && (!showGaps || emptyGaps <= 1) && (
+                        <div className="w-full text-center text-slate-400 text-xs py-6">
+                          No product detections recorded for Tier 2
                         </div>
                       )}
                     </>
@@ -812,7 +839,7 @@ export default function ScanResultView({
                           </div>
                         </td>
                         <td className="py-3 font-semibold text-slate-900 text-right">
-                          ${((item.cost_price || 1.25) * qty).toFixed(2)}
+                          ₹{(((item.cost_price || item.unit_price || 0) * qty)).toLocaleString()}
                         </td>
                       </tr>
                     )
