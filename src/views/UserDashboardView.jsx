@@ -20,6 +20,7 @@ export default function UserDashboardView({
   recentScans = [],
   inventory = [],
   purchaseOrders = [],
+  totalScansCount = 0,
   isLoading = false,
 }) {
   const hour = new Date().getHours()
@@ -96,7 +97,7 @@ export default function UserDashboardView({
               <Loader2 className="w-6 h-6 animate-spin text-slate-400 mt-1" />
             ) : (
               <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                {recentScans.length}
+                {totalScansCount || recentScans.length}
               </p>
             )}
           </div>

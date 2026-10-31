@@ -51,6 +51,7 @@ function MainApp() {
   const [purchaseOrders, setPurchaseOrders] = useState([])
   const [inventory, setInventory] = useState([])
   const [recentScans, setRecentScans] = useState([])
+  const [totalScansCount, setTotalScansCount] = useState(0)
   const [dataLoading, setDataLoading] = useState(false)
   const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
@@ -95,7 +96,7 @@ function MainApp() {
       const [invData, ordersData, scansData] = await Promise.all([
         api.getInventory().catch(() => null),
         api.getOrders().catch(() => null),
-        api.getScans().catch(() => null),
+        api.getScans({ limit: 50 }).catch(() => null),
       ])
 
       if (invData?.items || invData?.inventory) {
@@ -143,7 +144,10 @@ function MainApp() {
         }
       }
 
-      if (scansData?.items || scansData?.recentScans) {
+      if (scansData) {
+        if (typeof scansData.total === 'number') {
+          setTotalScansCount(scansData.total)
+        }
         const rawScans = scansData.items || scansData.recentScans
         if (Array.isArray(rawScans) && rawScans.length > 0) {
           const normalizedScans = rawScans.map((s) => ({
@@ -424,6 +428,7 @@ function MainApp() {
             purchaseOrders={purchaseOrders}
             recentScans={recentScans}
             inventory={inventory}
+            totalScansCount={totalScansCount}
             isLoading={dataLoading}
             onQuickApproveOrder={handleApprovePO}
           />
@@ -436,6 +441,7 @@ function MainApp() {
             recentScans={recentScans}
             inventory={inventory}
             purchaseOrders={purchaseOrders}
+            totalScansCount={totalScansCount}
             isLoading={dataLoading}
           />
         )
