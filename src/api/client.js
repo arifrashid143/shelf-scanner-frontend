@@ -96,8 +96,11 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  // Purchase Orders (GET /api/purchase-orders, POST /api/purchase-orders/draft, PUT /api/purchase-orders/{id}/approve, POST /api/purchase-orders/{id}/cancel)
+  // Purchase Orders (GET /api/purchase-orders, POST /api/purchase-orders/draft, GET /api/purchase-orders/{id}, PUT /api/purchase-orders/{id}/approve, POST /api/purchase-orders/{id}/cancel)
   getOrders: () => request('/purchase-orders'),
+
+  getOrderById: (poId) =>
+    request(`/purchase-orders/${encodeURIComponent(poId)}`),
 
   generateOrder: (data = {}) =>
     request('/purchase-orders/draft', {

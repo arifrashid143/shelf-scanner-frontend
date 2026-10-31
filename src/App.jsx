@@ -397,7 +397,42 @@ function MainApp() {
     setCurrentTab('scan-result')
   }
 
-  const handleSelectOrder = (order) => {
+  const handleSelectOrder = async (order) => {
+    if (order?.id) {
+      try {
+        const fullOrder = await api.getOrderById(order.id)
+        if (fullOrder) {
+          const rawStatus = (fullOrder.status || 'Draft').toUpperCase()
+          let formattedStatus = 'Draft'
+          if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
+          else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
+
+          setSelectedOrder({
+            id: fullOrder.id,
+            supplier: fullOrder.supplier_name || fullOrder.supplier || order.supplier || 'N/A',
+            date: fullOrder.created_at ? new Date(fullOrder.created_at).toLocaleDateString() : (fullOrder.date || order.date || ''),
+            total: typeof fullOrder.total_cost === 'number' ? fullOrder.total_cost : (fullOrder.total || order.total || 0),
+            status: formattedStatus,
+            items: Array.isArray(fullOrder.items) && fullOrder.items.length > 0
+              ? fullOrder.items.map((it) => ({
+                  id: it.id || it.product_id,
+                  name: it.product_name || it.name,
+                  stock: it.detected_stock ?? it.stock ?? '-',
+                  target: it.threshold ?? it.target ?? '-',
+                  qty: it.quantity ?? it.qty ?? 0,
+                  unitPrice: it.unit_cost ?? it.unitPrice ?? 0,
+                }))
+              : (Array.isArray(order.items) ? order.items : []),
+            notes: fullOrder.notes || order.notes || '',
+            scanSource: fullOrder.scan_id || fullOrder.shelf_id || order.scanSource || 'Shelf Scan',
+          })
+          setCurrentTab('order-detail')
+          return
+        }
+      } catch (err) {
+        console.warn('Failed to fetch order detail by ID:', err.message)
+      }
+    }
     setSelectedOrder(order)
     setCurrentTab('order-detail')
   }
