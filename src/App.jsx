@@ -96,7 +96,7 @@ function MainApp() {
       const [invData, ordersData, scansData] = await Promise.all([
         api.getInventory().catch(() => null),
         api.getOrders().catch(() => null),
-        api.getScans({ limit: 50 }).catch(() => null),
+        api.getScans({ limit: 100 }).catch(() => null),
       ])
 
       if (invData?.items || invData?.inventory) {
@@ -145,12 +145,22 @@ function MainApp() {
       }
 
       if (scansData) {
-        if (typeof scansData.total === 'number') {
-          setTotalScansCount(scansData.total)
-        }
         const rawScans = scansData.items || scansData.recentScans
         if (Array.isArray(rawScans) && rawScans.length > 0) {
-          const normalizedScans = rawScans.map((s) => ({
+          // Only show scans after they are successfully verified / completed
+          const verifiedScans = rawScans.filter((s) => {
+            const st = (s.status || '').toLowerCase()
+            return (
+              st === 'completed' ||
+              st === 'done' ||
+              st === 'verified' ||
+              (Number(s.total_detected_count) > 0 && st !== 'pending' && st !== 'processing')
+            )
+          })
+
+          setTotalScansCount(verifiedScans.length)
+
+          const normalizedScans = verifiedScans.map((s) => ({
             id: s.id,
             shelf: s.shelf_id ? s.shelf_id.replace(/_/g, ' ') : 'General Shelf',
             shelf_id: s.shelf_id,
@@ -162,9 +172,7 @@ function MainApp() {
             empty_gaps_count: s.empty_gaps_count ?? 0,
             items: s.total_detected_count ?? 0,
             total_detected_count: s.total_detected_count ?? 0,
-            status: s.status
-              ? s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()
-              : 'Done',
+            status: 'Verified',
             raw_image_url: s.raw_image_url,
             annotated_image_url: s.annotated_image_url,
           }))
@@ -332,6 +340,23 @@ function MainApp() {
       let fullScan = { ...res, previewUrl: scanData.previewUrl }
       if (res?.id) {
         try {
+          // If scan is still pending, poll briefly until verified
+          let attempts = 0
+          while (
+            attempts < 5 &&
+            (fullScan.status?.toLowerCase() === 'pending' || fullScan.status?.toLowerCase() === 'processing')
+          ) {
+            attempts++
+            await new Promise((resolve) => setTimeout(resolve, 1200))
+            const check = await api.getScanById(res.id).catch(() => null)
+            if (check) {
+              fullScan = { ...fullScan, ...check }
+              if (check.status?.toLowerCase() === 'completed' || check.status?.toLowerCase() === 'done') {
+                break
+              }
+            }
+          }
+
           const [detail, detections] = await Promise.all([
             api.getScanById(res.id).catch(() => null),
             api.getScanDetections(res.id).catch(() => null),
@@ -348,21 +373,33 @@ function MainApp() {
 
       setCurrentScan(fullScan)
 
-      setRecentScans((prev) => [
-        {
-          id: fullScan.id || `scn_${Date.now()}`,
-          date: fullScan.created_at ? new Date(fullScan.created_at).toLocaleDateString() : 'Just now',
-          shelf: fullScan.shelf_id || scanData.shelfName || 'Shelf Section 1',
-          time: fullScan.created_at ? new Date(fullScan.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
-          items: typeof fullScan.total_detected_count === 'number' ? fullScan.total_detected_count : 0,
-          gaps: typeof fullScan.empty_gaps_count === 'number' ? fullScan.empty_gaps_count : 0,
-          accuracy: fullScan.accuracy ?? fullScan.confidence ?? null,
-          status: fullScan.status || 'completed',
-          raw_image_url: fullScan.raw_image_url,
-          annotated_image_url: fullScan.annotated_image_url,
-        },
-        ...prev,
-      ])
+      // Only show the scan in history after it successfully gets verified
+      const isVerified =
+        fullScan.status?.toLowerCase() === 'completed' ||
+        fullScan.status?.toLowerCase() === 'done' ||
+        fullScan.status?.toLowerCase() === 'verified' ||
+        (Number(fullScan.total_detected_count) > 0)
+
+      if (isVerified) {
+        setRecentScans((prev) => [
+          {
+            id: fullScan.id || `scn_${Date.now()}`,
+            date: fullScan.created_at ? new Date(fullScan.created_at).toLocaleDateString() : 'Just now',
+            shelf: fullScan.shelf_id || scanData.shelfName || 'Shelf Section 1',
+            time: fullScan.created_at
+              ? new Date(fullScan.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : 'Just now',
+            items: typeof fullScan.total_detected_count === 'number' ? fullScan.total_detected_count : 0,
+            gaps: typeof fullScan.empty_gaps_count === 'number' ? fullScan.empty_gaps_count : 0,
+            accuracy: fullScan.accuracy ?? fullScan.confidence ?? null,
+            status: 'Verified',
+            raw_image_url: fullScan.raw_image_url,
+            annotated_image_url: fullScan.annotated_image_url,
+          },
+          ...prev.filter((p) => p.id !== fullScan.id),
+        ])
+        setTotalScansCount((prev) => (prev || 0) + 1)
+      }
 
       setCurrentTab('scan-result')
       showToast(

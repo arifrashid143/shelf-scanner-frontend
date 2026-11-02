@@ -46,12 +46,16 @@ export default function UserDashboardView({
       po.status?.toLowerCase() === 'needs_approval'
   ).length
 
-  const totalGaps = recentScans.reduce(
+  // Only show scans after they are successfully verified
+  const visibleScans = recentScans.filter((scan) => {
+    const st = (scan.status || '').toLowerCase()
+    return st !== 'processing' && st !== 'pending'
+  })
+
+  const totalGaps = visibleScans.reduce(
     (sum, s) => sum + (s.empty_gaps_count ?? s.gaps ?? 0),
     0
   )
-
-  const visibleScans = recentScans
 
   return (
     <div className="flex flex-col min-h-full lg:h-full lg:max-h-full space-y-4 w-full max-w-[1550px] min-h-0">
@@ -169,17 +173,13 @@ export default function UserDashboardView({
                 <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
                 <span>Loading shelf scans...</span>
               </div>
-            ) : recentScans.length === 0 ? (
+            ) : visibleScans.length === 0 ? (
               <div className="py-12 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
                 <Package className="w-8 h-8 text-slate-300 stroke-[1.5]" />
-                <span>No scans recorded yet.</span>
+                <span>No verified scans recorded yet.</span>
               </div>
             ) : (
               visibleScans.map((scan) => {
-                const isProcessing =
-                  scan.status?.toLowerCase() === 'processing' ||
-                  scan.status?.toLowerCase() === 'pending'
-
                 return (
                   <div
                     key={scan.id}
@@ -201,17 +201,10 @@ export default function UserDashboardView({
                     </div>
 
                     <div className="shrink-0 ml-2 sm:ml-3">
-                      {isProcessing ? (
-                        <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200/80">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Processing
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                          <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-                          Done
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                        Verified
+                      </span>
                     </div>
                   </div>
                 )

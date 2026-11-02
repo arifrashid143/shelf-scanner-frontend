@@ -41,12 +41,17 @@ export default function AdminDashboardView({
     (item) => item.status === 'Low' || item.is_low_stock === true
   )
 
-  const totalGaps = recentScans.reduce(
+  // Only show scans after they are successfully verified
+  const visibleScans = recentScans.filter((scan) => {
+    const st = (scan.status || '').toLowerCase()
+    return st !== 'processing' && st !== 'pending'
+  })
+
+  const totalGaps = visibleScans.reduce(
     (sum, s) => sum + (s.empty_gaps_count ?? s.gaps ?? 0),
     0
   )
 
-  const visibleScans = recentScans
   const visibleOrders = pendingOrders
 
   return (
@@ -169,16 +174,12 @@ export default function AdminDashboardView({
                 <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
                 <span>Loading shelf scans...</span>
               </div>
-            ) : recentScans.length === 0 ? (
+            ) : visibleScans.length === 0 ? (
               <div className="py-8 text-center text-slate-400 text-xs">
-                No scans recorded yet.
+                No verified scans recorded yet.
               </div>
             ) : (
               visibleScans.map((scan) => {
-                const isProcessing =
-                  scan.status?.toLowerCase() === 'processing' ||
-                  scan.status?.toLowerCase() === 'pending'
-
                 return (
                   <div
                     key={scan.id}
@@ -200,17 +201,10 @@ export default function AdminDashboardView({
                     </div>
 
                     <div className="shrink-0 ml-2 sm:ml-3">
-                      {isProcessing ? (
-                        <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200/80">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Processing
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                          <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-                          Done
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                        Verified
+                      </span>
                     </div>
                   </div>
                 )
