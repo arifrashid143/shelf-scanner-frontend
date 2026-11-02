@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   Image as ImageIcon,
-  LayoutGrid,
   Check,
   AlertTriangle,
   ShoppingCart,
@@ -16,11 +15,6 @@ export default function ScanResultView({
   onDone,
   onNavigate,
 }) {
-  const [activeVisualizerTab, setActiveVisualizerTab] = useState('photo') // 'photo' | 'map'
-  const [showBoxes, setShowBoxes] = useState(true)
-  const [showGaps, setShowGaps] = useState(true)
-  const [confidenceThreshold, setConfidenceThreshold] = useState(80)
-
   // PO Generation state
   const [isGeneratingPO, setIsGeneratingPO] = useState(false)
   const [poSuccessMessage, setPoSuccessMessage] = useState(null)
@@ -57,13 +51,7 @@ export default function ScanResultView({
       )
     : (scanData?.accuracy ?? scanData?.confidence ?? null)
 
-  // Separate API detections by Tier/Row if available
-  const tier1ApiDetections = hasApiDetections
-    ? apiDetections.filter((d) => d.row_index === 1 || !d.row_index)
-    : []
-  const tier2ApiDetections = hasApiDetections
-    ? apiDetections.filter((d) => d.row_index === 2)
-    : []
+
 
   // Helper to resolve relative backend image URLs
   const resolveImageUrl = (url) => {
@@ -340,73 +328,21 @@ export default function ScanResultView({
         </div>
       </div>
 
-      {/* Visualizer & Photo Inspection Box */}
+      {/* Uploaded Shelf Photo Inspection Box */}
       <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveVisualizerTab('photo')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeVisualizerTab === 'photo'
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
+            <ImageIcon className="w-4 h-4 text-blue-600" />
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
               Uploaded Shelf Photo
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveVisualizerTab('map')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeVisualizerTab === 'map'
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              2D Shelf Planogram Map
-            </button>
+            </h2>
           </div>
-
-          {activeVisualizerTab === 'map' && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowBoxes(!showBoxes)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                  showBoxes ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
-                }`}
-              >
-                Boxes
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowGaps(!showGaps)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                  showGaps ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
-                }`}
-              >
-                Gaps
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfidenceThreshold(confidenceThreshold === 80 ? 0 : 80)}
-                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
-                  confidenceThreshold >= 80
-                    ? 'bg-white border-slate-300 text-slate-800'
-                    : 'bg-slate-100 border-slate-200 text-slate-400'
-                }`}
-              >
-                ≥ 80%
-              </button>
-            </div>
-          )}
+          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+            {shelfName}
+          </span>
         </div>
 
         {/* Viewfinder Content */}
-        {activeVisualizerTab === 'photo' ? (
           <div className="rounded-xl overflow-hidden bg-slate-950 aspect-[16/9] max-h-[460px] flex items-center justify-center relative border border-slate-800">
             {photoUrl ? (
               <img
@@ -426,209 +362,6 @@ export default function ScanResultView({
               <span>AI Processed: {itemsCounted} items detected · {emptyGaps} empty gaps</span>
             </div>
           </div>
-        ) : (
-          <div className="bg-[#e9eff6] rounded-xl p-6 border border-slate-200 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 pb-2 border-b border-slate-200/80 gap-2">
-              <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                <LayoutGrid className="w-4 h-4 text-blue-600" />
-                2D Retail Shelf Planogram Map (Multi-Tier Digital Twin)
-              </span>
-              <span className="text-slate-500">
-                Active filters: {showBoxes ? 'Boxes visible' : 'Boxes hidden'} · {showGaps ? 'Gaps highlighted' : 'Gaps hidden'} · Min confidence: {confidenceThreshold}%
-              </span>
-            </div>
-
-            <div className="space-y-8 min-w-[500px] overflow-x-auto py-2">
-              {/* Shelf Tier 1 (Top Shelf) */}
-              <div>
-                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 px-1">
-                  <span>Tier 1 · Beverages & Essentials</span>
-                  <span className="text-slate-400 font-normal">Upper Facing Deck</span>
-                </div>
-                <div className="h-32 relative flex items-end gap-3 pb-1 overflow-x-auto">
-                  {hasApiDetections ? (
-                    tier1ApiDetections.map((d, idx) => {
-                      const isGap = d.is_empty_gap
-                      const conf = Math.round((d.confidence || 0.95) * 100)
-                      const isHighConf = conf >= confidenceThreshold
-                      const widthStyle = d.box?.width ? `${Math.max(16, Math.round(d.box.width * 100))}%` : '18%'
-
-                      if (isGap) {
-                        if (!showGaps) return null
-                        return (
-                          <div
-                            key={d.id || `t1-gap-${idx}`}
-                            style={{ width: widthStyle }}
-                            className="h-28 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in shrink-0"
-                          >
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
-                              GAP (Out of stock)
-                            </span>
-                            <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
-                          </div>
-                        )
-                      }
-
-                      if (!showBoxes) return null
-                      return (
-                        <div
-                          key={d.id || `t1-box-${idx}`}
-                          style={{ width: widthStyle }}
-                          className={`h-28 rounded-sm bg-[#f7b05b] border-2 border-blue-600 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in shrink-0 ${
-                            isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
-                          }`}
-                        >
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white w-max truncate max-w-full">
-                            {d.label?.replace(/\[.*?\]/g, '').split(' ')[0] || 'Item'}
-                          </span>
-                          <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
-                        </div>
-                      )
-                    })
-                  ) : (
-                    <>
-                      {showBoxes &&
-                        detectedProducts
-                          .filter((prod) => (prod.detected_count || 0) > 0)
-                          .slice(0, 3)
-                          .map((prod) => {
-                            const conf = avgConfidence != null ? avgConfidence : 100
-                            const isHighConf = conf >= confidenceThreshold
-                            return (
-                              <div
-                                key={prod.sku}
-                                style={{ width: '22%' }}
-                                className={`h-28 rounded-sm bg-[#f7b05b] border-2 border-blue-600 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
-                                  isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
-                                }`}
-                              >
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white w-max truncate max-w-full">
-                                  {prod.name.split(' ')[0]} ({prod.detected_count})
-                                </span>
-                                <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
-                              </div>
-                            )
-                          })}
-
-                      {showGaps && emptyGaps > 0 && (
-                        <div
-                          style={{ width: '24%' }}
-                          className="h-28 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in"
-                        >
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
-                            GAP (Out of stock)
-                          </span>
-                          <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
-                        </div>
-                      )}
-
-                      {detectedProducts.filter((p) => (p.detected_count || 0) > 0).length === 0 && (!showGaps || emptyGaps === 0) && (
-                        <div className="w-full text-center text-slate-400 text-xs py-8">
-                          No product detections recorded for Tier 1
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="h-3.5 bg-[#9aa6b2] rounded-xs shadow-inner"></div>
-              </div>
-
-              {/* Shelf Tier 2 (Bottom Shelf) */}
-              <div>
-                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 px-1">
-                  <span>Tier 2 · Snacks & Pantry</span>
-                  <span className="text-slate-400 font-normal">Lower Facing Deck</span>
-                </div>
-                <div className="h-28 relative flex items-end gap-3 pb-1 overflow-x-auto">
-                  {hasApiDetections ? (
-                    tier2ApiDetections.map((d, idx) => {
-                      const isGap = d.is_empty_gap
-                      const conf = Math.round((d.confidence || 0.95) * 100)
-                      const isHighConf = conf >= confidenceThreshold
-                      const widthStyle = d.box?.width ? `${Math.max(16, Math.round(d.box.width * 100))}%` : '18%'
-
-                      if (isGap) {
-                        if (!showGaps) return null
-                        return (
-                          <div
-                            key={d.id || `t2-gap-${idx}`}
-                            style={{ width: widthStyle }}
-                            className="h-24 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in shrink-0"
-                          >
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
-                              GAP (Out of stock)
-                            </span>
-                            <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
-                          </div>
-                        )
-                      }
-
-                      if (!showBoxes) return null
-                      return (
-                        <div
-                          key={d.id || `t2-box-${idx}`}
-                          style={{ width: widthStyle }}
-                          className={`h-24 rounded-sm bg-[#70c1b3] border-2 border-emerald-700 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in shrink-0 ${
-                            isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
-                          }`}
-                        >
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-800 text-white w-max truncate max-w-full">
-                            {d.label?.replace(/\[.*?\]/g, '').split(' ')[0] || 'Item'}
-                          </span>
-                          <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
-                        </div>
-                      )
-                    })
-                  ) : (
-                    <>
-                      {showBoxes &&
-                        detectedProducts
-                          .filter((prod) => (prod.detected_count || 0) > 0)
-                          .slice(3, 6)
-                          .map((prod) => {
-                            const conf = avgConfidence != null ? avgConfidence : 100
-                            const isHighConf = conf >= confidenceThreshold
-                            return (
-                              <div
-                                key={prod.sku}
-                                style={{ width: '22%' }}
-                                className={`h-24 rounded-sm bg-[#70c1b3] border-2 border-emerald-700 p-2 flex flex-col justify-between shadow-xs transition-all duration-200 animate-in fade-in ${
-                                  isHighConf ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-95'
-                                }`}
-                              >
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-800 text-white w-max truncate max-w-full">
-                                  {prod.name.split(' ')[0]} ({prod.detected_count})
-                                </span>
-                                <span className="text-[9px] text-slate-800 font-bold">Conf: {conf}%</span>
-                              </div>
-                            )
-                          })}
-
-                      {showGaps && emptyGaps > 1 && (
-                        <div
-                          style={{ width: '22%' }}
-                          className="h-24 rounded-sm bg-red-100/60 border-2 border-dashed border-red-500 p-2 flex flex-col justify-between transition-all duration-200 animate-in fade-in"
-                        >
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white w-max">
-                            GAP (Out of stock)
-                          </span>
-                          <span className="text-[9px] text-red-600 font-bold">Empty shelf slot</span>
-                        </div>
-                      )}
-
-                      {detectedProducts.filter((p) => (p.detected_count || 0) > 0).slice(3).length === 0 && (!showGaps || emptyGaps <= 1) && (
-                        <div className="w-full text-center text-slate-400 text-xs py-6">
-                          No product detections recorded for Tier 2
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="h-3.5 bg-[#9aa6b2] rounded-xs shadow-inner"></div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Detected Products on Shelf Table */}
