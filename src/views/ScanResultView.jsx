@@ -5,20 +5,16 @@ import {
   Check,
   AlertTriangle,
   ShoppingCart,
-  ShieldCheck,
   Loader2,
-  PackageCheck,
   Sparkles,
 } from 'lucide-react'
 import { api } from '../api/client'
 
 export default function ScanResultView({
   scanData,
-  isAdmin = false,
   inventory = [],
   onDone,
   onNavigate,
-  onInventoryUpdated,
 }) {
   const [activeVisualizerTab, setActiveVisualizerTab] = useState('photo') // 'photo' | 'map'
   const [showBoxes, setShowBoxes] = useState(true)
@@ -29,11 +25,6 @@ export default function ScanResultView({
   const [isGeneratingPO, setIsGeneratingPO] = useState(false)
   const [poSuccessMessage, setPoSuccessMessage] = useState(null)
   const [poErrorMessage, setPoErrorMessage] = useState(null)
-
-  // Admin Inventory Update state
-  const [isUpdatingInventory, setIsUpdatingInventory] = useState(false)
-  const [adminUpdateSuccess, setAdminUpdateSuccess] = useState(null)
-  const [adminUpdateError, setAdminUpdateError] = useState(null)
 
   const scanId = scanData?.id || scanData?.scan_id || 'Scan'
   const shelfName = scanData?.shelf_id || scanData?.shelfName || 'Shelf Section 1'
@@ -199,18 +190,6 @@ export default function ScanResultView({
     return initial
   })
 
-  // Admin inventory confirmed values
-  const [adminStockConfirmations, setAdminStockConfirmations] = useState(() => {
-    const initial = {}
-    detectedProducts.forEach((item) => {
-      initial[item.product_id] = {
-        selected: true,
-        newStock: item.detected_count,
-      }
-    })
-    return initial
-  })
-
   // Handle PO item toggle & quantity changes
   const togglePoItem = (productId) => {
     setSelectedPoItems((prev) => ({
@@ -272,44 +251,6 @@ export default function ScanResultView({
       setPoErrorMessage(err.message || 'Failed to submit Purchase Order to backend.')
     } finally {
       setIsGeneratingPO(false)
-    }
-  }
-
-  // Handle Admin Inventory Confirmation & Update (Exclusively Admin)
-  const handleAdminInventoryUpdate = async () => {
-    if (!isAdmin) return
-    setIsUpdatingInventory(true)
-    setAdminUpdateSuccess(null)
-    setAdminUpdateError(null)
-
-    try {
-      const updates = detectedProducts.filter(
-        (p) => adminStockConfirmations[p.product_id]?.selected
-      )
-
-      if (updates.length === 0) {
-        setAdminUpdateError('Please select at least one product to update.')
-        setIsUpdatingInventory(false)
-        return
-      }
-
-      let updatedCount = 0
-      for (const item of updates) {
-        const confirmedQty = adminStockConfirmations[item.product_id].newStock
-        await api.updateProduct(item.product_id, {
-          current_stock: confirmedQty,
-        })
-        updatedCount++
-      }
-
-      setAdminUpdateSuccess(`Successfully updated inventory for ${updatedCount} product(s) in backend database!`)
-      if (onInventoryUpdated) {
-        await onInventoryUpdated()
-      }
-    } catch (err) {
-      setAdminUpdateError(err.message || 'Error occurred while updating inventory in backend.')
-    } finally {
-      setIsUpdatingInventory(false)
     }
   }
 
@@ -874,145 +815,6 @@ export default function ScanResultView({
           </div>
         )}
       </div>
-
-      {/* Admin-Exclusive Inventory Management Feature */}
-      {isAdmin && (
-        <div className="bg-gradient-to-br from-purple-50/50 via-white to-white rounded-2xl border-2 border-purple-200/90 p-5 sm:p-6 shadow-xs space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-purple-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-purple-600" />
-                <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                  Admin Inventory Management: Review & Sync from Scan
-                </h2>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                  Admin Only
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Verify AI detected stock counts and update live inventory in backend database (<code className="font-mono text-purple-700">PUT /api/inventory/&#123;id&#125;</code>). Changes are never applied automatically without your explicit confirmation.
-              </p>
-            </div>
-          </div>
-
-          {adminUpdateSuccess && (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>{adminUpdateSuccess}</span>
-            </div>
-          )}
-
-          {adminUpdateError && (
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>{adminUpdateError}</span>
-            </div>
-          )}
-
-          {detectedProducts.length === 0 ? (
-            <div className="py-6 text-center text-slate-400 text-xs">
-              No product stock entries to reconcile for this scan.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
-                <table className="w-full text-left text-xs sm:text-sm min-w-[600px]">
-                  <thead>
-                    <tr className="text-xs text-purple-900/60 font-semibold border-b border-purple-100">
-                      <th className="pb-3 w-10">Select</th>
-                      <th className="pb-3">Product Name & SKU</th>
-                      <th className="pb-3">Current DB Stock</th>
-                      <th className="pb-3">Detected Count</th>
-                      <th className="pb-3">Confirmed New Stock</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-purple-50">
-                    {detectedProducts.map((p) => {
-                      const isSelected = adminStockConfirmations[p.product_id]?.selected ?? true
-                      const newStock = adminStockConfirmations[p.product_id]?.newStock ?? p.detected_count
-
-                      return (
-                        <tr key={p.product_id} className="hover:bg-purple-50/30 transition-colors">
-                          <td className="py-3">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() =>
-                                setAdminStockConfirmations((prev) => ({
-                                  ...prev,
-                                  [p.product_id]: {
-                                    ...prev[p.product_id],
-                                    selected: !prev[p.product_id]?.selected,
-                                  },
-                                }))
-                              }
-                              className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
-                            />
-                          </td>
-                          <td className="py-3 font-bold text-slate-900">
-                            {p.name}
-                            <span className="block text-[11px] font-normal text-slate-400">{p.sku}</span>
-                          </td>
-                          <td className="py-3 font-semibold text-slate-600">
-                            {p.current_stock} units
-                          </td>
-                          <td className="py-3 font-extrabold text-blue-600">
-                            {p.detected_count} units
-                          </td>
-                          <td className="py-3">
-                            <input
-                              type="number"
-                              min="0"
-                              value={newStock}
-                              disabled={!isSelected}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value, 10)
-                                setAdminStockConfirmations((prev) => ({
-                                  ...prev,
-                                  [p.product_id]: {
-                                    ...prev[p.product_id],
-                                    newStock: isNaN(val) ? 0 : Math.max(0, val),
-                                  },
-                                }))
-                              }}
-                              className="w-24 px-3 py-1.5 text-xs font-bold rounded-lg border border-purple-200 focus:outline-none focus:border-purple-600 disabled:opacity-40"
-                            />
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="pt-4 border-t border-purple-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <span className="text-xs text-slate-500">
-                  Submits updates to backend via <code className="font-mono text-purple-700">PUT /api/inventory/&#123;product_id&#125;</code> and refreshes live inventory.
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handleAdminInventoryUpdate}
-                  disabled={isUpdatingInventory}
-                  className="px-6 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 active:scale-98 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
-                >
-                  {isUpdatingInventory ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Applying Updates…</span>
-                    </>
-                  ) : (
-                    <>
-                      <PackageCheck className="w-4 h-4" />
-                      <span>Confirm & Update Inventory</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
