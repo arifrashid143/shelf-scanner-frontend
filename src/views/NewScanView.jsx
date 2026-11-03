@@ -368,7 +368,24 @@ export default function NewScanView({ onScanComplete }) {
               <p className="text-white/90 text-sm font-semibold tracking-wide">
                 Fit shelf straight on in frame
               </p>
-              <p className="text-xs text-slate-400 mt-1">Tap &ldquo;Open Camera&rdquo; or &ldquo;Gallery&rdquo; below</p>
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="bg-white/10 hover:bg-white/20 text-white font-bold px-3 py-1.5 rounded-xl text-xs border border-white/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  Gallery
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startCamera()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  Open Camera
+                </button>
+              </div>
             </div>
           )}
 
@@ -429,32 +446,20 @@ export default function NewScanView({ onScanComplete }) {
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 text-white" />
-                    <span>Analyse Shelf</span>
+                    <span>Analyse</span>
                   </>
                 )}
               </button>
             </>
           ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => galleryInputRef.current?.click()}
-                disabled={isAnalyzing}
-                className="flex-1 py-3 px-3 rounded-2xl bg-white border border-slate-200/90 text-slate-800 font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <ImageIcon className="w-4 h-4 text-slate-600" />
-                Gallery
-              </button>
-              <button
-                type="button"
-                onClick={() => startCamera()}
-                disabled={isAnalyzing}
-                className="flex-1 py-3 px-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <Camera className="w-4 h-4 text-white" />
-                Open Camera
-              </button>
-            </>
+            <button
+              type="button"
+              disabled
+              className="w-full py-3 px-4 rounded-2xl bg-slate-100 text-slate-400 border border-slate-200/80 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+            >
+              <Sparkles className="w-4 h-4 text-slate-400" />
+              <span>Analyse</span>
+            </button>
           )}
         </div>
 
@@ -729,13 +734,13 @@ export default function NewScanView({ onScanComplete }) {
                     >
                       {isAnalyzing ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
                           <span>Analyzing...</span>
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 text-white" />
-                          <span>Analyse Shelf</span>
+                          <span>Analyse</span>
                         </>
                       )}
                     </button>
@@ -743,25 +748,18 @@ export default function NewScanView({ onScanComplete }) {
                 </>
               ) : (
                 <>
-                  <span className="text-xs text-slate-500 font-medium">
+                  <span className="text-xs text-slate-400 font-medium">
                     No photo captured yet. Choose an option to start.
                   </span>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={() => galleryInputRef.current?.click()}
-                      className="px-3.5 py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-all cursor-pointer flex items-center gap-1.5 bg-white shadow-2xs"
+                      disabled
+                      className="px-6 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs sm:text-sm border border-slate-200/80 cursor-not-allowed flex items-center gap-2 select-none opacity-60"
+                      title="Capture or upload a shelf photo first"
                     >
-                      <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
-                      Browse
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => startCamera()}
-                      className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
-                    >
-                      <Camera className="w-3.5 h-3.5 text-white" />
-                      Open Camera
+                      <Sparkles className="w-4 h-4 text-slate-400" />
+                      <span>Analyse</span>
                     </button>
                   </div>
                 </>
