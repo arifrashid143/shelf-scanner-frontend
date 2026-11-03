@@ -90,10 +90,10 @@ export default function AdminDashboardView({
 
       {/* 3 Stat KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
-        {/* Card 1: Scans today */}
+        {/* Card 1: Total scans */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 mb-2">Scans today</p>
+            <p className="text-xs font-semibold text-slate-500 mb-2">Total scans</p>
             {isLoading ? (
               <Loader2 className="w-6 h-6 animate-spin text-slate-400 mt-1" />
             ) : (
