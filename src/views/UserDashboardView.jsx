@@ -1,7 +1,6 @@
 import {
   Scan,
   TrendingDown,
-  Clock,
   Search,
   Package,
   Plus,
@@ -19,7 +18,6 @@ export default function UserDashboardView({
   onGenerateOrder,
   recentScans = [],
   inventory = [],
-  purchaseOrders = [],
   totalScansCount = 0,
   isLoading = false,
 }) {
@@ -37,13 +35,6 @@ export default function UserDashboardView({
 
   const lowStockCount = inventory.filter(
     (item) => item.status === 'Low' || item.is_low_stock === true
-  ).length
-
-  const pendingApprovalCount = purchaseOrders.filter(
-    (po) =>
-      po.status?.toLowerCase() === 'draft' ||
-      po.status?.toLowerCase() === 'pending' ||
-      po.status?.toLowerCase() === 'needs_approval'
   ).length
 
   // Only show scans after they are successfully verified
@@ -92,8 +83,8 @@ export default function UserDashboardView({
         </div>
       </div>
 
-      {/* 4 Stat KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+      {/* 3 Stat KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 mb-2">Scans today</p>
@@ -123,22 +114,6 @@ export default function UserDashboardView({
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100/90 text-rose-600 flex items-center justify-center shrink-0">
             <TrendingDown className="w-5 h-5 stroke-[2.2]" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-start justify-between">
-          <div>
-            <p className="text-xs font-semibold text-slate-500 mb-2">Pending approval</p>
-            {isLoading ? (
-              <Loader2 className="w-6 h-6 animate-spin text-slate-400 mt-1" />
-            ) : (
-              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                {pendingApprovalCount}
-              </p>
-            )}
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100/90 text-amber-600 flex items-center justify-center shrink-0">
-            <Clock className="w-5 h-5 stroke-[2]" />
           </div>
         </div>
 
