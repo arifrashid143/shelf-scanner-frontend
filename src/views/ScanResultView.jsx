@@ -1,13 +1,11 @@
-import { useState } from 'react'
 import {
   Image as ImageIcon,
   Check,
   AlertTriangle,
   ShoppingCart,
-  Loader2,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react'
-import { api } from '../api/client'
 
 export default function ScanResultView({
   scanData,
@@ -15,11 +13,6 @@ export default function ScanResultView({
   onDone,
   onNavigate,
 }) {
-  // PO Generation state
-  const [isGeneratingPO, setIsGeneratingPO] = useState(false)
-  const [poSuccessMessage, setPoSuccessMessage] = useState(null)
-  const [poErrorMessage, setPoErrorMessage] = useState(null)
-
   const scanId = scanData?.id || scanData?.scan_id || 'Scan'
   const shelfName = scanData?.shelf_id || scanData?.shelfName || 'Shelf Section 1'
 
@@ -160,87 +153,11 @@ export default function ScanResultView({
       })
     : []
 
-  // Items for Purchase Order selection (low stock or zero detected)
+  // Items identified for replenishment (low stock or zero detected)
   const lowStockCandidates =
     rawLowStock.length > 0
       ? rawLowStock
       : detectedProducts.filter((p) => p.is_low_stock || p.detected_count === 0)
-
-  // Interactive PO selection states
-  const [selectedPoItems, setSelectedPoItems] = useState(() => {
-    const initial = {}
-    lowStockCandidates.forEach((item) => {
-      initial[item.product_id] = {
-        selected: true,
-        qty: item.reorder_recommended_qty || Math.max(1, (item.min_stock_threshold || item.max_shelf_capacity || 1) - (item.detected_count || 0)),
-      }
-    })
-    return initial
-  })
-
-  // Handle PO item toggle & quantity changes
-  const togglePoItem = (productId) => {
-    setSelectedPoItems((prev) => ({
-      ...prev,
-      [productId]: {
-        ...prev[productId],
-        selected: !prev[productId]?.selected,
-      },
-    }))
-  }
-
-  const handlePoQtyChange = (productId, qty) => {
-    const val = parseInt(qty, 10)
-    setSelectedPoItems((prev) => ({
-      ...prev,
-      [productId]: {
-        ...prev[productId],
-        qty: isNaN(val) ? 0 : Math.max(0, val),
-      },
-    }))
-  }
-
-  // Handle PO Submission
-  const handleGeneratePurchaseOrder = async () => {
-    setIsGeneratingPO(true)
-    setPoSuccessMessage(null)
-    setPoErrorMessage(null)
-
-    const itemsToOrder = lowStockCandidates
-      .filter((p) => selectedPoItems[p.product_id]?.selected && selectedPoItems[p.product_id]?.qty > 0)
-      .map((p) => ({
-        product_id: p.product_id,
-        quantity: selectedPoItems[p.product_id].qty,
-        unit_cost: p.cost_price || p.unit_price || 0,
-        recommended_reason: 'Low stock identified during visual shelf scan',
-      }))
-
-    try {
-      let poResponse
-      try {
-        poResponse = await api.generateOrder({
-          scan_id: scanId.startsWith('scn_') ? scanId : null,
-          supplier_id: 1,
-          items: itemsToOrder.length > 0 ? itemsToOrder : null,
-          notes: `Auto-generated draft PO for ${itemsToOrder.length} item(s) from shelf scan ${scanId}`,
-        })
-      } catch {
-        // Fallback with scan_id only if line-item payload needs backend adjustment
-        poResponse = await api.generateOrder({
-          scan_id: scanId.startsWith('scn_') ? scanId : null,
-        })
-      }
-
-      setPoSuccessMessage(`Purchase Order ${poResponse.id || ''} created successfully with status ${poResponse.status || 'DRAFT'}!`)
-      setTimeout(() => {
-        if (onNavigate) onNavigate('orders')
-      }, 1800)
-    } catch (err) {
-      setPoErrorMessage(err.message || 'Failed to submit Purchase Order to backend.')
-    } finally {
-      setIsGeneratingPO(false)
-    }
-  }
 
   return (
     <div className="space-y-4 w-full max-w-[1550px] pb-24">
@@ -429,125 +346,39 @@ export default function ScanResultView({
         </div>
       </div>
 
-      {/* Interactive Purchase Order Generation (Available to Both User & Admin) */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-blue-600" />
-              Automated Purchase Order Recommendations
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Select out-of-stock or low-stock items and customize replenishment quantities before creating a draft purchase order.
-            </p>
-          </div>
-          <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full w-max">
-            {lowStockCandidates.length} Items Require Restock
-          </span>
-        </div>
-
-        {poSuccessMessage && (
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>{poSuccessMessage}</span>
-          </div>
-        )}
-
-        {poErrorMessage && (
-          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>{poErrorMessage}</span>
-          </div>
-        )}
-
-        {lowStockCandidates.length === 0 ? (
-          <div className="py-8 text-center text-slate-400 text-xs">
-            All detected products are currently within optimal inventory levels. No replenishment order needed.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="overflow-x-auto overflow-y-auto max-h-[320px] -mx-5 sm:mx-0 px-5 sm:px-0 scrollbar-thin">
-              <table className="w-full text-left text-xs sm:text-sm min-w-[600px]">
-                <thead className="sticky top-0 bg-white z-10 shadow-2xs">
-                  <tr className="text-xs text-slate-400 font-medium border-b border-slate-100 bg-white">
-                    <th className="py-3 w-10 bg-white">Include</th>
-                    <th className="py-3 font-medium bg-white">Product</th>
-                    <th className="py-3 font-medium bg-white">Shelf / Threshold</th>
-                    <th className="py-3 font-medium bg-white">Recommended Order Qty</th>
-                    <th className="py-3 font-medium text-right bg-white">Est. Unit Cost</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {lowStockCandidates.map((item) => {
-                    const isSelected = selectedPoItems[item.product_id]?.selected ?? true
-                    const qty = selectedPoItems[item.product_id]?.qty ?? 10
-
-                    return (
-                      <tr key={item.product_id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => togglePoItem(item.product_id)}
-                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                          />
-                        </td>
-                        <td className="py-3 font-bold text-slate-900">
-                          {item.name}
-                          <span className="block text-[11px] font-normal text-slate-400">{item.sku}</span>
-                        </td>
-                        <td className="py-3 text-slate-600">
-                          <span className="font-bold text-rose-600">{item.detected_count || 0}</span> / {item.min_stock_threshold || 5} min
-                        </td>
-                        <td className="py-3">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="1"
-                              value={qty}
-                              disabled={!isSelected}
-                              onChange={(e) => handlePoQtyChange(item.product_id, e.target.value)}
-                              className="w-24 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500 disabled:opacity-40"
-                            />
-                            <span className="text-xs text-slate-400">units</span>
-                          </div>
-                        </td>
-                        <td className="py-3 font-semibold text-slate-900 text-right">
-                          ₹{(((item.cost_price || item.unit_price || 0) * qty)).toLocaleString()}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+      {/* AI Auto-Generated Purchase Order Banner */}
+      {lowStockCandidates.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white rounded-2xl border border-blue-200/90 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <ShoppingCart className="w-5 h-5" />
             </div>
-
-            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <span className="text-xs text-slate-500">
-                Purchase order will be drafted with backend endpoint <code className="font-mono text-blue-600">POST /api/purchase-orders/draft</code>.
-              </span>
-              <button
-                type="button"
-                onClick={handleGeneratePurchaseOrder}
-                disabled={isGeneratingPO || lowStockCandidates.length === 0}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
-              >
-                {isGeneratingPO ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Submitting Order…</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-4 h-4" />
-                    <span>Generate Purchase Order</span>
-                  </>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                  AI Auto-Generated Purchase Order
+                </h3>
+                {scanData?.auto_po_id && (
+                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                    #{scanData.auto_po_id}
+                  </span>
                 )}
-              </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {lowStockCandidates.length} low-stock item(s) detected during scan analysis. A draft purchase order has been generated automatically and sent to the Purchase Orders page for review and approval.
+              </p>
             </div>
           </div>
-        )}
-      </div>
+          <button
+            type="button"
+            onClick={() => onNavigate && onNavigate('orders')}
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-xs shrink-0 self-start sm:self-auto"
+          >
+            <span>View on Purchase Orders page</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

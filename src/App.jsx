@@ -401,11 +401,158 @@ function MainApp() {
         setTotalScansCount((prev) => (prev || 0) + 1)
       }
 
+      // Automatically generate purchase order using AI based on analyzed image data
+      try {
+        const detectedCountsByProductId = {}
+        const detectedCountsByName = {}
+
+        const rawDetections = Array.isArray(fullScan?.detections) ? fullScan.detections : []
+        rawDetections.forEach((d) => {
+          if (d.is_empty_gap) return
+          if (d.product_id != null) {
+            const idStr = String(d.product_id)
+            detectedCountsByProductId[idStr] = (detectedCountsByProductId[idStr] || 0) + 1
+          }
+          if (d.label) {
+            const cleanLabel = d.label.replace(/\[.*?\]/g, '').toLowerCase().trim()
+            detectedCountsByName[cleanLabel] = (detectedCountsByName[cleanLabel] || 0) + 1
+          }
+        })
+
+        const rawProducts = Array.isArray(fullScan?.products) ? fullScan.products : []
+        if (rawProducts.length > 0) {
+          rawProducts.forEach((p) => {
+            if (p.product_id != null) {
+              detectedCountsByProductId[String(p.product_id)] = p.detected_count ?? 0
+            }
+            if (p.name) {
+              detectedCountsByName[p.name.toLowerCase().trim()] = p.detected_count ?? 0
+            }
+          })
+        }
+
+        const itemsToReorder = []
+        if (inventory.length > 0) {
+          inventory.forEach((invItem) => {
+            const prodId = String(invItem.productId || invItem.id)
+            const nameKey = (invItem.name || '').toLowerCase().trim()
+
+            let detectedCount = 0
+            if (detectedCountsByProductId[prodId] !== undefined) {
+              detectedCount = detectedCountsByProductId[prodId]
+            } else if (detectedCountsByName[nameKey] !== undefined) {
+              detectedCount = detectedCountsByName[nameKey]
+            } else {
+              const matchingKey = Object.keys(detectedCountsByName).find(
+                (k) => nameKey.includes(k) || k.includes(nameKey)
+              )
+              if (matchingKey) {
+                detectedCount = detectedCountsByName[matchingKey]
+              }
+            }
+
+            const minThreshold = invItem.minThreshold ?? invItem.min_stock_threshold ?? 5
+            const maxCapacity = invItem.target ?? invItem.max_shelf_capacity ?? 10
+
+            if (detectedCount < minThreshold || detectedCount === 0) {
+              const reorderQty =
+                maxCapacity > detectedCount
+                  ? maxCapacity - detectedCount
+                  : Math.max(1, minThreshold - detectedCount)
+
+              itemsToReorder.push({
+                product_id: invItem.productId || invItem.id,
+                quantity: reorderQty,
+                unit_cost: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : 0),
+                recommended_reason: `AI detected ${detectedCount} on shelf (below threshold ${minThreshold})`,
+              })
+            }
+          })
+        } else if (rawProducts.length > 0) {
+          rawProducts.forEach((p) => {
+            const minThresh = p.min_stock_threshold ?? 5
+            const maxCap = p.max_shelf_capacity ?? 10
+            const detected = p.detected_count ?? 0
+            if (detected < minThresh || detected === 0) {
+              const reorderQty = maxCap > detected ? maxCap - detected : Math.max(1, minThresh - detected)
+              itemsToReorder.push({
+                product_id: p.product_id,
+                quantity: reorderQty,
+                unit_cost: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 0),
+                recommended_reason: `AI detected ${detected} on shelf`,
+              })
+            }
+          })
+        }
+
+        if (itemsToReorder.length > 0) {
+          let autoPoResponse
+          try {
+            autoPoResponse = await api.generateOrder({
+              scan_id: fullScan.id?.startsWith('scn_') ? fullScan.id : null,
+              supplier_id: 1,
+              items: itemsToReorder,
+              notes: `AI auto-generated Purchase Order for ${itemsToReorder.length} low-stock item(s) from shelf scan ${fullScan.id || ''}`,
+            })
+          } catch {
+            autoPoResponse = await api.generateOrder({
+              scan_id: fullScan.id?.startsWith('scn_') ? fullScan.id : null,
+            }).catch(() => null)
+          }
+
+          if (autoPoResponse?.id) {
+            fullScan.auto_po_id = autoPoResponse.id
+            fullScan.auto_po_items_count = itemsToReorder.length
+
+            // Refresh purchase orders list so it immediately appears on the Purchase Orders page
+            const ordersData = await api.getOrders().catch(() => null)
+            if (ordersData) {
+              const rawOrders = Array.isArray(ordersData)
+                ? ordersData
+                : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
+              if (rawOrders.length > 0) {
+                const normalizedOrders = rawOrders.map((order) => {
+                  const rawStatus = (order.status || 'Draft').toUpperCase()
+                  let formattedStatus = 'Draft'
+                  if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
+                  else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
+
+                  return {
+                    id: order.id,
+                    supplier: order.supplier_name || order.supplier || 'N/A',
+                    date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || ''),
+                    total: typeof order.total_cost === 'number' ? order.total_cost : (order.total || 0),
+                    status: formattedStatus,
+                    items: Array.isArray(order.items) ? order.items : [],
+                    notes: order.notes || '',
+                  }
+                })
+                setPurchaseOrders(normalizedOrders)
+                const target = normalizedOrders.find((o) => o.id === autoPoResponse.id) || normalizedOrders[0]
+                setSelectedOrder(target)
+              }
+            }
+          }
+        }
+      } catch (autoPoErr) {
+        console.warn('AI auto purchase order generation fallback:', autoPoErr.message)
+      }
+
+      setCurrentScan(fullScan)
+
+      if (fullScan.auto_po_id) {
+        showToast(
+          `Scan processed! AI auto-generated Purchase Order #${fullScan.auto_po_id} for ${fullScan.auto_po_items_count} low-stock item(s). Displayed on Purchase Orders page!`,
+          'success'
+        )
+      } else {
+        showToast(
+          `Scan ${fullScan.id || ''} processed! Detected: ${fullScan.total_detected_count ?? 0} items, ${fullScan.empty_gaps_count ?? 0} empty gaps.`,
+          'success'
+        )
+      }
+
       setCurrentTab('scan-result')
-      showToast(
-        `Scan ${fullScan.id || ''} processed! Detected: ${fullScan.total_detected_count ?? 0} items, ${fullScan.empty_gaps_count ?? 0} empty gaps.`,
-        'success'
-      )
     } catch (err) {
       console.error('Scan API error:', err)
       showToast(err.message || 'Failed to upload shelf scan to backend API.', 'error')
