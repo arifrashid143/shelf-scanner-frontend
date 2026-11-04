@@ -314,11 +314,15 @@ export default function SuperAdminView({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">
-              {analytics?.total_tenants ?? tenants.length}
+              {isLoading && !analytics ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : (
+                analytics?.total_tenants ?? tenants.length
+              )}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1 truncate">
-            {analytics?.active_tenants ?? tenants.filter((t) => t.is_active).length} active chains
+            {analytics?.active_tenants ?? tenants.filter((t) => t.is_active).length} active
           </p>
         </div>
 
@@ -330,11 +334,17 @@ export default function SuperAdminView({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-emerald-600">
-              {analytics?.active_tenants ?? tenants.filter((t) => t.is_active).length}
+              {isLoading && !analytics ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : (
+                analytics?.active_tenants ?? tenants.filter((t) => t.is_active).length
+              )}
             </span>
-            <span className="text-xs text-slate-400">
-              /{analytics?.total_tenants ?? tenants.length}
-            </span>
+            {analytics && (
+              <span className="text-xs text-slate-400 font-semibold">
+                /{analytics.total_tenants}
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-emerald-700 mt-1 truncate font-medium">
             Operational
@@ -349,7 +359,11 @@ export default function SuperAdminView({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">
-              {analytics?.total_stores ?? tenants.reduce((acc, t) => acc + (t.total_stores || 0), 0)}
+              {isLoading && !analytics ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : (
+                analytics?.total_stores ?? 0
+              )}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1 truncate">Across all tenants</p>
@@ -363,10 +377,14 @@ export default function SuperAdminView({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">
-              {analytics?.total_users ?? tenants.reduce((acc, t) => acc + (t.total_users || 0), 0)}
+              {isLoading && !analytics ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : (
+                analytics?.total_users ?? 0
+              )}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 truncate">Admins & Store Staff</p>
+          <p className="text-[11px] text-slate-500 mt-1 truncate">Admins & Staff</p>
         </div>
 
         {/* Total Scans */}
@@ -377,10 +395,14 @@ export default function SuperAdminView({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">
-              {analytics?.total_scans ?? tenants.reduce((acc, t) => acc + (t.total_scans || 0), 0)}
+              {isLoading && !analytics ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : (
+                analytics?.total_scans ?? 0
+              )}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 truncate">AI shelf audits run</p>
+          <p className="text-[11px] text-slate-500 mt-1 truncate">Platform audits</p>
         </div>
 
         {/* Total PO Value */}
@@ -391,10 +413,14 @@ export default function SuperAdminView({
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-xl sm:text-2xl font-black text-slate-900 truncate">
-              {formatCurrency(analytics?.total_purchase_orders_value ?? 0)}
+              {isLoading && !analytics ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : (
+                formatCurrency(analytics?.total_purchase_orders_value ?? 0)
+              )}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 truncate">Global Reorders</p>
+          <p className="text-[11px] text-slate-500 mt-1 truncate">Platform Reorders</p>
         </div>
       </div>
 
@@ -1102,3 +1128,4 @@ export default function SuperAdminView({
     </div>
   )
 }
+

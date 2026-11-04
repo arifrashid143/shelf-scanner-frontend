@@ -20,52 +20,9 @@ import {
   User as UserIcon,
 } from 'lucide-react'
 
-// Realistic initial fallback data for instant demo / offline support
-const initialFallbackUsers = [
-  {
-    id: 1,
-    full_name: 'Sarah Connor',
-    email: 'sarah.connor@shelfscanner.com',
-    role: 'STORE_ADMIN',
-    store_id: 'store_main',
-    is_active: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-  },
-  {
-    id: 2,
-    full_name: 'Jordan Lee',
-    email: 'jordan.lee@shelfscanner.com',
-    role: 'USER',
-    store_id: 'store_main',
-    is_active: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-  },
-  {
-    id: 3,
-    full_name: 'Alex Rivera',
-    email: 'alex.rivera@shelfscanner.com',
-    role: 'USER',
-    store_id: 'store_north',
-    is_active: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-  },
-  {
-    id: 4,
-    full_name: 'David Kim',
-    email: 'david.kim@shelfscanner.com',
-    role: 'USER',
-    store_id: 'store_main',
-    is_active: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-  },
-]
-
 export default function UserManagementView({ isAdmin, currentUser, onShowToast }) {
-  const [users, setUsers] = useState(initialFallbackUsers)
-  const [stores, setStores] = useState([
-    { id: 'store_main', name: 'Main Store' },
-    { id: 'store_north', name: 'North Branch' },
-  ])
+  const [users, setUsers] = useState([])
+  const [stores, setStores] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -111,7 +68,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
     try {
       const [usersRes, storesRes] = await Promise.all([
         api.getTenantUsers().catch((err) => {
-          console.warn('GET /api/tenant/users failed, using fallback:', err.message)
+          console.warn('GET /api/tenant/users failed:', err.message)
           return null
         }),
         api.getTenantStores().catch(() => []),
@@ -121,6 +78,8 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
         setUsers(usersRes)
       } else if (usersRes?.users || usersRes?.items) {
         setUsers(usersRes.users || usersRes.items)
+      } else {
+        setUsers([])
       }
 
       if (Array.isArray(storesRes) && storesRes.length > 0) {
@@ -128,7 +87,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
       }
     } catch (err) {
       console.error('Error fetching tenant users:', err)
-      setErrorMsg('Could not fetch company users from server. Showing cached users.')
+      setErrorMsg(err.message || 'Could not fetch company users from server.')
     } finally {
       setRefreshing(false)
     }

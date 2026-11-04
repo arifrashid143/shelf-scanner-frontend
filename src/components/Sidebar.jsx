@@ -61,7 +61,8 @@ export default function Sidebar({
         },
       ]
 
-  const displayName = user?.full_name || user?.name || 'Platform Superadmin'
+  const displayName =
+    user?.full_name || user?.name || (isSuperAdmin ? 'Superadmin' : isAdmin ? 'Store Admin' : 'Staff')
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
   return (

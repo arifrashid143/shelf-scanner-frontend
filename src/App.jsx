@@ -21,7 +21,8 @@ function MainApp() {
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const displayName = user?.full_name || user?.name || 'Main Store'
+  const displayName =
+    user?.full_name || user?.name || (isSuperAdmin ? 'Superadmin' : isAdmin ? 'Store Admin' : 'Store Associate')
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
   // Tailored page backgrounds that suit each view's theme and purpose

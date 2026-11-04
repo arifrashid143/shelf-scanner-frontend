@@ -24,7 +24,7 @@ export default function AdminDashboardView({
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-  const displayName = user?.full_name || user?.name || 'Platform Superadmin'
+  const displayName = user?.full_name || user?.name || 'Store Admin'
 
   const formattedDate = new Intl.DateTimeFormat('en-GB', {
     weekday: 'long',
