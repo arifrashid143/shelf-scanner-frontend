@@ -1,12 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { api } from '../api/client'
-import logoImg from '../assets/logo.png'
 import {
   Building2,
-  Users,
   Store,
   Scan,
-  Coins,
   ShieldCheck,
   Search,
   Plus,
@@ -20,7 +17,6 @@ import {
   EyeOff,
   LogOut,
   Edit2,
-  ChevronDown,
 } from 'lucide-react'
 
 export default function SuperAdminView({ user, onLogout }) {
@@ -131,17 +127,15 @@ export default function SuperAdminView({ user, onLogout }) {
 
   const displayName = user?.full_name || user?.name || 'Platform Superadmin'
   const userEmail = user?.email || 'superadmin'
-  const userInitial = displayName.charAt(0).toUpperCase() || 'S'
+  const userInitial = displayName.charAt(0).toUpperCase() || 'P'
 
-  // Format currency
-  const formatCurrency = (val) => {
-    const num = Number(val) || 0
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(num)
-  }
+  // Metric aggregates matching the dashboard cards
+  const totalTenantsCount = analytics?.total_tenants ?? tenants.length
+  const activeTenantsCount =
+    analytics?.active_tenants ?? tenants.filter((t) => t.is_active).length
+  const totalStoresCount =
+    analytics?.total_stores ??
+    tenants.reduce((acc, t) => acc + (Number(t.total_stores) || 0), 0)
 
   // Auto-slugify tenant name
   const handleNameChange = (e) => {
@@ -315,13 +309,13 @@ export default function SuperAdminView({ user, onLogout }) {
 
   const getPlanBadge = (tier) => {
     const t = (tier || '').toLowerCase()
-    if (t === 'enterprise') return 'bg-purple-100 text-purple-800 border-purple-200'
-    if (t === 'pro') return 'bg-blue-100 text-blue-800 border-blue-200'
-    return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+    if (t === 'enterprise') return 'bg-fuchsia-100 text-fuchsia-800'
+    if (t === 'pro') return 'bg-blue-100 text-blue-700'
+    return 'bg-emerald-100 text-emerald-800'
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 font-sans text-slate-900 antialiased flex flex-col">
+    <div className="min-h-screen w-full bg-[#f8fafc] font-sans text-slate-900 antialiased flex flex-col">
       {/* Toast Alert */}
       {toastMessage && (
         <div
@@ -346,134 +340,98 @@ export default function SuperAdminView({ user, onLogout }) {
         </div>
       )}
 
-      {/* ==================== SINGLE-PAGE TOP NAVIGATION BAR (NO SIDEBAR) ==================== */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          {/* Brand Identity */}
+      {/* ==================== TOP HEADER (MATCHING PHOTO) ==================== */}
+      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          {/* Left Brand Identity: Scanner App Icon + Shelf Scanner + SUPERADMIN Badge */}
           <div className="flex items-center gap-3">
-            <img
-              src={logoImg}
-              alt="Shelf Scanner Logo"
-              className="w-9 h-9 rounded-xl object-contain shadow-2xs shrink-0"
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">
-                  Shelf Scanner
-                </h1>
-                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
-                  <ShieldCheck className="w-3 h-3 text-amber-700" /> Superadmin
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-slate-500 mt-0.5">
-                Platform Management
-              </p>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-blue-500 flex items-center justify-center text-white shadow-xs shrink-0">
+              <Scan className="w-5 h-5" />
+            </div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">
+                Shelf Scanner
+              </h1>
+              <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fde68a] tracking-wider">
+                SUPERADMIN
+              </span>
             </div>
           </div>
 
-          {/* Right Header Actions: Refresh & User Profile Dropdown */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Refresh Live API Data Button */}
+          {/* Right Corner: Circular Profile Avatar with Dropdown Menu */}
+          <div className="relative" ref={profileMenuRef}>
             <button
               type="button"
-              onClick={() => loadData(true)}
-              disabled={refreshing || loading}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
-              title="Refresh live Superadmin API data"
+              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+              className="w-9 h-9 rounded-full bg-[#c26d24] hover:bg-[#b05f1d] text-white font-bold text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              aria-label="User profile menu"
+              aria-expanded={isProfileMenuOpen}
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              {userInitial}
             </button>
 
-            {/* User Profile Icon with Dropdown Menu (Right Corner of Header) */}
-            <div className="relative" ref={profileMenuRef}>
-              <button
-                type="button"
-                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 p-1 pl-1.5 sm:pr-2.5 rounded-full sm:rounded-2xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                aria-label="User profile menu"
-                aria-expanded={isProfileMenuOpen}
-              >
-                {/* Profile Icon Avatar */}
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
-                  {userInitial}
-                </div>
-                <div className="hidden md:flex flex-col text-left">
-                  <span className="text-xs font-bold text-slate-900 leading-tight truncate max-w-[130px]">
-                    {displayName}
-                  </span>
-                  <span className="text-[10px] text-amber-700 font-semibold leading-tight">
-                    Superadmin
-                  </span>
-                </div>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                    isProfileMenuOpen ? 'rotate-180 text-amber-600' : ''
-                  }`}
-                />
-              </button>
-
-              {/* Profile Dropdown Menu */}
-              {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                  {/* User Profile Information */}
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-amber-100">
-                      {userInitial}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-black text-slate-900 truncate leading-tight">
-                        {displayName}
-                      </p>
-                      <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5" title={userEmail}>
-                        {userEmail}
-                      </p>
-                      <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">
-                        <ShieldCheck className="w-3 h-3 text-amber-700" />
-                        Platform Superadmin
-                      </div>
+            {/* Profile Dropdown Menu */}
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200/90 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                {/* User Profile Information */}
+                <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#c26d24] text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-amber-100">
+                    {userInitial}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black text-slate-900 truncate leading-tight">
+                      {displayName}
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5" title={userEmail}>
+                      {userEmail}
+                    </p>
+                    <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">
+                      <ShieldCheck className="w-3 h-3 text-amber-700" />
+                      Platform Superadmin
                     </div>
                   </div>
-
-                  {/* Access Scope Info */}
-                  <div className="px-4 py-2.5 text-[11px] text-slate-500 bg-slate-50/70 border-b border-slate-100 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-500">Access Scope</span>
-                      <span className="font-bold text-slate-800">Platform Tenants</span>
-                    </div>
-                    {user?.id && (
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-slate-500">User ID</span>
-                        <span className="font-mono text-slate-700 text-[10px] truncate max-w-[140px]">{user.id}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Log Out Action in Profile Menu */}
-                  <div className="p-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false)
-                        onLogout()
-                      }}
-                      className="w-full py-2 px-3 rounded-xl hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors flex items-center gap-2.5 cursor-pointer group"
-                    >
-                      <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center group-hover:bg-rose-200 transition-colors">
-                        <LogOut className="w-3.5 h-3.5" />
-                      </div>
-                      <span>Log out</span>
-                    </button>
-                  </div>
                 </div>
-              )}
-            </div>
+
+                {/* Live Refresh Option */}
+                <div className="px-2 py-1 border-b border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadData(true)
+                      setIsProfileMenuOpen(false)
+                    }}
+                    disabled={refreshing || loading}
+                    className="w-full py-2 px-3 rounded-xl hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-2.5 cursor-pointer transition-colors"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
+                    <span>{refreshing ? 'Refreshing data…' : 'Refresh Live Data'}</span>
+                  </button>
+                </div>
+
+                {/* Log Out Action */}
+                <div className="p-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false)
+                      onLogout()
+                    }}
+                    className="w-full py-2 px-3 rounded-xl hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors flex items-center gap-2.5 cursor-pointer group"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center group-hover:bg-rose-200 transition-colors">
+                      <LogOut className="w-3.5 h-3.5" />
+                    </div>
+                    <span>Log out</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       {/* ==================== MAIN SINGLE-PAGE BODY ==================== */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Error Alert from API if any */}
         {apiError && (
           <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between">
@@ -491,154 +449,88 @@ export default function SuperAdminView({ user, onLogout }) {
           </div>
         )}
 
-        {/* ==================== SECTION 1: PLATFORM ANALYTICS (GET /api/superadmin/analytics) ==================== */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-blue-600" />
-              Platform Analytics Overview
-            </h2>
-            <span className="text-[11px] text-slate-400 font-mono">
-              GET /api/superadmin/analytics
-            </span>
+        {/* ==================== 3 TOP METRIC CARDS (EXACT MATCH TO PHOTO) ==================== */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: TENANTS */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                TENANTS
+              </span>
+              <Building2 className="w-5 h-5 text-purple-400/90" />
+            </div>
+            <div className="text-3xl font-black text-slate-900 mt-2.5">
+              {loading && !analytics && tenants.length === 0 ? (
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              ) : (
+                totalTenantsCount
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-1 font-medium">Total companies</p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {/* Card 1: Total Tenants */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tenants</span>
-                <Building2 className="w-4 h-4 text-purple-600" />
-              </div>
-              <div className="text-2xl font-black text-slate-900">
-                {loading && !analytics ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
-                ) : (
-                  analytics?.total_tenants ?? 0
-                )}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5 truncate">Total companies</p>
+          {/* Card 2: ACTIVE */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                ACTIVE
+              </span>
+              <CheckCircle2 className="w-5 h-5 text-emerald-500/90" />
             </div>
+            <div className="text-3xl font-black text-emerald-600 mt-2.5 flex items-baseline gap-1">
+              {loading && !analytics && tenants.length === 0 ? (
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              ) : (
+                <>
+                  <span>{activeTenantsCount}</span>
+                  <span className="text-slate-400 font-medium text-lg">/{totalTenantsCount}</span>
+                </>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-1 font-medium">Operational</p>
+          </div>
 
-            {/* Card 2: Active Tenants */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Active</span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div className="text-2xl font-black text-emerald-600 flex items-baseline gap-1">
-                {loading && !analytics ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
-                ) : (
-                  analytics?.active_tenants ?? 0
-                )}
-                {analytics?.total_tenants !== undefined && (
-                  <span className="text-xs text-slate-400 font-semibold">
-                    /{analytics.total_tenants}
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-emerald-700 mt-0.5 truncate font-medium">Operational</p>
+          {/* Card 3: STORES */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                STORES
+              </span>
+              <Store className="w-5 h-5 text-purple-400/90" />
             </div>
-
-            {/* Card 3: Total Stores */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Stores</span>
-                <Store className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="text-2xl font-black text-slate-900">
-                {loading && !analytics ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
-                ) : (
-                  analytics?.total_stores ?? 0
-                )}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5 truncate">Across all tenants</p>
+            <div className="text-3xl font-black text-slate-900 mt-2.5">
+              {loading && !analytics && tenants.length === 0 ? (
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              ) : (
+                totalStoresCount
+              )}
             </div>
-
-            {/* Card 4: Total Users */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Users</span>
-                <Users className="w-4 h-4 text-sky-600" />
-              </div>
-              <div className="text-2xl font-black text-slate-900">
-                {loading && !analytics ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
-                ) : (
-                  analytics?.total_users ?? 0
-                )}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5 truncate">Admins & Staff</p>
-            </div>
-
-            {/* Card 5: Total Scans */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Shelf Scans</span>
-                <Scan className="w-4 h-4 text-indigo-600" />
-              </div>
-              <div className="text-2xl font-black text-slate-900">
-                {loading && !analytics ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
-                ) : (
-                  analytics?.total_scans ?? 0
-                )}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5 truncate">Platform audits</p>
-            </div>
-
-            {/* Card 6: PO Volume */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">PO Value</span>
-                <Coins className="w-4 h-4 text-amber-600" />
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900 truncate">
-                {loading && !analytics ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
-                ) : (
-                  formatCurrency(analytics?.total_purchase_orders_value ?? 0)
-                )}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5 truncate">Reorders Managed</p>
-            </div>
+            <p className="text-xs text-slate-400 mt-1 font-medium">Across all tenants</p>
           </div>
         </div>
 
-        {/* ==================== SECTION 2: TENANTS MANAGEMENT (GET /api/superadmin/tenants) ==================== */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        {/* ==================== TENANT COMPANIES DIRECTORY (EXACT MATCH TO PHOTO) ==================== */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
           {/* Header & Controls Bar */}
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <Building2 className="w-5 h-5 text-slate-800" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-slate-900">
-                    Tenant Companies Directory
-                  </h2>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                    {filteredTenants.length}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5 font-mono">
-                  GET /api/superadmin/tenants
-                </p>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                Tenant Companies Directory
+              </h2>
             </div>
 
             {/* Search, Filters & Action Button */}
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Search */}
-              <div className="relative min-w-[200px] sm:min-w-[240px]">
+              <div className="relative min-w-[200px] sm:min-w-[260px]">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search by company, slug, ID…"
+                  placeholder="Search by company, slug, ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200/90 bg-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
                 />
                 {searchTerm && (
                   <button
@@ -651,13 +543,15 @@ export default function SuperAdminView({ user, onLogout }) {
                 )}
               </div>
 
-              {/* Status Filter */}
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-xs font-bold text-slate-600">
+              {/* Status Segmented Control */}
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-xs font-semibold text-slate-600">
                 <button
                   type="button"
                   onClick={() => setStatusFilter('ALL')}
-                  className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                    statusFilter === 'ALL' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:text-slate-900'
+                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                    statusFilter === 'ALL'
+                      ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                      : 'hover:text-slate-900'
                   }`}
                 >
                   All
@@ -665,8 +559,10 @@ export default function SuperAdminView({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('ACTIVE')}
-                  className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                    statusFilter === 'ACTIVE' ? 'bg-white text-emerald-700 shadow-2xs' : 'hover:text-slate-900'
+                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                    statusFilter === 'ACTIVE'
+                      ? 'bg-white text-emerald-700 shadow-2xs font-bold'
+                      : 'hover:text-slate-900'
                   }`}
                 >
                   Active
@@ -674,8 +570,10 @@ export default function SuperAdminView({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('SUSPENDED')}
-                  className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                    statusFilter === 'SUSPENDED' ? 'bg-white text-rose-700 shadow-2xs' : 'hover:text-slate-900'
+                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                    statusFilter === 'SUSPENDED'
+                      ? 'bg-white text-rose-700 shadow-2xs font-bold'
+                      : 'hover:text-slate-900'
                   }`}
                 >
                   Suspended
@@ -686,7 +584,7 @@ export default function SuperAdminView({ user, onLogout }) {
               <select
                 value={planFilter}
                 onChange={(e) => setPlanFilter(e.target.value)}
-                className="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
+                className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200/90 bg-white text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
               >
                 <option value="ALL">All Plans</option>
                 <option value="enterprise">Enterprise</option>
@@ -698,7 +596,7 @@ export default function SuperAdminView({ user, onLogout }) {
               <button
                 type="button"
                 onClick={() => setIsOnboardModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer shadow-xs transition-all shrink-0 ml-auto sm:ml-0"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Onboard Tenant</span>
@@ -710,17 +608,17 @@ export default function SuperAdminView({ user, onLogout }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-black uppercase tracking-wider text-slate-400 bg-slate-50/70">
-                  <th className="px-5 py-3.5">Company Name</th>
-                  <th className="px-4 py-3.5 font-mono">Tenant ID</th>
-                  <th className="px-4 py-3.5 font-mono">Slug</th>
-                  <th className="px-4 py-3.5">Plan Tier</th>
-                  <th className="px-4 py-3.5 text-center">Stores</th>
-                  <th className="px-4 py-3.5 text-center">Users</th>
-                  <th className="px-4 py-3.5 text-center">Scans</th>
-                  <th className="px-4 py-3.5 text-center">Status</th>
-                  <th className="px-4 py-3.5">Created At</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
+                <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-white">
+                  <th className="px-5 py-4">COMPANY NAME</th>
+                  <th className="px-4 py-4">TENANT ID</th>
+                  <th className="px-4 py-4">SLUG</th>
+                  <th className="px-4 py-4 text-center">PLAN TIER</th>
+                  <th className="px-4 py-4 text-center">STORES</th>
+                  <th className="px-4 py-4 text-center">USERS</th>
+                  <th className="px-4 py-4 text-center">SCANS</th>
+                  <th className="px-4 py-4 text-center">STATUS</th>
+                  <th className="px-4 py-4">CREATED AT</th>
+                  <th className="px-5 py-4 text-right">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -728,7 +626,7 @@ export default function SuperAdminView({ user, onLogout }) {
                   <tr>
                     <td colSpan={10} className="py-16 text-center text-slate-400">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
-                      <span>Loading tenants from GET /api/superadmin/tenants…</span>
+                      <span>Loading tenants…</span>
                     </td>
                   </tr>
                 ) : filteredTenants.length === 0 ? (
@@ -747,62 +645,62 @@ export default function SuperAdminView({ user, onLogout }) {
                     const initial = (tenant.name || tenant.id || 'T').charAt(0).toUpperCase()
 
                     return (
-                      <tr key={tenant.id} className="hover:bg-slate-50/70 transition-colors">
+                      <tr key={tenant.id} className="hover:bg-slate-50/50 transition-colors">
                         {/* Company Name */}
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-200">
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
                               {initial}
                             </div>
-                            <span className="font-bold text-slate-900">{tenant.name}</span>
+                            <span className="font-bold text-slate-900 text-sm">{tenant.name}</span>
                           </div>
                         </td>
 
                         {/* ID */}
-                        <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500">
+                        <td className="px-4 py-4 font-mono text-xs text-slate-600 whitespace-nowrap">
                           {tenant.id}
                         </td>
 
                         {/* Slug */}
-                        <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500">
-                          /{tenant.slug}
+                        <td className="px-4 py-4 font-mono text-xs text-slate-500 whitespace-nowrap">
+                          /{String(tenant.slug || '').replace(/^\//, '')}
                         </td>
 
                         {/* Plan Tier */}
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-4 text-center whitespace-nowrap">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${getPlanBadge(
+                            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getPlanBadge(
                               tenant.plan_tier
                             )}`}
                           >
-                            {tenant.plan_tier || 'Enterprise'}
+                            {tenant.plan_tier || 'ENTERPRISE'}
                           </span>
                         </td>
 
                         {/* Total Stores */}
-                        <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                        <td className="px-4 py-4 text-center font-semibold text-slate-700 text-xs">
                           {tenant.total_stores ?? 0}
                         </td>
 
                         {/* Total Users */}
-                        <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                        <td className="px-4 py-4 text-center font-semibold text-slate-700 text-xs">
                           {tenant.total_users ?? 0}
                         </td>
 
                         {/* Total Scans */}
-                        <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                        <td className="px-4 py-4 text-center font-semibold text-slate-700 text-xs">
                           {tenant.total_scans ?? 0}
                         </td>
 
                         {/* Status */}
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-4 text-center whitespace-nowrap">
                           {tenant.is_active ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                               Suspended
                             </span>
@@ -810,22 +708,24 @@ export default function SuperAdminView({ user, onLogout }) {
                         </td>
 
                         {/* Created At */}
-                        <td className="px-4 py-3.5 text-[11px] text-slate-500 whitespace-nowrap">
-                          {tenant.created_at ? new Date(tenant.created_at).toLocaleDateString() : '—'}
+                        <td className="px-4 py-4 text-xs text-slate-500 whitespace-nowrap">
+                          {tenant.created_at
+                            ? new Date(tenant.created_at).toLocaleDateString('en-US')
+                            : '—'}
                         </td>
 
                         {/* Actions */}
-                        <td className="px-5 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="px-5 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
                             {/* Toggle Status (PUT /api/superadmin/tenants/{tenant_id}/status) */}
                             <button
                               type="button"
                               onClick={() => handleQuickToggleStatus(tenant)}
                               disabled={isBusy}
-                              className={`p-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer border ${
                                 tenant.is_active
-                                  ? 'border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700'
-                                  : 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
+                                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200/80'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80'
                               }`}
                               title={tenant.is_active ? 'Suspend Tenant' : 'Activate Tenant'}
                             >
@@ -834,16 +734,14 @@ export default function SuperAdminView({ user, onLogout }) {
                               ) : (
                                 <Power className="w-3.5 h-3.5" />
                               )}
-                              <span className="hidden sm:inline">
-                                {tenant.is_active ? 'Suspend' : 'Activate'}
-                              </span>
+                              <span>{tenant.is_active ? 'Suspend' : 'Activate'}</span>
                             </button>
 
                             {/* Edit Button */}
                             <button
                               type="button"
                               onClick={() => openEditModal(tenant)}
-                              className="p-1.5 px-2.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
                               title="Edit tenant details and status"
                             >
                               <Edit2 className="w-3.5 h-3.5 text-slate-500" />
