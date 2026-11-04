@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { api } from '../api/client'
 import logoImg from '../assets/logo.png'
 import {
@@ -20,9 +20,14 @@ import {
   EyeOff,
   LogOut,
   Edit2,
+  ChevronDown,
 } from 'lucide-react'
 
 export default function SuperAdminView({ user, onLogout }) {
+  // User Profile Dropdown Menu State
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef(null)
+
   // Live API data state
   const [tenants, setTenants] = useState([])
   const [analytics, setAnalytics] = useState(null)
@@ -103,6 +108,30 @@ export default function SuperAdminView({ user, onLogout }) {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // Close profile dropdown menu on outside click or Escape key
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setIsProfileMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsProfileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  const displayName = user?.full_name || user?.name || 'Platform Superadmin'
+  const userEmail = user?.email || 'superadmin'
+  const userInitial = displayName.charAt(0).toUpperCase() || 'S'
 
   // Format currency
   const formatCurrency = (val) => {
@@ -342,39 +371,103 @@ export default function SuperAdminView({ user, onLogout }) {
             </div>
           </div>
 
-          {/* Right Header Actions: User Email, Refresh & Logout */}
-          <div className="flex items-center gap-3">
-            {/* Superadmin User Details */}
-            <div className="hidden sm:flex flex-col text-right">
-              <span className="text-xs font-bold text-slate-900 leading-tight">
-                {user?.full_name || user?.name || 'Platform Superadmin'}
-              </span>
-              <span className="text-[11px] text-slate-400 font-mono leading-tight">
-                {user?.email || 'superadmin'}
-              </span>
-            </div>
-
+          {/* Right Header Actions: Refresh & User Profile Dropdown */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Refresh Live API Data Button */}
             <button
               type="button"
               onClick={() => loadData(true)}
               disabled={refreshing || loading}
-              className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
               title="Refresh live Superadmin API data"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
-              <span className="hidden md:inline">Refresh</span>
+              <span className="hidden sm:inline">Refresh</span>
             </button>
 
-            {/* Standalone Logout Button */}
-            <button
-              type="button"
-              onClick={onLogout}
-              className="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Log out</span>
-            </button>
+            {/* User Profile Icon with Dropdown Menu (Right Corner of Header) */}
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2 p-1 pl-1.5 sm:pr-2.5 rounded-full sm:rounded-2xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                aria-label="User profile menu"
+                aria-expanded={isProfileMenuOpen}
+              >
+                {/* Profile Icon Avatar */}
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                  {userInitial}
+                </div>
+                <div className="hidden md:flex flex-col text-left">
+                  <span className="text-xs font-bold text-slate-900 leading-tight truncate max-w-[130px]">
+                    {displayName}
+                  </span>
+                  <span className="text-[10px] text-amber-700 font-semibold leading-tight">
+                    Superadmin
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                    isProfileMenuOpen ? 'rotate-180 text-amber-600' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                  {/* User Profile Information */}
+                  <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-amber-100">
+                      {userInitial}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-black text-slate-900 truncate leading-tight">
+                        {displayName}
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5" title={userEmail}>
+                        {userEmail}
+                      </p>
+                      <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">
+                        <ShieldCheck className="w-3 h-3 text-amber-700" />
+                        Platform Superadmin
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Access Scope Info */}
+                  <div className="px-4 py-2.5 text-[11px] text-slate-500 bg-slate-50/70 border-b border-slate-100 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-500">Access Scope</span>
+                      <span className="font-bold text-slate-800">Platform Tenants</span>
+                    </div>
+                    {user?.id && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-500">User ID</span>
+                        <span className="font-mono text-slate-700 text-[10px] truncate max-w-[140px]">{user.id}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Log Out Action in Profile Menu */}
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false)
+                        onLogout()
+                      }}
+                      className="w-full py-2 px-3 rounded-xl hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors flex items-center gap-2.5 cursor-pointer group"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center group-hover:bg-rose-200 transition-colors">
+                        <LogOut className="w-3.5 h-3.5" />
+                      </div>
+                      <span>Log out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { api } from './api/client'
 import Sidebar from './components/Sidebar'
@@ -14,7 +14,7 @@ import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
 import logoImg from './assets/logo.png'
-import { Loader2 } from 'lucide-react'
+import { Loader2, LogOut } from 'lucide-react'
 
 function MainApp() {
   const { user, isSuperAdmin, isAdmin, isAuthenticated, loading: authLoading, logout } = useAuth()
@@ -57,6 +57,27 @@ function MainApp() {
   const [dataLoading, setDataLoading] = useState(false)
   const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
+  const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false)
+  const mobileProfileRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (mobileProfileRef.current && !mobileProfileRef.current.contains(e.target)) {
+        setIsMobileProfileOpen(false)
+      }
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsMobileProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
 
   const showToast = (msg, type = 'info') => {
     setToastMessage({ text: msg, type })
@@ -805,14 +826,56 @@ function MainApp() {
             </div>
           </div>
 
-          {/* User Avatar Initial & Role Badge (No logout option on mobile screen) */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
-              {isAdmin ? 'Admin' : 'Staff'}
-            </span>
-            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shadow-2xs border border-blue-200">
-              {initial}
-            </div>
+          {/* User Profile Avatar with dropdown for mobile */}
+          <div className="relative shrink-0" ref={mobileProfileRef}>
+            <button
+              type="button"
+              onClick={() => setIsMobileProfileOpen((p) => !p)}
+              className="flex items-center gap-1.5 p-1 rounded-full border border-slate-200/80 hover:bg-slate-50 transition-colors cursor-pointer"
+              aria-label="User profile menu"
+            >
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+                {isAdmin ? 'Admin' : 'Staff'}
+              </span>
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shadow-2xs border border-blue-200">
+                {initial}
+              </div>
+            </button>
+
+            {isMobileProfileOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center shrink-0">
+                    {initial}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black text-slate-900 truncate leading-tight">
+                      {displayName}
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5">
+                      {user?.email || 'user'}
+                    </p>
+                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {isAdmin ? 'Store Admin' : 'Store Associate'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileProfileOpen(false)
+                      logout()
+                    }}
+                    className="w-full py-2 px-3 rounded-xl hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Log out</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
