@@ -359,28 +359,42 @@ export default function LoginView() {
                 {/* Role selection for Sign Up */}
                 {isSignUp && (
                   <div className="pt-1">
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Account Role
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5">
                       <button
                         type="button"
                         onClick={() => setRole('user')}
-                        className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        className={`py-2 px-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                           role === 'user'
                             ? 'bg-[#5C3DAA] text-white border-[#5C3DAA]'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
-                        Staff User
+                        Staff
                       </button>
                       <button
                         type="button"
                         onClick={() => setRole('admin')}
-                        className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        className={`py-2 px-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                           role === 'admin'
                             ? 'bg-[#1E1E68] text-white border-[#1E1E68]'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
                         Store Admin
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRole('superadmin')}
+                        className={`py-2 px-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          role === 'superadmin'
+                            ? 'bg-amber-600 text-white border-amber-600'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        Super Admin
                       </button>
                     </div>
                   </div>
@@ -422,6 +436,50 @@ export default function LoginView() {
                   )}
                 </button>
               </form>
+
+              {/* Demo / Quick Fill Credentials */}
+              {!isSignUp && (
+                <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Quick Demo Logins
+                  </p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('superadmin@shelfscanner.com')
+                        setPassword('superadmin123')
+                        setErrors({})
+                      }}
+                      className="py-1.5 px-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-[11px] font-bold transition-colors cursor-pointer"
+                    >
+                      Super Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('admin@shelfscanner.com')
+                        setPassword('admin123')
+                        setErrors({})
+                      }}
+                      className="py-1.5 px-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 text-[11px] font-bold transition-colors cursor-pointer"
+                    >
+                      Store Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('user@shelfscanner.com')
+                        setPassword('user123')
+                        setErrors({})
+                      }}
+                      className="py-1.5 px-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-[11px] font-bold transition-colors cursor-pointer"
+                    >
+                      Staff User
+                    </button>
+                  </div>
+                </div>
+              )}
 
 
             </div>

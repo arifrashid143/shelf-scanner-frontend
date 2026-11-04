@@ -150,23 +150,33 @@ export function AuthProvider({ children }) {
   }
 
   // Normalized Role Evaluation:
-  // Superadmin, Tenant Admin, and Admin are treated as Admin
-  const roleStr = String(user?.role || user?.user_role || '').toLowerCase()
-  const isAdmin =
+  // Superadmin manages platform tenants and cannot access store-level data.
+  // Tenant Admin / Store Admin manages store stock, purchase orders, and company users.
+  // User is store staff.
+  const roleStr = String(user?.role || user?.user_role || '').toLowerCase().trim()
+  const isSuperAdmin =
     roleStr === 'superadmin' ||
-    roleStr === 'super_admin' ||
-    roleStr === 'admin' ||
-    roleStr === 'tenant_admin' ||
-    roleStr === 'store_admin' ||
-    roleStr.includes('admin')
+    roleStr === 'super_admin'
 
-  // Staff and standard users
-  const isUser = !isAdmin && !!user
+  const isTenantAdmin =
+    !isSuperAdmin &&
+    (roleStr === 'admin' ||
+      roleStr === 'tenant_admin' ||
+      roleStr === 'store_admin' ||
+      roleStr.includes('admin'))
+
+  // Store/Tenant admin flag (for inventory, purchase orders, tenant users)
+  const isAdmin = isTenantAdmin
+
+  // Staff and standard store users
+  const isUser = !isSuperAdmin && !isTenantAdmin && !!user
 
   const value = {
     user,
-    role: user?.role || null,
+    role: user?.role || (isSuperAdmin ? 'superadmin' : isAdmin ? 'admin' : 'user'),
     tenant_id: user?.tenant_id || null,
+    isSuperAdmin,
+    isTenantAdmin,
     isAdmin,
     isUser,
     isAuthenticated: !!user,

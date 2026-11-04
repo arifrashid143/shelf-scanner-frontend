@@ -8,6 +8,7 @@ import {
   LogOut,
   ShieldCheck,
   UserCheck,
+  Building2,
 } from 'lucide-react'
 
 export default function Sidebar({
@@ -15,36 +16,50 @@ export default function Sidebar({
   onNavigate,
   user,
   isAdmin,
+  isSuperAdmin,
   onLogout,
 }) {
-  const navItems = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-    },
-    {
-      id: 'new-scan',
-      label: 'Scan shelf',
-      icon: Scan,
-    },
-    {
-      id: 'orders',
-      label: 'Purchase orders',
-      icon: FileText,
-    },
-    {
-      id: 'inventory',
-      label: 'Inventory',
-      icon: Package,
-    },
-    {
-      id: 'users',
-      label: 'User management',
-      icon: Users,
-      adminOnly: true,
-    },
-  ]
+  const navItems = isSuperAdmin
+    ? [
+        {
+          id: 'tenants',
+          label: 'Tenant companies',
+          icon: Building2,
+        },
+        {
+          id: 'dashboard',
+          label: 'Platform analytics',
+          icon: LayoutDashboard,
+        },
+      ]
+    : [
+        {
+          id: 'dashboard',
+          label: 'Dashboard',
+          icon: LayoutDashboard,
+        },
+        {
+          id: 'new-scan',
+          label: 'Scan shelf',
+          icon: Scan,
+        },
+        {
+          id: 'orders',
+          label: 'Purchase orders',
+          icon: FileText,
+        },
+        {
+          id: 'inventory',
+          label: 'Inventory',
+          icon: Package,
+        },
+        {
+          id: 'users',
+          label: 'User management',
+          icon: Users,
+          adminOnly: true,
+        },
+      ]
 
   const displayName = user?.full_name || user?.name || 'Platform Superadmin'
   const initial = displayName.charAt(0).toUpperCase() || 'P'
@@ -104,7 +119,13 @@ export default function Sidebar({
         <div className="space-y-2.5 pt-3 border-t border-slate-100 shrink-0">
           {/* User Profile Card */}
           <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3 flex items-center gap-3 overflow-hidden shadow-2xs">
-            <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center shrink-0 border border-purple-200">
+            <div className={`w-9 h-9 rounded-full font-black text-xs flex items-center justify-center shrink-0 border ${
+              isSuperAdmin
+                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                : isAdmin
+                ? 'bg-purple-100 text-purple-700 border-purple-200'
+                : 'bg-blue-100 text-blue-700 border-blue-200'
+            }`}>
               {initial}
             </div>
             <div className="truncate flex-1 min-w-0">
@@ -112,7 +133,11 @@ export default function Sidebar({
                 {displayName}
               </p>
               <div className="flex items-center gap-1 mt-0.5">
-                {isAdmin ? (
+                {isSuperAdmin ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700">
+                    <ShieldCheck className="w-3 h-3 text-amber-600" /> Superadmin
+                  </span>
+                ) : isAdmin ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-700">
                     <ShieldCheck className="w-3 h-3 text-purple-600" /> Admin
                   </span>

@@ -212,4 +212,25 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // ==================== SUPERADMIN (PLATFORM MANAGEMENT) ====================
+  // GET /api/superadmin/tenants - List Tenants
+  getSuperadminTenants: () => request('/superadmin/tenants'),
+
+  // POST /api/superadmin/tenants - Create Tenant & Provision Admin
+  createSuperadminTenant: (data) =>
+    request('/superadmin/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // PUT /api/superadmin/tenants/{tenant_id}/status - Update Tenant Status
+  updateSuperadminTenantStatus: (tenantId, data) =>
+    request(`/superadmin/tenants/${encodeURIComponent(tenantId)}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // GET /api/superadmin/analytics - Get Superadmin Analytics
+  getSuperadminAnalytics: () => request('/superadmin/analytics'),
 }
