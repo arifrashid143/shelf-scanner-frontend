@@ -14,7 +14,7 @@ import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
 import logoImg from './assets/logo.png'
-import { Loader2, Building2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 function MainApp() {
   const { user, isSuperAdmin, isAdmin, isAuthenticated, loading: authLoading, logout } = useAuth()
@@ -27,7 +27,7 @@ function MainApp() {
 
   // Tailored page backgrounds that suit each view's theme and purpose
   const getPageBg = () => {
-    switch (effectiveTab) {
+    switch (currentTab) {
       case 'dashboard':
         return 'bg-slate-100/80' // Clean, neutral slate for primary KPI overview
       case 'new-scan':
@@ -42,22 +42,12 @@ function MainApp() {
         return 'bg-emerald-50/50' // Fresh emerald for warehouse stock & product catalog
       case 'users':
         return 'bg-sky-50/50' // Clean workspace sky blue for user management
-      case 'tenants':
-        return 'bg-amber-50/40' // Executive amber for Superadmin platform management
       default:
         return 'bg-slate-50'
     }
   }
 
   const [currentTab, setCurrentTab] = useState('dashboard')
-
-  // Superadmin is strictly scoped to Tenants platform management and Platform Analytics
-  const effectiveTab = isSuperAdmin
-    ? currentTab === 'dashboard'
-      ? 'dashboard'
-      : 'tenants'
-    : currentTab
-
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [currentScan, setCurrentScan] = useState(null)
   const [purchaseOrders, setPurchaseOrders] = useState([])
@@ -67,11 +57,6 @@ function MainApp() {
   const [dataLoading, setDataLoading] = useState(false)
   const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
-
-  // Superadmin platform state (GET /api/superadmin/tenants & GET /api/superadmin/analytics)
-  const [tenantsList, setTenantsList] = useState([])
-  const [superadminAnalytics, setSuperadminAnalytics] = useState(null)
-  const [tenantsLoading, setTenantsLoading] = useState(false)
 
   const showToast = (msg, type = 'info') => {
     setToastMessage({ text: msg, type })
@@ -105,69 +90,9 @@ function MainApp() {
     }
   }
 
-  // Superadmin: Load platform tenants & SaaS analytics
-  const loadSuperadminData = async () => {
-    setTenantsLoading(true)
-    setDataError(null)
-    try {
-      const [analyticsData, tenantsData] = await Promise.all([
-        api.getSuperadminAnalytics().catch((err) => {
-          console.warn('Superadmin analytics error:', err.message)
-          return null
-        }),
-        api.getSuperadminTenants().catch((err) => {
-          console.warn('Superadmin tenants error:', err.message)
-          return null
-        }),
-      ])
-      if (analyticsData) setSuperadminAnalytics(analyticsData)
-      if (Array.isArray(tenantsData)) setTenantsList(tenantsData)
-    } catch (err) {
-      console.error('Superadmin data loading error:', err)
-      setDataError(err.message || 'Failed to load platform data')
-    } finally {
-      setTenantsLoading(false)
-    }
-  }
-
-  // Superadmin Actions
-  const handleCreateTenant = async (tenantData) => {
-    try {
-      showToast('Onboarding tenant and provisioning admin…', 'info')
-      const created = await api.createSuperadminTenant(tenantData)
-      setTenantsList((prev) => [created, ...prev.filter((t) => t.id !== created.id)])
-      showToast(`Tenant "${created.name}" onboarded successfully!`, 'success')
-      // Refresh analytics
-      api.getSuperadminAnalytics().then((a) => a && setSuperadminAnalytics(a)).catch(() => {})
-      return created
-    } catch (err) {
-      showToast(err.message || 'Failed to onboard tenant', 'error')
-      throw err
-    }
-  }
-
-  const handleUpdateTenantStatus = async (tenantId, updateData) => {
-    try {
-      const updated = await api.updateSuperadminTenantStatus(tenantId, updateData)
-      setTenantsList((prev) =>
-        prev.map((t) => (t.id === tenantId ? { ...t, ...updated } : t))
-      )
-      const actionName = updated.is_active ? 'activated' : 'suspended'
-      showToast(`Tenant "${updated.name || tenantId}" ${actionName} successfully`, 'success')
-      // Refresh analytics
-      api.getSuperadminAnalytics().then((a) => a && setSuperadminAnalytics(a)).catch(() => {})
-      return updated
-    } catch (err) {
-      showToast(err.message || 'Failed to update tenant status', 'error')
-      throw err
-    }
-  }
-
-  // Fetch real data from backend API when authenticated
+  // Fetch real data from backend API when authenticated (for Store Admin and Staff)
   const loadData = async () => {
-    if (isSuperAdmin) {
-      return loadSuperadminData()
-    }
+    if (isSuperAdmin) return
 
     setDataLoading(true)
     setDataError(null)
@@ -714,47 +639,14 @@ function MainApp() {
     return <LoginView />
   }
 
+  // Superadmin Single-Page Management (NO sidebar, NO store data, NO tabs)
+  if (isSuperAdmin) {
+    return <SuperAdminView user={user} onLogout={logout} />
+  }
+
   // Render view depending on user role and selected tab
   const renderContent = () => {
-    // Superadmin Role Isolation: Superadmin ONLY manages platform tenants and SaaS analytics
-    if (isSuperAdmin) {
-      if (effectiveTab === 'tenants' || effectiveTab === 'dashboard') {
-        return (
-          <SuperAdminView
-            tenants={tenantsList}
-            analytics={superadminAnalytics}
-            isLoading={tenantsLoading}
-            onCreateTenant={handleCreateTenant}
-            onUpdateTenantStatus={handleUpdateTenantStatus}
-            onRefresh={loadSuperadminData}
-            onShowToast={showToast}
-          />
-        )
-      }
-
-      return (
-        <div className="bg-white p-8 rounded-2xl border border-slate-200/90 text-center max-w-lg mx-auto my-12 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 mx-auto mb-4 flex items-center justify-center">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <h2 className="text-lg font-black text-slate-900 mb-1">
-            Access Restricted to Superadmin
-          </h2>
-          <p className="text-xs text-slate-500 leading-relaxed mb-6">
-            Store-specific shelf scans, warehouse inventory, and store purchase orders are strictly partitioned within tenant organizations. As platform Superadmin, your access is dedicated to managing tenant organizations and tenant administrators.
-          </p>
-          <button
-            type="button"
-            onClick={() => setCurrentTab('tenants')}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer shadow-xs"
-          >
-            Go to Tenants Management
-          </button>
-        </div>
-      )
-    }
-
-    switch (effectiveTab) {
+    switch (currentTab) {
       case 'dashboard':
         return isAdmin ? (
           <AdminDashboardView
@@ -873,11 +765,10 @@ function MainApp() {
       {/* Desktop Persistent Left Sidebar with Margins and Out-of-Navbar Logo */}
       <div className="hidden md:flex h-full shrink-0">
         <Sidebar
-          currentTab={effectiveTab}
+          currentTab={currentTab}
           onNavigate={setCurrentTab}
           user={user}
           isAdmin={isAdmin}
-          isSuperAdmin={isSuperAdmin}
           onLogout={logout}
         />
       </div>
@@ -894,22 +785,20 @@ function MainApp() {
             />
             <div className="min-w-0">
               <p className="text-[11px] font-medium text-slate-500 leading-tight truncate">
-                {effectiveTab === 'dashboard' ? greeting : 'Shelf Scanner'}
+                {currentTab === 'dashboard' ? greeting : 'Shelf Scanner'}
               </p>
               <h2 className="text-sm font-black text-slate-900 tracking-tight leading-tight truncate">
-                {effectiveTab === 'dashboard'
-                  ? (isSuperAdmin ? 'Platform Overview' : displayName)
-                  : effectiveTab === 'tenants'
-                  ? 'Tenant Management'
-                  : effectiveTab === 'new-scan'
+                {currentTab === 'dashboard'
+                  ? displayName
+                  : currentTab === 'new-scan'
                   ? 'Scan Shelf'
-                  : effectiveTab === 'orders'
+                  : currentTab === 'orders'
                   ? 'Purchase Orders'
-                  : effectiveTab === 'order-detail'
+                  : currentTab === 'order-detail'
                   ? 'Order Details'
-                  : effectiveTab === 'inventory'
+                  : currentTab === 'inventory'
                   ? 'Inventory'
-                  : effectiveTab === 'users'
+                  : currentTab === 'users'
                   ? 'User Management'
                   : 'Shelf Scanner'}
               </h2>
@@ -918,22 +807,10 @@ function MainApp() {
 
           {/* User Avatar Initial & Role Badge (No logout option on mobile screen) */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-              isSuperAdmin
-                ? 'bg-amber-100 text-amber-800 border-amber-300'
-                : isAdmin
-                ? 'bg-purple-100 text-purple-700 border-purple-200'
-                : 'bg-slate-100 text-slate-600 border-slate-200/80'
-            }`}>
-              {isSuperAdmin ? 'Superadmin' : isAdmin ? 'Admin' : 'Staff'}
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+              {isAdmin ? 'Admin' : 'Staff'}
             </span>
-            <div className={`w-8 h-8 rounded-full font-bold flex items-center justify-center text-xs shadow-2xs border ${
-              isSuperAdmin
-                ? 'bg-amber-100 text-amber-800 border-amber-300'
-                : isAdmin
-                ? 'bg-purple-100 text-purple-700 border-purple-200'
-                : 'bg-blue-100 text-blue-700 border-blue-200'
-            }`}>
+            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shadow-2xs border border-blue-200">
               {initial}
             </div>
           </div>
@@ -962,10 +839,9 @@ function MainApp() {
 
       {/* Mobile Bottom Navigation */}
       <BottomNav
-        currentTab={effectiveTab}
+        currentTab={currentTab}
         onNavigate={setCurrentTab}
         isAdmin={isAdmin}
-        isSuperAdmin={isSuperAdmin}
       />
     </div>
   )
