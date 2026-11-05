@@ -1,7 +1,12 @@
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 
-export default function OrdersView({ purchaseOrders = [], onSelectOrder, isLoading = false }) {
+export default function OrdersView({
+  purchaseOrders = [],
+  onSelectOrder,
+  onRefresh,
+  isLoading = false,
+}) {
   const [statusFilter, setStatusFilter] = useState('All')
 
   const filterTabs = ['All', 'Draft', 'Approved', 'Rejected']
@@ -9,6 +14,14 @@ export default function OrdersView({ purchaseOrders = [], onSelectOrder, isLoadi
   const filteredOrders = purchaseOrders.filter((po) => {
     if (statusFilter === 'All') return true
     return po.status === statusFilter
+  })
+
+  // Ensure newest purchase orders are always at the top of the table
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    const timeA = a.createdAt || (a.rawCreatedAt ? new Date(a.rawCreatedAt).getTime() : 0)
+    const timeB = b.createdAt || (b.rawCreatedAt ? new Date(b.rawCreatedAt).getTime() : 0)
+    if (timeB !== timeA) return timeB - timeA
+    return String(b.id || '').localeCompare(String(a.id || ''), undefined, { numeric: true })
   })
 
   return (
@@ -32,6 +45,17 @@ export default function OrdersView({ purchaseOrders = [], onSelectOrder, isLoadi
               {tab}
             </button>
           ))}
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isLoading}
+              className="p-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
+              title="Refresh orders"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+            </button>
+          )}
         </div>
 
         {/* Order Cards List */}
@@ -41,12 +65,12 @@ export default function OrdersView({ purchaseOrders = [], onSelectOrder, isLoadi
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
               <span>Loading purchase orders from server...</span>
             </div>
-          ) : filteredOrders.length === 0 ? (
+          ) : sortedOrders.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-200/90 p-8 text-center text-slate-400 text-xs shadow-xs">
               No {statusFilter !== 'All' ? statusFilter.toLowerCase() : ''} purchase orders found.
             </div>
           ) : (
-            filteredOrders.map((order) => (
+            sortedOrders.map((order) => (
               <div
                 key={order.id}
                 onClick={() => onSelectOrder(order)}
@@ -102,6 +126,17 @@ export default function OrdersView({ purchaseOrders = [], onSelectOrder, isLoadi
                 {tab}
               </button>
             ))}
+            {onRefresh && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                disabled={isLoading}
+                className="p-1.5 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
+                title="Refresh purchase orders"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -127,14 +162,14 @@ export default function OrdersView({ purchaseOrders = [], onSelectOrder, isLoadi
                       </div>
                     </td>
                   </tr>
-                ) : filteredOrders.length === 0 ? (
+                ) : sortedOrders.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-14 text-center text-slate-400 text-sm">
                       No {statusFilter !== 'All' ? statusFilter.toLowerCase() : ''} purchase orders found.
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order) => (
+                  sortedOrders.map((order) => (
                     <tr
                       key={order.id}
                       onClick={() => onSelectOrder(order)}

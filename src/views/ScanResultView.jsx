@@ -347,7 +347,7 @@ export default function ScanResultView({
       </div>
 
       {/* AI Auto-Generated Purchase Order Banner */}
-      {lowStockCandidates.length > 0 && (
+      {(scanData?.auto_po_id || lowStockCandidates.length > 0) && (
         <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white rounded-2xl border border-blue-200/90 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">

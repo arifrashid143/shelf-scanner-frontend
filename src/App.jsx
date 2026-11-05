@@ -16,6 +16,49 @@ import SuperAdminView from './views/SuperAdminView'
 import logoImg from './assets/logo.png'
 import { Loader2, LogOut } from 'lucide-react'
 
+function normalizeOrder(order) {
+  if (!order) return null
+  const rawStatus = (order.status || 'Draft').toUpperCase()
+  let formattedStatus = 'Draft'
+  if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
+  else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
+
+  const rawDate = order.created_at || order.createdAt || order.date || null
+  let parsedTime = Date.now()
+  if (rawDate) {
+    const t = new Date(rawDate).getTime()
+    if (!isNaN(t)) parsedTime = t
+  }
+
+  return {
+    id: String(order.id),
+    supplier: order.supplier_name || order.supplier || 'Primary Supplier',
+    date: rawDate && !isNaN(new Date(rawDate).getTime())
+      ? new Date(rawDate).toLocaleDateString()
+      : (order.date || 'Today'),
+    createdAt: parsedTime,
+    rawCreatedAt: rawDate,
+    total: typeof order.total_cost === 'number'
+      ? order.total_cost
+      : typeof order.total === 'number'
+      ? order.total
+      : 0,
+    status: formattedStatus,
+    items: Array.isArray(order.items) ? order.items : [],
+    notes: order.notes || '',
+  }
+}
+
+function sortOrdersNewestFirst(ordersList) {
+  if (!Array.isArray(ordersList)) return []
+  return [...ordersList].sort((a, b) => {
+    const timeA = a?.createdAt || 0
+    const timeB = b?.createdAt || 0
+    if (timeB !== timeA) return timeB - timeA
+    return String(b?.id || '').localeCompare(String(a?.id || ''), undefined, { numeric: true })
+  })
+}
+
 function MainApp() {
   const { user, isSuperAdmin, isAdmin, isAuthenticated, loading: authLoading, logout } = useAuth()
 
@@ -111,6 +154,30 @@ function MainApp() {
     }
   }
 
+  // Refresh live purchase orders from backend API (sorted newest first)
+  const refreshOrders = async () => {
+    try {
+      const ordersData = await api.getOrders().catch(() => null)
+      if (ordersData) {
+        const rawOrders = Array.isArray(ordersData)
+          ? ordersData
+          : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
+        const normalized = rawOrders.map(normalizeOrder).filter(Boolean)
+        setPurchaseOrders((prev) => {
+          const combined = [...normalized]
+          prev.forEach((p) => {
+            if (!combined.some((c) => String(c.id) === String(p.id))) {
+              combined.push(p)
+            }
+          })
+          return sortOrdersNewestFirst(combined)
+        })
+      }
+    } catch (err) {
+      console.error('Failed to refresh purchase orders:', err)
+    }
+  }
+
   // Fetch real data from backend API when authenticated (for Store Admin and Staff)
   const loadData = async () => {
     if (isSuperAdmin) return
@@ -148,24 +215,11 @@ function MainApp() {
           ? ordersData
           : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
         if (rawOrders.length > 0) {
-          const normalizedOrders = rawOrders.map((order) => {
-            const rawStatus = (order.status || 'Draft').toUpperCase()
-            let formattedStatus = 'Draft'
-            if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
-            else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
-
-            return {
-              id: order.id,
-              supplier: order.supplier_name || order.supplier || 'N/A',
-              date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || ''),
-              total: typeof order.total_cost === 'number' ? order.total_cost : (order.total || 0),
-              status: formattedStatus,
-              items: Array.isArray(order.items) ? order.items : [],
-              notes: order.notes || '',
-            }
-          })
+          const normalizedOrders = sortOrdersNewestFirst(
+            rawOrders.map(normalizeOrder).filter(Boolean)
+          )
           setPurchaseOrders(normalizedOrders)
-          setSelectedOrder(normalizedOrders[0])
+          setSelectedOrder(normalizedOrders[0] || null)
         }
       }
 
@@ -240,34 +294,42 @@ function MainApp() {
         res = await api.generateOrder({ scan_id: payload.scan_id })
       }
 
-      // Refresh orders list from backend
+      // Refresh orders list from backend and place newly generated PO at the top
       const ordersData = await api.getOrders().catch(() => null)
+      let allOrders = []
       if (ordersData) {
         const rawOrders = Array.isArray(ordersData)
           ? ordersData
           : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
-        if (rawOrders.length > 0) {
-          const normalizedOrders = rawOrders.map((order) => {
-            const rawStatus = (order.status || 'Draft').toUpperCase()
-            let formattedStatus = 'Draft'
-            if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
-            else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
+        allOrders = rawOrders.map(normalizeOrder).filter(Boolean)
+      }
 
-            return {
-              id: order.id,
-              supplier: order.supplier_name || order.supplier || 'N/A',
-              date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || ''),
-              total: typeof order.total_cost === 'number' ? order.total_cost : (order.total || 0),
-              status: formattedStatus,
-              items: Array.isArray(order.items) ? order.items : [],
-              notes: order.notes || '',
-            }
-          })
-          setPurchaseOrders(normalizedOrders)
-          const target = normalizedOrders.find((o) => o.id === res?.id) || normalizedOrders[0]
-          setSelectedOrder(target)
+      if (res?.id) {
+        const existingIdx = allOrders.findIndex((o) => String(o.id) === String(res.id))
+        const normalizedNew = normalizeOrder({
+          ...res,
+          status: res.status || 'Draft',
+          created_at: res.created_at || new Date().toISOString(),
+        })
+        if (existingIdx >= 0) {
+          allOrders[existingIdx] = { ...allOrders[existingIdx], ...normalizedNew }
+        } else {
+          allOrders.unshift(normalizedNew)
         }
       }
+
+      const sortedOrders = sortOrdersNewestFirst(allOrders)
+      if (res?.id) {
+        const idx = sortedOrders.findIndex((o) => String(o.id) === String(res.id))
+        if (idx > 0) {
+          const [poToTop] = sortedOrders.splice(idx, 1)
+          sortedOrders.unshift(poToTop)
+        }
+      }
+
+      setPurchaseOrders(sortedOrders)
+      const target = (res?.id ? sortedOrders.find((o) => String(o.id) === String(res.id)) : null) || sortedOrders[0]
+      setSelectedOrder(target)
 
       setCurrentTab('orders')
       showToast(
@@ -429,6 +491,9 @@ function MainApp() {
 
       // Automatically generate purchase order using AI based on analyzed image data
       try {
+        const scanId = fullScan.id || fullScan.scan_id || res?.id || null
+        const existingDraftPoId = fullScan.draft_purchase_order_id || null
+
         const detectedCountsByProductId = {}
         const detectedCountsByName = {}
 
@@ -445,9 +510,13 @@ function MainApp() {
           }
         })
 
-        const rawProducts = Array.isArray(fullScan?.products) ? fullScan.products : []
-        if (rawProducts.length > 0) {
-          rawProducts.forEach((p) => {
+        const rawProductCounts = Array.isArray(fullScan?.product_counts)
+          ? fullScan.product_counts
+          : Array.isArray(fullScan?.products)
+          ? fullScan.products
+          : []
+        if (rawProductCounts.length > 0) {
+          rawProductCounts.forEach((p) => {
             if (p.product_id != null) {
               detectedCountsByProductId[String(p.product_id)] = p.detected_count ?? 0
             }
@@ -458,7 +527,32 @@ function MainApp() {
         }
 
         const itemsToReorder = []
-        if (inventory.length > 0) {
+
+        // 1. Prioritize low_stock_summary provided directly by AI vision engine
+        const lowStockSummary = Array.isArray(fullScan?.low_stock_summary)
+          ? fullScan.low_stock_summary
+          : []
+        if (lowStockSummary.length > 0) {
+          lowStockSummary.forEach((item) => {
+            if (item.product_id != null) {
+              const pId = parseInt(item.product_id, 10)
+              if (!isNaN(pId)) {
+                const qty =
+                  item.reorder_recommended_qty ||
+                  Math.max(1, (item.max_shelf_capacity || 10) - (item.detected_count || 0))
+                itemsToReorder.push({
+                  product_id: pId,
+                  quantity: qty,
+                  unit_cost: item.cost_price != null ? Number(item.cost_price) : null,
+                  recommended_reason: `AI detected ${item.detected_count ?? 0} on shelf (min threshold ${item.min_stock_threshold ?? 5})`,
+                })
+              }
+            }
+          })
+        }
+
+        // 2. Fallback: match inventory products against detected counts
+        if (itemsToReorder.length === 0 && inventory.length > 0) {
           inventory.forEach((invItem) => {
             const prodId = String(invItem.productId || invItem.id)
             const nameKey = (invItem.name || '').toLowerCase().trim()
@@ -486,79 +580,115 @@ function MainApp() {
                   ? maxCapacity - detectedCount
                   : Math.max(1, minThreshold - detectedCount)
 
-              itemsToReorder.push({
-                product_id: invItem.productId || invItem.id,
-                quantity: reorderQty,
-                unit_cost: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : 0),
-                recommended_reason: `AI detected ${detectedCount} on shelf (below threshold ${minThreshold})`,
-              })
+              const pId = parseInt(invItem.productId || invItem.id, 10)
+              if (!isNaN(pId)) {
+                itemsToReorder.push({
+                  product_id: pId,
+                  quantity: reorderQty,
+                  unit_cost: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : null),
+                  recommended_reason: `AI detected ${detectedCount} on shelf (below threshold ${minThreshold})`,
+                })
+              }
             }
           })
-        } else if (rawProducts.length > 0) {
-          rawProducts.forEach((p) => {
+        } else if (itemsToReorder.length === 0 && rawProductCounts.length > 0) {
+          rawProductCounts.forEach((p) => {
             const minThresh = p.min_stock_threshold ?? 5
             const maxCap = p.max_shelf_capacity ?? 10
             const detected = p.detected_count ?? 0
             if (detected < minThresh || detected === 0) {
               const reorderQty = maxCap > detected ? maxCap - detected : Math.max(1, minThresh - detected)
-              itemsToReorder.push({
-                product_id: p.product_id,
-                quantity: reorderQty,
-                unit_cost: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 0),
-                recommended_reason: `AI detected ${detected} on shelf`,
-              })
+              const pId = parseInt(p.product_id, 10)
+              if (!isNaN(pId)) {
+                itemsToReorder.push({
+                  product_id: pId,
+                  quantity: reorderQty,
+                  unit_cost: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : null),
+                  recommended_reason: `AI detected ${detected} on shelf`,
+                })
+              }
             }
           })
         }
 
-        if (itemsToReorder.length > 0) {
-          let autoPoResponse
+        let autoPoResponse = null
+        if (existingDraftPoId) {
+          autoPoResponse = { id: existingDraftPoId }
+        } else if (itemsToReorder.length > 0 || scanId) {
           try {
-            autoPoResponse = await api.generateOrder({
-              scan_id: fullScan.id?.startsWith('scn_') ? fullScan.id : null,
-              supplier_id: 1,
-              items: itemsToReorder,
-              notes: `AI auto-generated Purchase Order for ${itemsToReorder.length} low-stock item(s) from shelf scan ${fullScan.id || ''}`,
-            })
-          } catch {
-            autoPoResponse = await api.generateOrder({
-              scan_id: fullScan.id?.startsWith('scn_') ? fullScan.id : null,
-            }).catch(() => null)
-          }
-
-          if (autoPoResponse?.id) {
-            fullScan.auto_po_id = autoPoResponse.id
-            fullScan.auto_po_items_count = itemsToReorder.length
-
-            // Refresh purchase orders list so it immediately appears on the Purchase Orders page
-            const ordersData = await api.getOrders().catch(() => null)
-            if (ordersData) {
-              const rawOrders = Array.isArray(ordersData)
-                ? ordersData
-                : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
-              if (rawOrders.length > 0) {
-                const normalizedOrders = rawOrders.map((order) => {
-                  const rawStatus = (order.status || 'Draft').toUpperCase()
-                  let formattedStatus = 'Draft'
-                  if (rawStatus === 'APPROVED') formattedStatus = 'Approved'
-                  else if (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') formattedStatus = 'Rejected'
-
-                  return {
-                    id: order.id,
-                    supplier: order.supplier_name || order.supplier || 'N/A',
-                    date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || ''),
-                    total: typeof order.total_cost === 'number' ? order.total_cost : (order.total || 0),
-                    status: formattedStatus,
-                    items: Array.isArray(order.items) ? order.items : [],
-                    notes: order.notes || '',
-                  }
+            if (itemsToReorder.length > 0) {
+              try {
+                autoPoResponse = await api.generateOrder({
+                  scan_id: scanId,
+                  items: itemsToReorder,
+                  notes: `AI auto-generated Purchase Order for ${itemsToReorder.length} low-stock item(s) from shelf scan ${scanId || ''}`,
                 })
-                setPurchaseOrders(normalizedOrders)
-                const target = normalizedOrders.find((o) => o.id === autoPoResponse.id) || normalizedOrders[0]
-                setSelectedOrder(target)
+              } catch (withItemsErr) {
+                console.warn('Draft PO with items error, trying scan_id only:', withItemsErr.message)
+                autoPoResponse = await api.generateOrder({
+                  scan_id: scanId,
+                  notes: `AI auto-generated Purchase Order from shelf scan ${scanId || ''}`,
+                }).catch(() => null)
               }
+            } else if (scanId) {
+              autoPoResponse = await api.generateOrder({
+                scan_id: scanId,
+                notes: `AI auto-generated Purchase Order from shelf scan ${scanId || ''}`,
+              }).catch(() => null)
             }
+          } catch (autoErr) {
+            console.warn('AI draft PO generation error:', autoErr.message)
           }
+        }
+
+        if (autoPoResponse?.id) {
+          fullScan.auto_po_id = autoPoResponse.id
+          fullScan.auto_po_items_count = itemsToReorder.length
+        }
+
+        // Fetch refreshed orders list from backend
+        const freshOrdersData = await api.getOrders().catch(() => null)
+        let allOrders = []
+        if (freshOrdersData) {
+          const rawOrders = Array.isArray(freshOrdersData)
+            ? freshOrdersData
+            : freshOrdersData.purchaseOrders || (freshOrdersData.id ? [freshOrdersData] : [])
+          allOrders = rawOrders.map(normalizeOrder).filter(Boolean)
+        }
+
+        // If autoPoResponse was created, ensure it exists in orders list
+        if (autoPoResponse?.id) {
+          const existingIdx = allOrders.findIndex((o) => String(o.id) === String(autoPoResponse.id))
+          const normalizedNew = normalizeOrder({
+            ...autoPoResponse,
+            status: autoPoResponse.status || 'Draft',
+            created_at: autoPoResponse.created_at || new Date().toISOString(),
+            items: autoPoResponse.items || itemsToReorder,
+            notes: autoPoResponse.notes || `AI auto-generated Purchase Order from shelf scan ${scanId || ''}`,
+          })
+
+          if (existingIdx >= 0) {
+            allOrders[existingIdx] = { ...allOrders[existingIdx], ...normalizedNew }
+          } else {
+            allOrders.unshift(normalizedNew)
+          }
+        }
+
+        // Sort orders strictly newest first
+        const sortedOrders = sortOrdersNewestFirst(allOrders)
+
+        // Ensure the newly generated PO is placed at the very top (index 0) of the PO table
+        if (autoPoResponse?.id) {
+          const targetIdx = sortedOrders.findIndex((o) => String(o.id) === String(autoPoResponse.id))
+          if (targetIdx > 0) {
+            const [poToTop] = sortedOrders.splice(targetIdx, 1)
+            sortedOrders.unshift(poToTop)
+          }
+        }
+
+        setPurchaseOrders(sortedOrders)
+        if (sortedOrders.length > 0) {
+          setSelectedOrder(sortedOrders[0])
         }
       } catch (autoPoErr) {
         console.warn('AI auto purchase order generation fallback:', autoPoErr.message)
@@ -717,6 +847,7 @@ function MainApp() {
           <OrdersView
             purchaseOrders={purchaseOrders}
             onSelectOrder={handleSelectOrder}
+            onRefresh={refreshOrders}
             isLoading={dataLoading}
           />
         )

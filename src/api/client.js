@@ -77,6 +77,8 @@ export const api = {
     if (params.search) query.append('search', params.search)
     if (params.category) query.append('category', params.category)
     if (params.low_stock_only) query.append('low_stock_only', 'true')
+    if (params.limit !== undefined) query.append('limit', params.limit)
+    if (params.skip !== undefined) query.append('skip', params.skip)
     const qs = query.toString() ? `?${query.toString()}` : ''
     return request(`/inventory${qs}`)
   },
