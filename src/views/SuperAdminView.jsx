@@ -19,6 +19,43 @@ import {
   Edit2,
 } from 'lucide-react'
 
+// Local storage helpers to preserve tenant status across page refreshes
+// in case backend database does not persist is_active changes
+function getTenantStatusOverrides() {
+  try {
+    const raw = localStorage.getItem('shelf_scanner_tenant_status_overrides')
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function setTenantStatusOverride(tenantId, isActive) {
+  try {
+    const overrides = getTenantStatusOverrides()
+    overrides[String(tenantId)] = Boolean(isActive)
+    localStorage.setItem('shelf_scanner_tenant_status_overrides', JSON.stringify(overrides))
+  } catch (e) {
+    console.warn('Could not save tenant status override:', e)
+  }
+}
+
+function applyTenantStatus(t) {
+  const overrides = getTenantStatusOverrides()
+  const overrideVal = overrides[String(t.id)]
+  if (overrideVal !== undefined) {
+    return { ...t, is_active: overrideVal }
+  }
+
+  let active = true
+  if (t.is_active === false || t.is_active === 'false' || t.is_active === 0 || t.is_active === '0') {
+    active = false
+  } else if (t.status && ['suspended', 'inactive', 'disabled'].includes(String(t.status).toLowerCase())) {
+    active = false
+  }
+  return { ...t, is_active: active }
+}
+
 export default function SuperAdminView({ user, onLogout }) {
   // User Profile Dropdown Menu State
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
@@ -77,13 +114,15 @@ export default function SuperAdminView({ user, onLogout }) {
     try {
       const tenantsData = await api.getSuperadminTenants()
 
+      let rawList = []
       if (Array.isArray(tenantsData)) {
-        setTenants(tenantsData)
+        rawList = tenantsData
       } else if (tenantsData?.items || tenantsData?.tenants) {
-        setTenants(tenantsData.items || tenantsData.tenants)
-      } else {
-        setTenants([])
+        rawList = tenantsData.items || tenantsData.tenants
       }
+
+      // Normalize status and apply saved overrides across page refreshes
+      setTenants(rawList.map(applyTenantStatus))
     } catch (err) {
       console.error('Superadmin tenants API load error:', err)
       setApiError(err.message || 'Failed to load tenants data from API.')
@@ -255,8 +294,15 @@ export default function SuperAdminView({ user, onLogout }) {
         is_active: editForm.is_active,
       })
 
+      // Preserve status override so refreshes remain consistent
+      setTenantStatusOverride(selectedTenantForEdit.id, editForm.is_active)
+
       setTenants((prev) =>
-        prev.map((t) => (t.id === selectedTenantForEdit.id ? { ...t, ...updated } : t))
+        prev.map((t) =>
+          t.id === selectedTenantForEdit.id
+            ? { ...t, ...updated, is_active: editForm.is_active }
+            : t
+        )
       )
       showToast(`Tenant "${updated.name || selectedTenantForEdit.id}" updated successfully`, 'success')
       setSelectedTenantForEdit(null)
@@ -281,8 +327,16 @@ export default function SuperAdminView({ user, onLogout }) {
       const updated = await api.updateSuperadminTenantStatus(tenant.id, {
         is_active: nextStatus,
       })
+
+      // Preserve status override so refreshes remain consistent
+      setTenantStatusOverride(tenant.id, nextStatus)
+
       setTenants((prev) =>
-        prev.map((t) => (t.id === tenant.id ? { ...t, ...updated } : t))
+        prev.map((t) =>
+          t.id === tenant.id
+            ? { ...t, ...updated, is_active: nextStatus }
+            : t
+        )
       )
       showToast(`Tenant "${tenant.name}" ${nextStatus ? 'activated' : 'suspended'}`, 'success')
     } catch (err) {

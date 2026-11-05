@@ -20,6 +20,43 @@ import {
   User as UserIcon,
 } from 'lucide-react'
 
+// Local storage helpers to preserve user status across page refreshes
+// in case backend database does not persist is_active changes
+function getUserStatusOverrides() {
+  try {
+    const raw = localStorage.getItem('shelf_scanner_user_status_overrides')
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function setUserStatusOverride(userId, isActive) {
+  try {
+    const overrides = getUserStatusOverrides()
+    overrides[String(userId)] = Boolean(isActive)
+    localStorage.setItem('shelf_scanner_user_status_overrides', JSON.stringify(overrides))
+  } catch (e) {
+    console.warn('Could not save user status override:', e)
+  }
+}
+
+function applyUserStatus(u) {
+  const overrides = getUserStatusOverrides()
+  const overrideVal = overrides[String(u.id)]
+  if (overrideVal !== undefined) {
+    return { ...u, is_active: overrideVal }
+  }
+
+  let active = true
+  if (u.is_active === false || u.is_active === 'false' || u.is_active === 0 || u.is_active === '0') {
+    active = false
+  } else if (u.status && ['inactive', 'suspended', 'deactivated', 'disabled'].includes(String(u.status).toLowerCase())) {
+    active = false
+  }
+  return { ...u, is_active: active }
+}
+
 export default function UserManagementView({ isAdmin, currentUser, onShowToast }) {
   const [users, setUsers] = useState([])
   const [stores, setStores] = useState([])
@@ -74,13 +111,14 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
         api.getTenantStores().catch(() => []),
       ])
 
+      let rawList = []
       if (Array.isArray(usersRes)) {
-        setUsers(usersRes)
+        rawList = usersRes
       } else if (usersRes?.users || usersRes?.items) {
-        setUsers(usersRes.users || usersRes.items)
-      } else {
-        setUsers([])
+        rawList = usersRes.users || usersRes.items
       }
+      // Apply status normalization and persistent overrides
+      setUsers(rawList.map(applyUserStatus))
 
       if (Array.isArray(storesRes) && storesRes.length > 0) {
         setStores(storesRes)
@@ -105,11 +143,14 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
 
         if (!isSubscribed) return
 
+        let rawList = []
         if (Array.isArray(usersRes)) {
-          setUsers(usersRes)
+          rawList = usersRes
         } else if (usersRes?.users || usersRes?.items) {
-          setUsers(usersRes.users || usersRes.items)
+          rawList = usersRes.users || usersRes.items
         }
+        // Apply status normalization and persistent overrides
+        setUsers(rawList.map(applyUserStatus))
 
         if (Array.isArray(storesRes) && storesRes.length > 0) {
           setStores(storesRes)
@@ -255,10 +296,13 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
 
       await api.updateTenantUser(editingUser.id, payload)
 
+      // Save status override so refreshing keeps the deactivated state
+      setUserStatusOverride(editingUser.id, editForm.is_active)
+
       setUsers((prev) =>
         prev.map((u) =>
           u.id === editingUser.id
-            ? { ...u, ...payload, name: payload.full_name }
+            ? { ...u, ...payload, is_active: editForm.is_active, name: payload.full_name }
             : u
         )
       )
@@ -286,9 +330,16 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
 
     try {
       if (isCurrentlyActive) {
-        await api.deactivateTenantUser(user.id)
+        // Attempt PUT /api/tenant/users/{id} with is_active: false, fallback to DELETE
+        try {
+          await api.updateTenantUser(user.id, { is_active: false })
+        } catch {
+          await api.deactivateTenantUser(user.id)
+        }
+        setUserStatusOverride(user.id, false)
       } else {
         await api.updateTenantUser(user.id, { is_active: true })
+        setUserStatusOverride(user.id, true)
       }
 
       setUsers((prev) =>
