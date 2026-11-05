@@ -24,9 +24,8 @@ export default function SuperAdminView({ user, onLogout }) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef(null)
 
-  // Live API data state
+  // Live API data state (strictly GET /api/superadmin/tenants)
   const [tenants, setTenants] = useState([])
-  const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [apiError, setApiError] = useState(null)
@@ -69,21 +68,14 @@ export default function SuperAdminView({ user, onLogout }) {
     setTimeout(() => setToastMessage(null), 3500)
   }
 
-  // Fetch real data from Superadmin APIs
+  // Fetch real data strictly from GET /api/superadmin/tenants
   const loadData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true)
     else setLoading(true)
     setApiError(null)
 
     try {
-      const [analyticsData, tenantsData] = await Promise.all([
-        api.getSuperadminAnalytics(),
-        api.getSuperadminTenants(),
-      ])
-
-      if (analyticsData) {
-        setAnalytics(analyticsData)
-      }
+      const tenantsData = await api.getSuperadminTenants()
 
       if (Array.isArray(tenantsData)) {
         setTenants(tenantsData)
@@ -93,8 +85,8 @@ export default function SuperAdminView({ user, onLogout }) {
         setTenants([])
       }
     } catch (err) {
-      console.error('Superadmin API load error:', err)
-      setApiError(err.message || 'Failed to load data from Superadmin APIs.')
+      console.error('Superadmin tenants API load error:', err)
+      setApiError(err.message || 'Failed to load tenants data from API.')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -129,13 +121,13 @@ export default function SuperAdminView({ user, onLogout }) {
   const userEmail = user?.email || 'superadmin'
   const userInitial = displayName.charAt(0).toUpperCase() || 'P'
 
-  // Metric aggregates matching the dashboard cards
-  const totalTenantsCount = analytics?.total_tenants ?? tenants.length
-  const activeTenantsCount =
-    analytics?.active_tenants ?? tenants.filter((t) => t.is_active).length
-  const totalStoresCount =
-    analytics?.total_stores ??
-    tenants.reduce((acc, t) => acc + (Number(t.total_stores) || 0), 0)
+  // Metric aggregates derived strictly from GET /api/superadmin/tenants
+  const totalTenantsCount = tenants.length
+  const activeTenantsCount = tenants.filter((t) => t.is_active).length
+  const totalStoresCount = tenants.reduce(
+    (acc, t) => acc + (Number(t.total_stores) || 0),
+    0
+  )
 
   // Auto-slugify tenant name
   const handleNameChange = (e) => {
@@ -219,9 +211,6 @@ export default function SuperAdminView({ user, onLogout }) {
       setTenants((prev) => [created, ...prev.filter((t) => t.id !== created.id)])
       showToast(`Tenant "${created.name}" created and Admin provisioned!`, 'success')
 
-      // Refresh live analytics
-      api.getSuperadminAnalytics().then((res) => res && setAnalytics(res)).catch(() => {})
-
       setIsOnboardModalOpen(false)
       setCreateForm({
         name: '',
@@ -270,9 +259,6 @@ export default function SuperAdminView({ user, onLogout }) {
         prev.map((t) => (t.id === selectedTenantForEdit.id ? { ...t, ...updated } : t))
       )
       showToast(`Tenant "${updated.name || selectedTenantForEdit.id}" updated successfully`, 'success')
-
-      // Refresh analytics
-      api.getSuperadminAnalytics().then((res) => res && setAnalytics(res)).catch(() => {})
       setSelectedTenantForEdit(null)
     } catch (err) {
       showToast(err.message || 'Failed to update tenant status', 'error')
@@ -299,7 +285,6 @@ export default function SuperAdminView({ user, onLogout }) {
         prev.map((t) => (t.id === tenant.id ? { ...t, ...updated } : t))
       )
       showToast(`Tenant "${tenant.name}" ${nextStatus ? 'activated' : 'suspended'}`, 'success')
-      api.getSuperadminAnalytics().then((res) => res && setAnalytics(res)).catch(() => {})
     } catch (err) {
       showToast(err.message || `Failed to ${actionLabel} tenant`, 'error')
     } finally {
@@ -460,7 +445,7 @@ export default function SuperAdminView({ user, onLogout }) {
               <Building2 className="w-5 h-5 text-purple-400/90" />
             </div>
             <div className="text-3xl font-black text-slate-900 mt-2.5">
-              {loading && !analytics && tenants.length === 0 ? (
+              {loading && tenants.length === 0 ? (
                 <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
               ) : (
                 totalTenantsCount
@@ -478,7 +463,7 @@ export default function SuperAdminView({ user, onLogout }) {
               <CheckCircle2 className="w-5 h-5 text-emerald-500/90" />
             </div>
             <div className="text-3xl font-black text-emerald-600 mt-2.5 flex items-baseline gap-1">
-              {loading && !analytics && tenants.length === 0 ? (
+              {loading && tenants.length === 0 ? (
                 <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
               ) : (
                 <>
@@ -499,7 +484,7 @@ export default function SuperAdminView({ user, onLogout }) {
               <Store className="w-5 h-5 text-purple-400/90" />
             </div>
             <div className="text-3xl font-black text-slate-900 mt-2.5">
-              {loading && !analytics && tenants.length === 0 ? (
+              {loading && tenants.length === 0 ? (
                 <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
               ) : (
                 totalStoresCount
