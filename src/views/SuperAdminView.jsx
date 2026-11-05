@@ -4,10 +4,8 @@ import {
   Building2,
   Store,
   Scan,
-  ShieldCheck,
   Search,
   Plus,
-  RefreshCw,
   Power,
   X,
   CheckCircle2,
@@ -64,7 +62,6 @@ export default function SuperAdminView({ user, onLogout }) {
   // Live API data state (strictly GET /api/superadmin/tenants)
   const [tenants, setTenants] = useState([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [apiError, setApiError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
 
@@ -106,9 +103,8 @@ export default function SuperAdminView({ user, onLogout }) {
   }
 
   // Fetch real data strictly from GET /api/superadmin/tenants
-  const loadData = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) setRefreshing(true)
-    else setLoading(true)
+  const loadData = useCallback(async () => {
+    setLoading(true)
     setApiError(null)
 
     try {
@@ -128,7 +124,6 @@ export default function SuperAdminView({ user, onLogout }) {
       setApiError(err.message || 'Failed to load tenants data from API.')
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }, [])
 
@@ -157,7 +152,10 @@ export default function SuperAdminView({ user, onLogout }) {
   }, [])
 
   const displayName = user?.full_name || user?.name || 'Platform Superadmin'
-  const userEmail = user?.email || 'superadmin'
+  const userEmail =
+    user?.email && user.email.includes('@')
+      ? user.email
+      : 'superadmin@platform.com'
   const userInitial = displayName.charAt(0).toUpperCase() || 'P'
 
   // Metric aggregates derived strictly from GET /api/superadmin/tenants
@@ -409,58 +407,43 @@ export default function SuperAdminView({ user, onLogout }) {
               {userInitial}
             </button>
 
-            {/* Profile Dropdown Menu */}
+            {/* Profile Dropdown Menu (Matching Provided Design) */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200/90 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                {/* User Profile Information */}
-                <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#c26d24] text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-amber-100">
+              <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl border border-slate-100 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                {/* Top Section: User Avatar & Details */}
+                <div className="p-5 flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-blue-600 ring-4 ring-blue-100/80 flex items-center justify-center text-white font-black text-xl shadow-xs shrink-0">
                     {userInitial}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black text-slate-900 truncate leading-tight">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
                       {displayName}
-                    </p>
-                    <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5" title={userEmail}>
+                    </h3>
+                    <p className="text-xs font-mono text-slate-400 truncate mt-1">
                       {userEmail}
                     </p>
-                    <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">
-                      <ShieldCheck className="w-3 h-3 text-amber-700" />
-                      Platform Superadmin
-                    </div>
                   </div>
                 </div>
 
-                {/* Live Refresh Option */}
-                <div className="px-2 py-1 border-b border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      loadData(true)
-                      setIsProfileMenuOpen(false)
-                    }}
-                    disabled={refreshing || loading}
-                    className="w-full py-2 px-3 rounded-xl hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-2.5 cursor-pointer transition-colors"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
-                    <span>{refreshing ? 'Refreshing data…' : 'Refresh Live Data'}</span>
-                  </button>
-                </div>
+                {/* Divider Line */}
+                <div className="border-t border-slate-100"></div>
 
-                {/* Log Out Action */}
-                <div className="p-2">
+                {/* Bottom Section: Log Out Button */}
+                <div className="p-4 sm:p-5">
                   <button
                     type="button"
                     onClick={() => {
                       setIsProfileMenuOpen(false)
                       onLogout()
                     }}
-                    className="w-full py-2 px-3 rounded-xl hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors flex items-center gap-2.5 cursor-pointer group"
+                    className="w-full flex items-center gap-3.5 p-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center group-hover:bg-rose-200 transition-colors">
-                      <LogOut className="w-3.5 h-3.5" />
+                    <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
+                      <LogOut className="w-5 h-5" />
                     </div>
-                    <span>Log out</span>
+                    <span className="text-base font-bold text-rose-600">
+                      Log out
+                    </span>
                   </button>
                 </div>
               </div>
@@ -480,7 +463,7 @@ export default function SuperAdminView({ user, onLogout }) {
             </div>
             <button
               type="button"
-              onClick={() => loadData(true)}
+              onClick={() => loadData()}
               className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs cursor-pointer font-bold"
             >
               Retry
