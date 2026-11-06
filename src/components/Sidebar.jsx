@@ -1,4 +1,3 @@
-import logoImg from '../assets/logo.png'
 import {
   LayoutDashboard,
   Scan,
@@ -6,8 +5,6 @@ import {
   Package,
   Users,
   LogOut,
-  ShieldCheck,
-  UserCheck,
 } from 'lucide-react'
 
 export default function Sidebar({
@@ -46,89 +43,77 @@ export default function Sidebar({
     },
   ]
 
-  const initial = (user?.full_name || user?.name || (isAdmin ? 'Store Admin' : 'Staff'))
-    .charAt(0)
-    .toUpperCase() || 'P'
+  const displayName =
+    user?.full_name || user?.name || (isAdmin ? 'Store Admin' : 'Staff')
+  const tenantName =
+    user?.tenant_name ||
+    user?.tenant?.name ||
+    user?.store_name ||
+    user?.company_name ||
+    'Apex Retail'
+  const initial = displayName.charAt(0).toUpperCase() || 'S'
 
   const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   return (
-    <div className="h-full flex flex-col shrink-0 select-none pl-4 pr-2 pt-4 pb-4">
-      {/* Brand Logo & Name outside the navigation bar */}
-      <div className="h-10 flex items-center gap-3 px-1 mb-4 shrink-0">
-        <img
-          src={logoImg}
-          alt="Shelf Scanner Logo"
-          className="w-9 h-9 rounded-xl shadow-xs object-contain shrink-0"
-        />
-        <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">
-          Shelf Scanner
-        </h1>
-      </div>
+    <aside className="w-60 bg-white h-full border-r border-slate-200/90 flex flex-col justify-between shrink-0 select-none">
+      {/* Navigation Items with Icons */}
+      <nav className="py-3 space-y-0.5 overflow-y-auto no-scrollbar">
+        {visibleNavItems.map((item) => {
+          const Icon = item.icon
+          const isActive =
+            currentTab === item.id ||
+            (item.id === 'orders' && currentTab === 'order-detail') ||
+            (item.id === 'new-scan' && currentTab === 'scan-result')
 
-      {/* Navigation Bar (Floating card with top, bottom, and left margins) */}
-      <aside className="w-60 bg-white flex-1 border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between shadow-xs min-h-0">
-        {/* Navigation Items with Icons */}
-        <nav className="space-y-1.5 overflow-y-auto no-scrollbar">
-          {visibleNavItems.map((item) => {
-            const Icon = item.icon
-            const isActive =
-              currentTab === item.id ||
-              (item.id === 'orders' && currentTab === 'order-detail') ||
-              (item.id === 'new-scan' && currentTab === 'scan-result')
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm transition-all font-semibold flex items-center gap-3 cursor-pointer ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-600 font-bold shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className={`w-full text-left px-5 py-3 text-xs sm:text-sm transition-colors flex items-center gap-3 cursor-pointer ${
+                isActive
+                  ? 'border-l-4 border-[#3F4168] bg-slate-100/90 text-slate-900 font-bold'
+                  : 'border-l-4 border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-medium'
+              }`}
+            >
+              <Icon
+                className={`w-4 h-4 shrink-0 ${
+                  isActive ? 'text-[#3F4168]' : 'text-slate-400'
                 }`}
-              >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                <span className="truncate">{item.label}</span>
-              </button>
-            )
-          })}
-        </nav>
+              />
+              <span className="truncate">{item.label}</span>
+            </button>
+          )
+        })}
+      </nav>
 
-        {/* Bottom Section: User Profile & Separated Logout */}
-        <div className="space-y-2.5 pt-3 border-t border-slate-100 shrink-0">
-          {/* User Profile Card */}
-          <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3 flex items-center gap-3 overflow-hidden shadow-2xs">
-            <div className={`w-9 h-9 rounded-full font-black text-xs flex items-center justify-center shrink-0 border ${
-              isAdmin
-                ? 'bg-purple-100 text-purple-700 border-purple-200'
-                : 'bg-blue-100 text-blue-700 border-blue-200'
-            }`}>
-              {initial}
-            </div>
-            <div className="truncate flex-1 min-w-0 flex items-center">
-              {isAdmin ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700">
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600" /> Admin
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
-                  <UserCheck className="w-3.5 h-3.5 text-blue-600" /> Staff
-                </span>
-              )}
-            </div>
+      {/* Bottom Section: User Profile & Sign Out Button */}
+      <div className="p-4 border-t border-slate-100 space-y-3 shrink-0">
+        {/* User Profile Card */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-[#f0e7fe] text-[#7c3aed] font-bold text-sm flex items-center justify-center shrink-0">
+            {initial}
           </div>
-
-          {/* Standalone Logout Option Apart from User Profile */}
-          <button
-            type="button"
-            onClick={onLogout}
-            className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200/80 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-[0.99]"
-          >
-            <LogOut className="w-3.5 h-3.5 text-rose-500" />
-            <span>Log out</span>
-          </button>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate">
+              {displayName}
+            </p>
+            <p className="text-[11px] text-slate-400 font-normal leading-tight mt-0.5 truncate">
+              ({tenantName})
+            </p>
+          </div>
         </div>
-      </aside>
-    </div>
+
+        {/* Sign Out Button */}
+        <button
+          type="button"
+          onClick={onLogout}
+          className="w-full py-2 px-3 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs active:scale-[0.99]"
+        >
+          <LogOut className="w-3.5 h-3.5 text-slate-700" />
+          <span>Sign out</span>
+        </button>
+      </div>
+    </aside>
   )
 }

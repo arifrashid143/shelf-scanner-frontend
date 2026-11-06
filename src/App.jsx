@@ -13,8 +13,7 @@ import OrderDetailView from './views/OrderDetailView'
 import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
-import logoImg from './assets/logo.png'
-import { Loader2, LogOut } from 'lucide-react'
+import { Loader2, LogOut, GripVertical, Plus } from 'lucide-react'
 
 function normalizeOrder(order) {
   if (!order) return null
@@ -66,6 +65,12 @@ function MainApp() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const displayName =
     user?.full_name || user?.name || (isSuperAdmin ? 'Superadmin' : isAdmin ? 'Store Admin' : 'Store Associate')
+  const tenantName =
+    user?.tenant_name ||
+    user?.tenant?.name ||
+    user?.store_name ||
+    user?.company_name ||
+    'Apex Retail'
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
   // Tailored page backgrounds that suit each view's theme and purpose
@@ -902,7 +907,7 @@ function MainApp() {
   }
 
   return (
-    <div className={`h-screen w-full flex flex-col md:flex-row font-sans antialiased text-slate-900 overflow-hidden transition-colors duration-300 ${getPageBg()}`}>
+    <div className={`h-screen w-full flex flex-col font-sans antialiased text-slate-900 overflow-hidden ${getPageBg()}`}>
       {/* Toast Notification Alert */}
       {toastMessage && (
         <div
@@ -927,69 +932,51 @@ function MainApp() {
         </div>
       )}
 
-      {/* Desktop Persistent Left Sidebar with Margins and Out-of-Navbar Logo */}
-      <div className="hidden md:flex h-full shrink-0">
-        <Sidebar
-          currentTab={currentTab}
-          onNavigate={setCurrentTab}
-          user={user}
-          isAdmin={isAdmin}
-          onLogout={logout}
-        />
-      </div>
+      {/* Global Top Navbar spanning full width */}
+      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-4 sm:px-6 border-b border-white/10 shadow-2xs select-none">
+        {/* Left: App Grid Icon + Brand */}
+        <div className="flex items-center gap-2.5">
+          <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
+          <span className="font-bold text-base tracking-tight text-white select-none">
+            Shelf Scanner
+          </span>
+        </div>
 
-      {/* Right Column Content Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0">
-        {/* Mobile Top Status Bar with Brand Logo & Greeting Header */}
-        <div className="md:hidden bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <img
-              src={logoImg}
-              alt="Shelf Scanner"
-              className="w-8 h-8 rounded-xl object-contain shadow-2xs shrink-0"
-            />
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium text-slate-500 leading-tight truncate">
-                {currentTab === 'dashboard' ? greeting : 'Shelf Scanner'}
-              </p>
-              <h2 className="text-sm font-black text-slate-900 tracking-tight leading-tight truncate">
-                {currentTab === 'dashboard'
-                  ? displayName
-                  : currentTab === 'new-scan'
-                  ? 'Scan Shelf'
-                  : currentTab === 'orders'
-                  ? 'Purchase Orders'
-                  : currentTab === 'order-detail'
-                  ? 'Order Details'
-                  : currentTab === 'inventory'
-                  ? 'Inventory'
-                  : currentTab === 'users'
-                  ? 'User Management'
-                  : 'Shelf Scanner'}
-              </h2>
-            </div>
+        {/* Center: Greeting Pill */}
+        <div className="hidden md:flex items-center justify-center">
+          <div className="bg-[#505378]/90 border border-white/10 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white shadow-2xs">
+            {greeting}, {displayName} ({tenantName})
           </div>
+        </div>
+
+        {/* Right: + New scan button and Mobile profile menu */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCurrentTab('new-scan')}
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>New scan</span>
+          </button>
 
           {/* User Profile Avatar with dropdown for mobile */}
-          <div className="relative shrink-0" ref={mobileProfileRef}>
+          <div className="relative md:hidden shrink-0" ref={mobileProfileRef}>
             <button
               type="button"
               onClick={() => setIsMobileProfileOpen((p) => !p)}
-              className="flex items-center gap-1.5 p-1 rounded-full border border-slate-200/80 hover:bg-slate-50 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 p-1 rounded-full border border-white/20 hover:bg-white/10 transition-colors cursor-pointer"
               aria-label="User profile menu"
             >
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
-                {isAdmin ? 'Admin' : 'Staff'}
-              </span>
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shadow-2xs border border-blue-200">
+              <div className="w-7 h-7 rounded-full bg-purple-200 text-purple-900 font-bold flex items-center justify-center text-xs shadow-2xs">
                 {initial}
               </div>
             </button>
 
             {isMobileProfileOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
                 <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center shrink-0">
                     {initial}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1015,33 +1002,49 @@ function MainApp() {
                     className="w-full py-2 px-3 rounded-xl hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5 text-rose-600" />
-                    <span>Log out</span>
+                    <span>Sign out</span>
                   </button>
                 </div>
               </div>
             )}
           </div>
         </div>
+      </header>
 
-        {/* Main Content Area: Responsive viewport fitting with scroll support */}
-        <main className="flex-1 h-full min-h-0 overflow-y-auto px-4 sm:px-5 md:pl-2 md:pr-4 lg:pr-6 pt-3 md:pt-4 max-w-[1550px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-8 flex flex-col">
-          {dataError && (
-            <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                <span>{dataError}</span>
+      {/* Main Body Below Top Navbar: Sidebar on left, Content on right */}
+      <div className="flex-1 flex w-full min-h-0 overflow-hidden">
+        {/* Desktop Left Sidebar docked under navbar */}
+        <div className="hidden md:flex h-full shrink-0">
+          <Sidebar
+            currentTab={currentTab}
+            onNavigate={setCurrentTab}
+            user={user}
+            isAdmin={isAdmin}
+            onLogout={logout}
+          />
+        </div>
+
+        {/* Right Column Content Area */}
+        <div className="flex-1 flex flex-col h-full min-w-0 bg-[#f8f9fa] overflow-hidden">
+          <main className="flex-1 h-full min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-8 flex flex-col">
+            {dataError && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                  <span>{dataError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadData}
+                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+                >
+                  Retry
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={loadData}
-                className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold cursor-pointer"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-          {renderContent()}
-        </main>
+            )}
+            {renderContent()}
+          </main>
+        </div>
       </div>
 
       {/* Mobile Bottom Navigation */}
