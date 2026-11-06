@@ -46,8 +46,11 @@ export default function Sidebar({
     },
   ]
 
-  const displayName = user?.full_name || user?.name || (isAdmin ? 'Store Admin' : 'Staff')
-  const initial = displayName.charAt(0).toUpperCase() || 'P'
+  const initial = (user?.full_name || user?.name || (isAdmin ? 'Store Admin' : 'Staff'))
+    .charAt(0)
+    .toUpperCase() || 'P'
+
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   return (
     <div className="h-full flex flex-col shrink-0 select-none pl-4 pr-2 pt-4 pb-4">
@@ -67,7 +70,7 @@ export default function Sidebar({
       <aside className="w-60 bg-white flex-1 border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between shadow-xs min-h-0">
         {/* Navigation Items with Icons */}
         <nav className="space-y-1.5 overflow-y-auto no-scrollbar">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon
             const isActive =
               currentTab === item.id ||
@@ -86,15 +89,6 @@ export default function Sidebar({
               >
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
                 <span className="truncate">{item.label}</span>
-                {item.adminOnly && (
-                  <span className={`ml-auto text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md shrink-0 ${
-                    isActive
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-purple-50 text-purple-700 border border-purple-200/80'
-                  }`}>
-                    Admin
-                  </span>
-                )}
               </button>
             )
           })}
@@ -111,21 +105,16 @@ export default function Sidebar({
             }`}>
               {initial}
             </div>
-            <div className="truncate flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-900 truncate leading-tight">
-                {displayName}
-              </p>
-              <div className="flex items-center gap-1 mt-0.5">
-                {isAdmin ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-700">
-                    <ShieldCheck className="w-3 h-3 text-purple-600" /> Admin
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600">
-                    <UserCheck className="w-3 h-3 text-blue-600" /> Staff
-                  </span>
-                )}
-              </div>
+            <div className="truncate flex-1 min-w-0 flex items-center">
+              {isAdmin ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700">
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600" /> Admin
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
+                  <UserCheck className="w-3.5 h-3.5 text-blue-600" /> Staff
+                </span>
+              )}
             </div>
           </div>
 
