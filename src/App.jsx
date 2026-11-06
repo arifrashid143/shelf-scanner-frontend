@@ -13,7 +13,8 @@ import OrderDetailView from './views/OrderDetailView'
 import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
-import { Loader2, LogOut, GripVertical, Plus } from 'lucide-react'
+import logoImg from './assets/logo.png'
+import { Loader2, LogOut, Plus } from 'lucide-react'
 
 function normalizeOrder(order) {
   if (!order) return null
@@ -934,9 +935,13 @@ function MainApp() {
 
       {/* Global Top Navbar spanning full width */}
       <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-4 sm:px-6 border-b border-white/10 shadow-2xs select-none">
-        {/* Left: App Grid Icon + Brand */}
+        {/* Left: Custom Brand Logo + Name */}
         <div className="flex items-center gap-2.5">
-          <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
+          <img
+            src={logoImg}
+            alt="Shelf Scanner"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-md object-contain shrink-0 shadow-2xs"
+          />
           <span className="font-bold text-base tracking-tight text-white select-none">
             Shelf Scanner
           </span>
