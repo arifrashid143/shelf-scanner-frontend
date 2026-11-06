@@ -538,9 +538,6 @@ export default function NewScanView({
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
               New scan
             </h1>
-            <span className="hidden xl:inline text-xs font-medium text-slate-500">
-              Capture or upload a shelf photo for AI detection and inventory gap sync.
-            </span>
           </div>
 
           {/* Shelf Location & Mode Switcher */}
@@ -799,9 +796,6 @@ export default function NewScanView({
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none">
                     Recent Scans
                   </h2>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Verified visual shelf analyses
-                  </p>
                 </div>
               </div>
               <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80">
