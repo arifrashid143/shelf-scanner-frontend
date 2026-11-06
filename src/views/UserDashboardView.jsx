@@ -46,7 +46,7 @@ export default function UserDashboardView({
       {/* Top Header Row matching Sidebar logo height */}
       <div className="flex items-center justify-between shrink-0 h-10">
         <div className="flex items-baseline gap-3 min-w-0">
-          <h1 className="hidden md:block text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none truncate">
+          <h1 className="hidden md:block text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none truncate">
             {greeting}, {displayName}
           </h1>
         </div>
