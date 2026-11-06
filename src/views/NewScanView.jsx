@@ -7,15 +7,17 @@ import {
   Sparkles,
   AlertCircle,
   RotateCcw,
-  Focus,
-  SunMedium,
-  Zap,
-  Package,
-  ShoppingCart,
-  ScanLine,
+  Scan,
+  Check,
+  ArrowRight,
 } from 'lucide-react'
 
-export default function NewScanView({ onScanComplete }) {
+export default function NewScanView({
+  onScanComplete,
+  recentScans = [],
+  onSelectScan,
+  isLoading = false,
+}) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -463,49 +465,67 @@ export default function NewScanView({ onScanComplete }) {
           )}
         </div>
 
-        {/* Mobile Scanning Instructions with Icons */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-xs space-y-2.5 flex-1 min-h-0 overflow-y-auto no-scrollbar">
-          <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            <h2 className="text-xs font-bold text-slate-900">Scanning Tips</h2>
+        {/* Mobile Recent Scans Table */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-xs flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
+            <div className="flex items-center gap-2">
+              <Scan className="w-3.5 h-3.5 text-blue-600" />
+              <h2 className="text-xs font-bold text-slate-900">Recent Scans</h2>
+            </div>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              {recentScans.length} {recentScans.length === 1 ? 'scan' : 'scans'}
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex items-start gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
-                <Focus className="w-3 h-3" />
+
+          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pt-2 space-y-2">
+            {isLoading ? (
+              <div className="py-8 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-1.5">
+                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                <span>Loading recent scans...</span>
               </div>
-              <div>
-                <p className="font-bold text-slate-800 text-[11px]">Straight-on</p>
-                <p className="text-slate-500 text-[10px]">Head-on angle</p>
+            ) : recentScans.length === 0 ? (
+              <div className="py-6 text-center text-slate-400 text-xs">
+                No recent scans recorded yet.
               </div>
-            </div>
-            <div className="flex items-start gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
-                <SunMedium className="w-3 h-3" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 text-[11px]">Clear Light</p>
-                <p className="text-slate-500 text-[10px]">Avoid glare</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
-                <Camera className="w-3 h-3" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 text-[11px]">Keep Steady</p>
-                <p className="text-slate-500 text-[10px]">Sharp label</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5">
-                <Zap className="w-3 h-3" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 text-[11px]">Instant AI</p>
-                <p className="text-slate-500 text-[10px]">Counts &amp; gaps</p>
-              </div>
-            </div>
+            ) : (
+              recentScans.map((scan) => {
+                const gapsCount = scan.empty_gaps_count ?? scan.gaps ?? 0
+                const itemsCount = scan.total_detected_count ?? scan.items ?? 0
+
+                return (
+                  <div
+                    key={scan.id}
+                    onClick={() => onSelectScan && onSelectScan(scan)}
+                    className="p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/80 active:scale-98 transition-all cursor-pointer flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-slate-900 text-xs truncate">
+                        {scan.shelf || scan.shelf_id || 'Shelf Section'}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400">
+                        <span>{scan.time || scan.date || 'Today'}</span>
+                        <span>·</span>
+                        <span>{itemsCount} items</span>
+                        {gapsCount > 0 && (
+                          <>
+                            <span>·</span>
+                            <span className="text-rose-600 font-bold">{gapsCount} gaps</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        <Check className="w-2.5 h-2.5 text-emerald-600 stroke-[2.5]" />
+                        Verified
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         </div>
       </div>
@@ -565,8 +585,8 @@ export default function NewScanView({ onScanComplete }) {
 
         {/* 2-Column Grid filling 100% of available height within the viewport */}
         <div className="flex-1 min-h-0 grid grid-cols-12 gap-4 items-stretch">
-          {/* Left Column (8 cols): Camera / Preview / Upload Card */}
-          <div className="col-span-12 lg:col-span-7 xl:col-span-8 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between h-full min-h-0 overflow-hidden">
+          {/* Left Column (7 cols): Camera / Preview / Upload Card */}
+          <div className="col-span-12 lg:col-span-7 xl:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between h-full min-h-0 overflow-hidden">
             {/* Viewfinder Area */}
             <div className="flex-1 min-h-0 flex flex-col justify-center relative">
               {isAnalyzing ? (
@@ -767,105 +787,116 @@ export default function NewScanView({ onScanComplete }) {
             </div>
           </div>
 
-          {/* Right Column (4-5 cols): Instructions & Pipeline with Icons */}
-          <div className="col-span-12 lg:col-span-5 xl:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between h-full min-h-0 overflow-y-auto no-scrollbar space-y-3.5">
-            {/* Top Section: Scanning Instructions with Icons */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4" />
+          {/* Right Column (5 cols): Recent Scans Table */}
+          <div className="col-span-12 lg:col-span-5 xl:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex flex-col h-full min-h-0 overflow-hidden">
+            {/* Table Card Header */}
+            <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100/80">
+                  <Scan className="w-4 h-4 stroke-[2.2]" />
                 </div>
                 <div>
-                  <h2 className="text-xs sm:text-sm font-bold text-slate-900">Scanning Instructions</h2>
-                  <p className="text-[11px] text-slate-400">Tips for an optimal AI detection scan</p>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none">
+                    Recent Scans
+                  </h2>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Verified visual shelf analyses
+                  </p>
                 </div>
               </div>
-
-              <div className="space-y-2.5 text-xs">
-                <div className="flex items-start gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100/80 mt-0.5">
-                    <Focus className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-800 text-xs">Straight-on Angle</p>
-                    <p className="text-slate-500 text-[11px] leading-tight mt-0.5">Capture entire shelf section head-on without tilting.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100/80 mt-0.5">
-                    <SunMedium className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-800 text-xs">Clear Lighting</p>
-                    <p className="text-slate-500 text-[11px] leading-tight mt-0.5">Avoid heavy flash reflections, glare, and deep shadows.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100/80 mt-0.5">
-                    <Camera className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-800 text-xs">Keep Steady</p>
-                    <p className="text-slate-500 text-[11px] leading-tight mt-0.5">Hold phone or webcam steady so packaging is sharp.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100/80 mt-0.5">
-                    <Zap className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-800 text-xs">Instant AI Detection</p>
-                    <p className="text-slate-500 text-[11px] leading-tight mt-0.5">Vision model counts items, identifies SKUs, and flags gaps.</p>
-                  </div>
-                </div>
-              </div>
+              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80">
+                {recentScans.length} {recentScans.length === 1 ? 'scan' : 'scans'}
+              </span>
             </div>
 
-            {/* Bottom Section: AI Vision Pipeline with Icons */}
-            <div className="space-y-2.5 pt-2 border-t border-slate-100">
-              <div className="flex items-center gap-2 pb-1.5">
-                <div className="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                  <ScanLine className="w-3.5 h-3.5" />
+            {/* Table Body with In-Table Scrolling */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto no-scrollbar">
+              {isLoading ? (
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 text-xs gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                  <span>Loading scan history...</span>
                 </div>
-                <h3 className="text-xs font-bold text-slate-900">AI Vision Pipeline</h3>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-1.5 text-blue-700 font-bold text-[11px]">
-                    <Camera className="w-3 h-3 shrink-0" />
-                    <span>1. Capture</span>
+              ) : recentScans.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 text-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mb-2.5 border border-slate-100">
+                    <Scan className="w-6 h-6 stroke-[1.8]" />
                   </div>
-                  <p className="text-slate-500 text-[10px] mt-0.5">Live video frame</p>
+                  <p className="font-bold text-slate-700 text-xs">No recent scans recorded</p>
+                  <p className="text-[11px] text-slate-400 mt-1 max-w-[220px]">
+                    Capture or upload a shelf photo to run your first visual AI scan.
+                  </p>
                 </div>
+              ) : (
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50 border-b border-slate-200/80 sticky top-0 z-10 text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider shadow-2xs">
+                    <tr>
+                      <th className="px-4 py-2.5 bg-slate-50">Shelf / ID</th>
+                      <th className="px-3 py-2.5 bg-slate-50 text-center">Items &amp; Gaps</th>
+                      <th className="px-3 py-2.5 bg-slate-50 text-right">Time</th>
+                      <th className="px-4 py-2.5 bg-slate-50 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {recentScans.map((scan) => {
+                      const gapsCount = scan.empty_gaps_count ?? scan.gaps ?? 0
+                      const itemsCount = scan.total_detected_count ?? scan.items ?? 0
 
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-1.5 text-indigo-700 font-bold text-[11px]">
-                    <ScanLine className="w-3 h-3 shrink-0" />
-                    <span>2. Detect</span>
-                  </div>
-                  <p className="text-slate-500 text-[10px] mt-0.5">SKUs &amp; boxes</p>
-                </div>
+                      return (
+                        <tr
+                          key={scan.id}
+                          onClick={() => onSelectScan && onSelectScan(scan)}
+                          className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                          title="Click to view scan results and visual detections"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[130px] sm:max-w-[170px]">
+                                {scan.shelf || scan.shelf_id || 'Shelf Section'}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
+                                {scan.id}
+                              </span>
+                            </div>
+                          </td>
 
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-[11px]">
-                    <Package className="w-3 h-3 shrink-0" />
-                    <span>3. Validate</span>
-                  </div>
-                  <p className="text-slate-500 text-[10px] mt-0.5">Compare targets</p>
-                </div>
+                          <td className="px-3 py-3 text-center">
+                            <div className="inline-flex items-center gap-1.5">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
+                                {itemsCount} {itemsCount === 1 ? 'item' : 'items'}
+                              </span>
+                              {gapsCount > 0 ? (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
+                                  {gapsCount} {gapsCount === 1 ? 'gap' : 'gaps'}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                                  0 gaps
+                                </span>
+                              )}
+                            </div>
+                          </td>
 
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-1.5 text-purple-700 font-bold text-[11px]">
-                    <ShoppingCart className="w-3 h-3 shrink-0" />
-                    <span>4. Reorder</span>
-                  </div>
-                  <p className="text-slate-500 text-[10px] mt-0.5">Draft PO for gaps</p>
-                </div>
-              </div>
+                          <td className="px-3 py-3 text-right">
+                            <span className="text-slate-500 font-medium whitespace-nowrap text-[11px]">
+                              {scan.time || scan.date || 'Today'}
+                            </span>
+                          </td>
+
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                <Check className="w-3 h-3 text-emerald-600 stroke-[2.5]" />
+                                Verified
+                              </span>
+                              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>

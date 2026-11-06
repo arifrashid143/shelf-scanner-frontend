@@ -26,13 +26,6 @@ export default function UserDashboardView({
 
   const displayName = user?.full_name || user?.name || 'Store Associate'
 
-  const formattedDate = new Intl.DateTimeFormat('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date())
-
   const lowStockCount = inventory.filter(
     (item) => item.status === 'Low' || item.is_low_stock === true
   ).length
@@ -56,22 +49,10 @@ export default function UserDashboardView({
           <h1 className="hidden md:block text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none truncate">
             {greeting}, {displayName}
           </h1>
-          <span className="hidden xl:inline text-xs font-medium text-slate-500 truncate">
-            {formattedDate} · Here&apos;s your shelf overview.
-          </span>
         </div>
 
-        {/* Action Buttons: Inventory & New scan */}
+        {/* Action Button: New scan */}
         <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => onNavigate('inventory')}
-            className="px-3.5 py-2 rounded-xl border border-slate-200/90 hover:bg-slate-50 active:scale-98 text-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 bg-white shadow-2xs cursor-pointer"
-          >
-            <Package className="w-4 h-4 text-slate-600" />
-            Inventory
-          </button>
-
           <button
             type="button"
             onClick={() => onNavigate('new-scan')}

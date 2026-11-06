@@ -827,7 +827,14 @@ function MainApp() {
         )
 
       case 'new-scan':
-        return <NewScanView onScanComplete={handleScanComplete} />
+        return (
+          <NewScanView
+            onScanComplete={handleScanComplete}
+            recentScans={recentScans}
+            onSelectScan={handleSelectScan}
+            isLoading={dataLoading}
+          />
+        )
 
       case 'scan-result':
         return (
