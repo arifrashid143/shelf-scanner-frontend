@@ -125,9 +125,6 @@ export default function InventoryView({
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
             Inventory
           </h1>
-          <span className="hidden lg:inline text-xs font-medium text-slate-500">
-            Real-time stock counts, shelf capacity targets, and scan sync telemetry.
-          </span>
         </div>
 
         {isAdmin && (

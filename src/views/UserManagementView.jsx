@@ -15,7 +15,6 @@ import {
   AlertCircle,
   Loader2,
   Store,
-  RefreshCw,
   Mail,
   User as UserIcon,
 } from 'lucide-react'
@@ -61,7 +60,6 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
   const [users, setUsers] = useState([])
   const [stores, setStores] = useState([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
   // Search and Filters
@@ -97,40 +95,6 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
   const [updating, setUpdating] = useState(false)
   const [editApiError, setEditApiError] = useState('')
 
-  // Handle manual refresh
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    setErrorMsg('')
-
-    try {
-      const [usersRes, storesRes] = await Promise.all([
-        api.getTenantUsers().catch((err) => {
-          console.warn('GET /api/tenant/users failed:', err.message)
-          return null
-        }),
-        api.getTenantStores().catch(() => []),
-      ])
-
-      let rawList = []
-      if (Array.isArray(usersRes)) {
-        rawList = usersRes
-      } else if (usersRes?.users || usersRes?.items) {
-        rawList = usersRes.users || usersRes.items
-      }
-      // Apply status normalization and persistent overrides
-      setUsers(rawList.map(applyUserStatus))
-
-      if (Array.isArray(storesRes) && storesRes.length > 0) {
-        setStores(storesRes)
-      }
-    } catch (err) {
-      console.error('Error fetching tenant users:', err)
-      setErrorMsg(err.message || 'Could not fetch company users from server.')
-    } finally {
-      setRefreshing(false)
-    }
-  }
-
   // Initial load from Tenant Administration API
   useEffect(() => {
     let isSubscribed = true
@@ -158,6 +122,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
       } catch (err) {
         if (isSubscribed) {
           console.error('Error fetching tenant users:', err)
+          setErrorMsg(err.message || 'Could not fetch company users from server.')
         }
       } finally {
         if (isSubscribed) {
@@ -399,24 +364,10 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
             User management
           </h1>
-          <span className="hidden lg:inline text-xs font-medium text-slate-500">
-            Tenant workspace · Manage company accounts, store staff, and admin permissions
-          </span>
         </div>
 
         {/* Action Button: Create Company User */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            title="Refresh users"
-            className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-600 font-semibold text-xs transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
-
           {isAdmin ? (
             <button
               type="button"

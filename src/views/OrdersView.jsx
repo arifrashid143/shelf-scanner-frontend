@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 export default function OrdersView({
   purchaseOrders = [],
   onSelectOrder,
-  onRefresh,
   isLoading = false,
 }) {
   const [statusFilter, setStatusFilter] = useState('All')
@@ -45,17 +44,6 @@ export default function OrdersView({
               {tab}
             </button>
           ))}
-          {onRefresh && (
-            <button
-              type="button"
-              onClick={onRefresh}
-              disabled={isLoading}
-              className="p-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
-              title="Refresh orders"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
-            </button>
-          )}
         </div>
 
         {/* Order Cards List */}
@@ -126,17 +114,6 @@ export default function OrdersView({
                 {tab}
               </button>
             ))}
-            {onRefresh && (
-              <button
-                type="button"
-                onClick={onRefresh}
-                disabled={isLoading}
-                className="p-1.5 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
-                title="Refresh purchase orders"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
-              </button>
-            )}
           </div>
         </div>
 

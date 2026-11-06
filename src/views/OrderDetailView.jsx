@@ -106,9 +106,6 @@ export default function OrderDetailView({
             {status}
           </span>
         </div>
-        <p className="text-xs text-slate-500 font-medium">
-          Created from scan · {order.scanSource || order.shelf_id || 'Shelf Scan'}
-        </p>
       </div>
 
       {actionError && (

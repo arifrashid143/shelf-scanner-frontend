@@ -273,6 +273,13 @@ function MainApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated])
 
+  useEffect(() => {
+    if (isAuthenticated && currentTab === 'orders') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      refreshOrders()
+    }
+  }, [isAuthenticated, currentTab])
+
   // --- Purchase Order Actions with Backend Enforcement ---
 
   const handleGeneratePO = async (customPayload = null) => {
@@ -854,7 +861,6 @@ function MainApp() {
           <OrdersView
             purchaseOrders={purchaseOrders}
             onSelectOrder={handleSelectOrder}
-            onRefresh={refreshOrders}
             isLoading={dataLoading}
           />
         )
