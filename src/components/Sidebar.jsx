@@ -88,10 +88,10 @@ export default function Sidebar({
       </nav>
 
       {/* Bottom Section: User Profile & Sign Out Button */}
-      <div className="p-4 border-t border-slate-100 space-y-3 shrink-0">
+      <div className="p-3.5 border-t border-slate-100 space-y-2.5 shrink-0">
         {/* User Profile Card */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#f0e7fe] text-[#7c3aed] font-bold text-sm flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-md bg-[#f0e7fe] text-[#7c3aed] font-bold text-xs flex items-center justify-center shrink-0">
             {initial}
           </div>
           <div className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={onLogout}
-          className="w-full py-2 px-3 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs active:scale-[0.99]"
+          className="w-full py-1.5 px-3 rounded-md border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs active:scale-[0.99]"
         >
           <LogOut className="w-3.5 h-3.5 text-slate-700" />
           <span>Sign out</span>

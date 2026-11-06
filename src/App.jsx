@@ -944,7 +944,7 @@ function MainApp() {
 
         {/* Center: Greeting Pill */}
         <div className="hidden md:flex items-center justify-center">
-          <div className="bg-[#505378]/90 border border-white/10 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white shadow-2xs">
+          <div className="bg-[#505378]/90 border border-white/10 px-3.5 py-1 rounded-md text-xs sm:text-sm font-medium text-white shadow-2xs">
             {greeting}, {displayName} ({tenantName})
           </div>
         </div>
@@ -954,7 +954,7 @@ function MainApp() {
           <button
             type="button"
             onClick={() => setCurrentTab('new-scan')}
-            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>New scan</span>
@@ -1026,7 +1026,7 @@ function MainApp() {
 
         {/* Right Column Content Area */}
         <div className="flex-1 flex flex-col h-full min-w-0 bg-[#f8f9fa] overflow-hidden">
-          <main className="flex-1 h-full min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-24 md:pb-8 flex flex-col">
+          <main className="flex-1 h-full min-h-0 overflow-y-auto px-3 sm:px-4 lg:px-5 py-2.5 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-20 md:pb-2.5 flex flex-col">
             {dataError && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
