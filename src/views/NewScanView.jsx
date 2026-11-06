@@ -9,7 +9,6 @@ import {
   RotateCcw,
   Scan,
   Check,
-  ArrowRight,
 } from 'lucide-react'
 
 export default function NewScanView({
@@ -515,12 +514,11 @@ export default function NewScanView({
                       </div>
                     </div>
 
-                    <div className="shrink-0 flex items-center gap-1.5">
+                    <div className="shrink-0 flex items-center">
                       <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                         <Check className="w-2.5 h-2.5 text-emerald-600 stroke-[2.5]" />
                         Verified
                       </span>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                     </div>
                   </div>
                 )
@@ -877,12 +875,11 @@ export default function NewScanView({
                           </td>
 
                           <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end">
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                                 <Check className="w-3 h-3 text-emerald-600 stroke-[2.5]" />
                                 Verified
                               </span>
-                              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
                             </div>
                           </td>
                         </tr>
