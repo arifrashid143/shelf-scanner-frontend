@@ -10,7 +10,6 @@ import {
 export default function Sidebar({
   currentTab,
   onNavigate,
-  user,
   isAdmin,
   onLogout,
 }) {
@@ -42,16 +41,6 @@ export default function Sidebar({
       adminOnly: true,
     },
   ]
-
-  const displayName =
-    user?.full_name || user?.name || (isAdmin ? 'Store Admin' : 'Staff')
-  const tenantName =
-    user?.tenant_name ||
-    user?.tenant?.name ||
-    user?.store_name ||
-    user?.company_name ||
-    'Apex Retail'
-  const initial = displayName.charAt(0).toUpperCase() || 'S'
 
   const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
@@ -87,28 +76,12 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* Bottom Section: User Profile & Sign Out Button */}
-      <div className="p-3.5 border-t border-slate-100 space-y-2.5 shrink-0">
-        {/* User Profile Card */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-[#f0e7fe] text-[#7c3aed] font-bold text-xs flex items-center justify-center shrink-0">
-            {initial}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate">
-              {displayName}
-            </p>
-            <p className="text-[11px] text-slate-400 font-normal leading-tight mt-0.5 truncate">
-              ({tenantName})
-            </p>
-          </div>
-        </div>
-
-        {/* Sign Out Button */}
+      {/* Bottom Section: Sign Out Button (profile option removed from navbar) */}
+      <div className="p-3.5 border-t border-slate-100 shrink-0">
         <button
           type="button"
           onClick={onLogout}
-          className="w-full py-1.5 px-3 rounded-md border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs active:scale-[0.99]"
+          className="w-full py-2 px-3 rounded-md border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs active:scale-[0.99]"
         >
           <LogOut className="w-3.5 h-3.5 text-slate-700" />
           <span>Sign out</span>
