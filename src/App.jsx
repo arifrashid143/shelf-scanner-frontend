@@ -62,8 +62,6 @@ function sortOrdersNewestFirst(ordersList) {
 function MainApp() {
   const { user, isSuperAdmin, isAdmin, isAuthenticated, loading: authLoading, logout } = useAuth()
 
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const displayName =
     user?.full_name || user?.name || (isSuperAdmin ? 'Superadmin' : isAdmin ? 'Store Admin' : 'Store Associate')
   const tenantName =
@@ -947,13 +945,6 @@ function MainApp() {
           </span>
         </div>
 
-        {/* Center: Greeting Pill */}
-        <div className="hidden md:flex items-center justify-center">
-          <div className="bg-[#505378]/90 border border-white/10 px-3.5 py-1 rounded-md text-xs sm:text-sm font-medium text-white shadow-2xs">
-            {greeting}, {displayName} ({tenantName})
-          </div>
-        </div>
-
         {/* Right: User Profile Avatar with dropdown */}
         <div className="relative shrink-0 flex items-center" ref={profileMenuRef}>
           <button
@@ -1035,7 +1026,7 @@ function MainApp() {
 
         {/* Right Column Content Area */}
         <div className="flex-1 flex flex-col h-full min-w-0 bg-[#f8f9fa] overflow-hidden">
-          <main className="flex-1 h-full min-h-0 overflow-y-auto px-3 sm:px-4 lg:px-5 py-2.5 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-20 md:pb-2.5 flex flex-col">
+          <main className="flex-1 h-full min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-20 md:pb-6 flex flex-col">
             {dataError && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
