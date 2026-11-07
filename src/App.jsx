@@ -106,18 +106,18 @@ function MainApp() {
   const [dataLoading, setDataLoading] = useState(false)
   const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
-  const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false)
-  const mobileProfileRef = useRef(null)
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (mobileProfileRef.current && !mobileProfileRef.current.contains(e.target)) {
-        setIsMobileProfileOpen(false)
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setIsProfileMenuOpen(false)
       }
     }
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        setIsMobileProfileOpen(false)
+        setIsProfileMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -965,49 +965,57 @@ function MainApp() {
             <span>New scan</span>
           </button>
 
-          {/* User Profile Avatar with dropdown for mobile */}
-          <div className="relative md:hidden shrink-0" ref={mobileProfileRef}>
+          {/* User Profile Avatar with dropdown at right side of header */}
+          <div className="relative shrink-0" ref={profileMenuRef}>
             <button
               type="button"
-              onClick={() => setIsMobileProfileOpen((p) => !p)}
-              className="flex items-center gap-1.5 p-1 rounded-full border border-white/20 hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+              className="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer ring-2 ring-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400"
               aria-label="User profile menu"
+              aria-expanded={isProfileMenuOpen}
             >
-              <div className="w-7 h-7 rounded-full bg-purple-200 text-purple-900 font-bold flex items-center justify-center text-xs shadow-2xs">
-                {initial}
-              </div>
+              {initial}
             </button>
 
-            {isMobileProfileOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
-                <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center shrink-0">
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
+                {/* Top Section: User Avatar & Details */}
+                <div className="p-4 sm:p-5 flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-full bg-blue-600 ring-4 ring-blue-100 flex items-center justify-center text-white font-black text-lg shadow-xs shrink-0">
                     {initial}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black text-slate-900 truncate leading-tight">
+                    <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight truncate">
                       {displayName}
+                    </h3>
+                    <p className="text-xs font-mono text-slate-400 truncate mt-0.5">
+                      {user?.email || 'user@retail.com'}
                     </p>
-                    <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5">
-                      {user?.email || 'user'}
-                    </p>
-                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                      {isAdmin ? 'Store Admin' : 'Store Associate'}
+                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
+                      {isAdmin ? 'Store Admin' : 'Store Associate'} · {tenantName}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-2">
+                {/* Divider Line */}
+                <div className="border-t border-slate-100"></div>
+
+                {/* Bottom Section: Log Out Button */}
+                <div className="p-3 sm:p-4">
                   <button
                     type="button"
                     onClick={() => {
-                      setIsMobileProfileOpen(false)
+                      setIsProfileMenuOpen(false)
                       logout()
                     }}
-                    className="w-full py-2 px-3 rounded-xl hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
+                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <LogOut className="w-3.5 h-3.5 text-rose-600" />
-                    <span>Sign out</span>
+                    <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
+                      <LogOut className="w-4 h-4 text-rose-600" />
+                    </div>
+                    <span className="text-sm font-bold text-rose-600">
+                      Log out
+                    </span>
                   </button>
                 </div>
               </div>
