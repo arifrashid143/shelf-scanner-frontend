@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { api } from './api/client'
 import Sidebar from './components/Sidebar'
@@ -14,7 +14,7 @@ import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
 import logoImg from './assets/logo.png'
-import { Loader2, LogOut } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 function normalizeOrder(order) {
   if (!order) return null
@@ -62,16 +62,6 @@ function sortOrdersNewestFirst(ordersList) {
 function MainApp() {
   const { user, isSuperAdmin, isAdmin, isAuthenticated, loading: authLoading, logout } = useAuth()
 
-  const displayName =
-    user?.full_name || user?.name || (isSuperAdmin ? 'Superadmin' : isAdmin ? 'Store Admin' : 'Store Associate')
-  const tenantName =
-    user?.tenant_name ||
-    user?.tenant?.name ||
-    user?.store_name ||
-    user?.company_name ||
-    'Apex Retail'
-  const initial = displayName.charAt(0).toUpperCase() || 'P'
-
   // Tailored page backgrounds that suit each view's theme and purpose
   const getPageBg = () => {
     switch (currentTab) {
@@ -104,27 +94,6 @@ function MainApp() {
   const [dataLoading, setDataLoading] = useState(false)
   const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
-  const profileMenuRef = useRef(null)
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
-        setIsProfileMenuOpen(false)
-      }
-    }
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setIsProfileMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [])
 
   const showToast = (msg, type = 'info') => {
     setToastMessage({ text: msg, type })
@@ -944,71 +913,6 @@ function MainApp() {
             Shelf Scanner
           </span>
         </div>
-
-        {/* Right: User Profile Avatar with dropdown */}
-        <div className="relative shrink-0 flex items-center" ref={profileMenuRef}>
-          <button
-            type="button"
-            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20"
-            aria-label="User profile menu"
-            aria-expanded={isProfileMenuOpen}
-          >
-            <span>{initial}</span>
-            {/* Active online green indicator dot on bottom right */}
-            <span
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#3F4168]"
-              title="Online"
-            />
-          </button>
-
-          {isProfileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
-              {/* Top Section: User Avatar & Details */}
-              <div className="p-4 sm:p-5 flex items-center gap-3.5">
-                <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-[#d8c4d9] text-[#4a3952] ring-4 ring-[#ecd8ec]/60 flex items-center justify-center font-black text-lg shadow-xs">
-                    {initial}
-                  </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#52b757] ring-2 ring-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight truncate">
-                    {displayName}
-                  </h3>
-                  <p className="text-xs font-mono text-slate-400 truncate mt-0.5">
-                    {user?.email || 'user@retail.com'}
-                  </p>
-                  <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
-                    {isAdmin ? 'Store Admin' : 'Store Associate'} · {tenantName}
-                  </span>
-                </div>
-              </div>
-
-              {/* Divider Line */}
-              <div className="border-t border-slate-100"></div>
-
-              {/* Bottom Section: Log Out Button */}
-              <div className="p-3 sm:p-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsProfileMenuOpen(false)
-                    logout()
-                  }}
-                  className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
-                    <LogOut className="w-4 h-4 text-rose-600" />
-                  </div>
-                  <span className="text-sm font-bold text-rose-600">
-                    Log out
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
       </header>
 
       {/* Main Body Below Top Navbar: Sidebar on left, Content on right */}
@@ -1026,7 +930,7 @@ function MainApp() {
 
         {/* Right Column Content Area */}
         <div className="flex-1 flex flex-col h-full min-w-0 bg-[#f8f9fa] overflow-hidden">
-          <main className="flex-1 h-full min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-20 md:pb-6 flex flex-col">
+          <main className="flex-1 h-full min-h-0 overflow-y-auto px-3 sm:px-4 lg:px-5 py-3 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-16 md:pb-3 flex flex-col">
             {dataError && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
