@@ -14,7 +14,7 @@ import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
 import logoImg from './assets/logo.png'
-import { Loader2, LogOut, Plus } from 'lucide-react'
+import { Loader2, LogOut } from 'lucide-react'
 
 function normalizeOrder(order) {
   if (!order) return null
@@ -954,73 +954,69 @@ function MainApp() {
           </div>
         </div>
 
-        {/* Right: + New scan button and Mobile profile menu */}
-        <div className="flex items-center gap-3">
+        {/* Right: User Profile Avatar with dropdown */}
+        <div className="relative shrink-0 flex items-center" ref={profileMenuRef}>
           <button
             type="button"
-            onClick={() => setCurrentTab('new-scan')}
-            className="px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20"
+            aria-label="User profile menu"
+            aria-expanded={isProfileMenuOpen}
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>New scan</span>
+            <span>{initial}</span>
+            {/* Active online green indicator dot on bottom right */}
+            <span
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#3F4168]"
+              title="Online"
+            />
           </button>
 
-          {/* User Profile Avatar with dropdown at right side of header */}
-          <div className="relative shrink-0" ref={profileMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-              className="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer ring-2 ring-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              aria-label="User profile menu"
-              aria-expanded={isProfileMenuOpen}
-            >
-              {initial}
-            </button>
-
-            {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
-                {/* Top Section: User Avatar & Details */}
-                <div className="p-4 sm:p-5 flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-full bg-blue-600 ring-4 ring-blue-100 flex items-center justify-center text-white font-black text-lg shadow-xs shrink-0">
+          {isProfileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
+              {/* Top Section: User Avatar & Details */}
+              <div className="p-4 sm:p-5 flex items-center gap-3.5">
+                <div className="relative shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-[#d8c4d9] text-[#4a3952] ring-4 ring-[#ecd8ec]/60 flex items-center justify-center font-black text-lg shadow-xs">
                     {initial}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight truncate">
-                      {displayName}
-                    </h3>
-                    <p className="text-xs font-mono text-slate-400 truncate mt-0.5">
-                      {user?.email || 'user@retail.com'}
-                    </p>
-                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
-                      {isAdmin ? 'Store Admin' : 'Store Associate'} · {tenantName}
-                    </span>
-                  </div>
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#52b757] ring-2 ring-white" />
                 </div>
-
-                {/* Divider Line */}
-                <div className="border-t border-slate-100"></div>
-
-                {/* Bottom Section: Log Out Button */}
-                <div className="p-3 sm:p-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false)
-                      logout()
-                    }}
-                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
-                      <LogOut className="w-4 h-4 text-rose-600" />
-                    </div>
-                    <span className="text-sm font-bold text-rose-600">
-                      Log out
-                    </span>
-                  </button>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight truncate">
+                    {displayName}
+                  </h3>
+                  <p className="text-xs font-mono text-slate-400 truncate mt-0.5">
+                    {user?.email || 'user@retail.com'}
+                  </p>
+                  <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
+                    {isAdmin ? 'Store Admin' : 'Store Associate'} · {tenantName}
+                  </span>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* Divider Line */}
+              <div className="border-t border-slate-100"></div>
+
+              {/* Bottom Section: Log Out Button */}
+              <div className="p-3 sm:p-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileMenuOpen(false)
+                    logout()
+                  }}
+                  className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
+                    <LogOut className="w-4 h-4 text-rose-600" />
+                  </div>
+                  <span className="text-sm font-bold text-rose-600">
+                    Log out
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
