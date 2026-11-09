@@ -827,6 +827,7 @@ function MainApp() {
           <UserDashboardView
             user={user}
             onNavigate={setCurrentTab}
+            onSelectOrder={handleSelectOrder}
             onSelectScan={handleSelectScan}
             onGenerateOrder={() => handleGeneratePO()}
             recentScans={recentScans}

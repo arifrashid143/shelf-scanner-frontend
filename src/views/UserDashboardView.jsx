@@ -5,19 +5,22 @@ import {
   Search,
   Check,
   Loader2,
-  FilePlus,
-  Package,
+  FileText,
+  ArrowRight,
 } from 'lucide-react'
 
 export default function UserDashboardView({
   user,
   onNavigate,
+  onSelectOrder,
   onSelectScan,
-  onGenerateOrder,
+  purchaseOrders = [],
   recentScans = [],
   inventory = [],
   totalScansCount = 0,
   isLoading = false,
+  // eslint-disable-next-line no-unused-vars
+  onGenerateOrder,
 }) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -29,9 +32,12 @@ export default function UserDashboardView({
     user?.company_name ||
     'Apex Retail'
 
-  const lowStockCount = inventory.filter(
+  const pendingOrders = purchaseOrders.filter(
+    (po) => po.status === 'Draft' || po.status === 'DRAFT' || po.status === 'Pending'
+  )
+  const lowStockItems = inventory.filter(
     (item) => item.status === 'Low' || item.is_low_stock === true
-  ).length
+  )
 
   // Only show scans after they are successfully verified
   const visibleScans = recentScans.filter((scan) => {
@@ -43,6 +49,8 @@ export default function UserDashboardView({
     (sum, s) => sum + (s.empty_gaps_count ?? s.gaps ?? 0),
     0
   )
+
+  const visibleOrders = pendingOrders
 
   return (
     <div className="flex flex-col h-full w-full min-h-0 space-y-2.5">
@@ -89,7 +97,7 @@ export default function UserDashboardView({
               <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
             ) : (
               <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {lowStockCount}
+                {lowStockItems.length}
               </p>
             )}
           </div>
@@ -116,7 +124,7 @@ export default function UserDashboardView({
         </div>
       </div>
 
-      {/* Main 2-Column Content Grid: Scan history & Quick actions */}
+      {/* Main 2-Column Content Grid: Scan history & Needs approval */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-2.5 items-stretch h-full">
         {/* Left Column: Scan history */}
         <div className="bg-white rounded-md border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col h-full min-h-0">
@@ -132,8 +140,7 @@ export default function UserDashboardView({
               </div>
             ) : visibleScans.length === 0 ? (
               <div className="py-8 text-center text-slate-400 text-xs">
-                <Package className="w-8 h-8 text-slate-300 stroke-[1.5] mx-auto mb-2" />
-                <span>No verified scans recorded yet.</span>
+                No verified scans recorded yet.
               </div>
             ) : (
               visibleScans.map((scan) => {
@@ -170,52 +177,47 @@ export default function UserDashboardView({
           </div>
         </div>
 
-        {/* Right Column: Quick actions */}
-        <div className="bg-white rounded-md border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col h-full min-h-0 justify-between">
-          <div>
-            <div className="pb-2 border-b border-slate-100 shrink-0">
-              <h2 className="text-sm font-bold text-slate-900">Quick actions</h2>
-            </div>
+        {/* Right Column: Needs approval */}
+        <div className="bg-white rounded-md border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col h-full min-h-0">
+          <div className="pb-2 border-b border-slate-100 shrink-0">
+            <h2 className="text-sm font-bold text-slate-900">Needs approval</h2>
+          </div>
 
-            <div className="pt-3 space-y-3">
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Notice gaps or low stock on aisle shelves? Trigger an instant shelf scan or draft an AI restock purchase order for store manager approval.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => onNavigate('new-scan')}
-                  className="p-3 rounded-md border border-blue-200 bg-blue-50/60 hover:bg-blue-100/80 transition-all text-left group cursor-pointer"
-                >
-                  <div className="w-7 h-7 rounded-md bg-blue-600 text-white flex items-center justify-center mb-2 shadow-2xs">
-                    <Scan className="w-3.5 h-3.5" />
-                  </div>
-                  <p className="font-bold text-xs sm:text-sm text-slate-900 group-hover:text-blue-700">
-                    Scan Shelf Now
-                  </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    Capture photo to detect gaps
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onGenerateOrder}
-                  className="p-3 rounded-md border border-purple-200 bg-purple-50/60 hover:bg-purple-100/80 transition-all text-left group cursor-pointer"
-                >
-                  <div className="w-7 h-7 rounded-md bg-[#5956c6] text-white flex items-center justify-center mb-2 shadow-2xs">
-                    <FilePlus className="w-3.5 h-3.5" />
-                  </div>
-                  <p className="font-bold text-xs sm:text-sm text-slate-900 group-hover:text-purple-700">
-                    Generate PO
-                  </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    Order for {lowStockCount} low items
-                  </p>
-                </button>
+          <div className="flex-1 min-h-0 pt-2 space-y-1.5 overflow-y-auto no-scrollbar">
+            {isLoading ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
+                <span>Loading pending orders...</span>
               </div>
-            </div>
+            ) : pendingOrders.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                No orders pending approval. All orders are up to date.
+              </div>
+            ) : (
+              visibleOrders.map((order) => (
+                <div
+                  key={order.id}
+                  onClick={() => onSelectOrder && onSelectOrder(order)}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-md border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 active:scale-[0.99] transition-all cursor-pointer group shadow-2xs"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-md bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 stroke-[1.8]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">{order.id}</p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5 truncate">
+                        {order.supplier || order.supplier_name || 'Supplier'} · {order.items?.length ?? 0} items
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 ml-2.5">
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
