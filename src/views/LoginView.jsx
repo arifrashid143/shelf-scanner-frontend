@@ -219,7 +219,7 @@ export default function LoginView() {
                 <img
                   src={logoImg}
                   alt="ShelfScan Logo"
-                  className="w-16 h-16 rounded-2xl object-contain shadow-xs drop-shadow-sm"
+                  className="w-16 h-16 rounded-md object-contain shadow-xs drop-shadow-sm"
                 />
               </div>
 
@@ -257,7 +257,7 @@ export default function LoginView() {
 
               {/* Error Message */}
               {errorMsg && (
-                <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center justify-between">
+                <div className="mb-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                     <span>{errorMsg}</span>
@@ -284,7 +284,7 @@ export default function LoginView() {
                       onChange={(e) => handleChange('name', e.target.value)}
                       onBlur={() => handleBlur('name')}
                       placeholder="Full name"
-                      className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-sm sm:text-base focus:outline-none transition-all ${
+                      className={`w-full px-4 py-3 bg-white border rounded-md text-slate-900 placeholder:text-slate-400 text-sm sm:text-base focus:outline-none transition-all ${
                         touched.name && errors.name
                           ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/10'
                           : 'border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-[#5C3DAA]'
@@ -307,7 +307,7 @@ export default function LoginView() {
                     onChange={(e) => handleChange('email', e.target.value)}
                     onBlur={() => handleBlur('email')}
                     placeholder="Email address"
-                    className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-sm sm:text-base focus:outline-none transition-all ${
+                    className={`w-full px-4 py-3 bg-white border rounded-md text-slate-900 placeholder:text-slate-400 text-sm sm:text-base focus:outline-none transition-all ${
                       touched.email && errors.email
                         ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/10'
                         : 'border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-[#5C3DAA]'
@@ -330,7 +330,7 @@ export default function LoginView() {
                       onChange={(e) => handleChange('password', e.target.value)}
                       onBlur={() => handleBlur('password')}
                       placeholder="Password"
-                      className={`w-full px-4 py-3 pr-11 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-sm sm:text-base focus:outline-none transition-all ${
+                      className={`w-full px-4 py-3 pr-11 bg-white border rounded-md text-slate-900 placeholder:text-slate-400 text-sm sm:text-base focus:outline-none transition-all ${
                         touched.password && errors.password
                           ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/10'
                           : 'border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-[#5C3DAA]'
@@ -363,7 +363,7 @@ export default function LoginView() {
                       <button
                         type="button"
                         onClick={() => setRole('user')}
-                        className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        className={`py-2 px-3 rounded-md text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
                           role === 'user'
                             ? 'bg-[#5C3DAA] text-white border-[#5C3DAA]'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -374,7 +374,7 @@ export default function LoginView() {
                       <button
                         type="button"
                         onClick={() => setRole('admin')}
-                        className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        className={`py-2 px-3 rounded-md text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
                           role === 'admin'
                             ? 'bg-[#1E1E68] text-white border-[#1E1E68]'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -411,7 +411,7 @@ export default function LoginView() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-3 py-3.5 px-5 bg-[#2DC46A] hover:bg-[#25ab5c] active:scale-[0.99] text-white font-semibold text-sm sm:text-base rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="w-full mt-3 py-3 px-5 bg-[#2DC46A] hover:bg-[#25ab5c] active:scale-[0.99] text-white font-semibold text-sm sm:text-base rounded-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />

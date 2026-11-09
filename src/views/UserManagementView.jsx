@@ -453,11 +453,11 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
         {/* Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           {/* Role Filter */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
+          <div className="flex items-center bg-slate-100 p-1 rounded-md text-xs font-bold text-slate-600">
             <button
               type="button"
               onClick={() => setRoleFilter('ALL')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 roleFilter === 'ALL' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:text-slate-900'
               }`}
             >
@@ -466,7 +466,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
             <button
               type="button"
               onClick={() => setRoleFilter('ADMIN')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 roleFilter === 'ADMIN' ? 'bg-white text-purple-700 shadow-2xs' : 'hover:text-slate-900'
               }`}
             >
@@ -475,7 +475,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
             <button
               type="button"
               onClick={() => setRoleFilter('USER')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 roleFilter === 'USER' ? 'bg-white text-blue-700 shadow-2xs' : 'hover:text-slate-900'
               }`}
             >
@@ -484,11 +484,11 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
           </div>
 
           {/* Status Filter */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
+          <div className="flex items-center bg-slate-100 p-1 rounded-md text-xs font-bold text-slate-600">
             <button
               type="button"
               onClick={() => setStatusFilter('ALL')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 statusFilter === 'ALL' ? 'bg-white text-slate-900 shadow-2xs' : 'hover:text-slate-900'
               }`}
             >
@@ -497,7 +497,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
             <button
               type="button"
               onClick={() => setStatusFilter('ACTIVE')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 statusFilter === 'ACTIVE' ? 'bg-white text-emerald-700 shadow-2xs' : 'hover:text-slate-900'
               }`}
             >
@@ -506,7 +506,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
             <button
               type="button"
               onClick={() => setStatusFilter('INACTIVE')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 statusFilter === 'INACTIVE' ? 'bg-white text-slate-700 shadow-2xs' : 'hover:text-slate-900'
               }`}
             >
@@ -612,12 +612,12 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                       {/* Role Column */}
                       <td className="px-4 py-3.5">
                         {isUserAdmin ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200/80">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200/80">
                             <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
                             Store Admin
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/80">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/80">
                             <UserCheck className="w-3.5 h-3.5 text-blue-600" />
                             Store Staff
                           </span>
@@ -626,7 +626,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
 
                       {/* Store Column */}
                       <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/70">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200/70">
                           <Store className="w-3 h-3 text-slate-500" />
                           {storeLabel}
                         </span>
@@ -635,12 +635,12 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                       {/* Status Column */}
                       <td className="px-4 py-3.5">
                         {isActive ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200/80">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200/80">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                             Inactive
                           </span>
@@ -660,7 +660,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                               type="button"
                               onClick={() => openEditModal(user)}
                               title="Edit user"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -669,7 +669,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                               type="button"
                               onClick={() => handleToggleActive(user)}
                               title={isActive ? 'Deactivate user' : 'Reactivate user'}
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                                 isActive
                                   ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                                   : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
@@ -696,7 +696,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
       {/* ===================== CREATE USER MODAL ===================== */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col space-y-5">
+          <div className="w-full max-w-lg bg-white rounded-md p-6 sm:p-7 shadow-2xl border border-slate-100 flex flex-col space-y-5">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
@@ -719,7 +719,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
 
             {/* Error Banner */}
             {createApiError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{createApiError}</span>
               </div>
@@ -740,7 +740,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                     onChange={(e) => handleCreateChange('full_name', e.target.value)}
                     onBlur={() => handleCreateBlur('full_name')}
                     placeholder="e.g. Alex Morgan"
-                    className={`w-full pl-9 pr-4 py-2.5 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-all ${
+                    className={`w-full pl-9 pr-4 py-2 bg-white border rounded-md text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-all ${
                       createTouched.full_name && createErrors.full_name
                         ? 'border-rose-400 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/10'
                         : 'border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600'
@@ -768,7 +768,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                     onChange={(e) => handleCreateChange('email', e.target.value)}
                     onBlur={() => handleCreateBlur('email')}
                     placeholder="alex.morgan@company.com"
-                    className={`w-full pl-9 pr-4 py-2.5 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-all ${
+                    className={`w-full pl-9 pr-4 py-2 bg-white border rounded-md text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-all ${
                       createTouched.email && createErrors.email
                         ? 'border-rose-400 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/10'
                         : 'border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600'
@@ -796,7 +796,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                     onChange={(e) => handleCreateChange('password', e.target.value)}
                     onBlur={() => handleCreateBlur('password')}
                     placeholder="Minimum 6 characters"
-                    className={`w-full pl-9 pr-11 py-2.5 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-all ${
+                    className={`w-full pl-9 pr-11 py-2 bg-white border rounded-md text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-all ${
                       createTouched.password && createErrors.password
                         ? 'border-rose-400 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/10'
                         : 'border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600'
@@ -829,7 +829,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                     <button
                       type="button"
                       onClick={() => setCreateForm((prev) => ({ ...prev, role: 'USER' }))}
-                      className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      className={`py-2 px-2.5 rounded-md text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                         createForm.role === 'USER'
                           ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -841,7 +841,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                     <button
                       type="button"
                       onClick={() => setCreateForm((prev) => ({ ...prev, role: 'STORE_ADMIN' }))}
-                      className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      className={`py-2 px-2.5 rounded-md text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                         createForm.role === 'STORE_ADMIN'
                           ? 'bg-purple-700 text-white border-purple-700 shadow-2xs'
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -861,7 +861,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                   <select
                     value={createForm.store_id}
                     onChange={(e) => setCreateForm((prev) => ({ ...prev, store_id: e.target.value }))}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all cursor-pointer"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all cursor-pointer"
                   >
                     {stores.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -878,14 +878,14 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-md text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-bold px-5 py-2 rounded-md text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {creating ? (
                     <>
@@ -908,7 +908,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
       {/* ===================== EDIT USER MODAL ===================== */}
       {isEditModalOpen && editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col space-y-5">
+          <div className="w-full max-w-lg bg-white rounded-md p-6 sm:p-7 shadow-2xl border border-slate-100 flex flex-col space-y-5">
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
@@ -929,7 +929,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
             </div>
 
             {editApiError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{editApiError}</span>
               </div>
@@ -946,7 +946,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                   required
                   value={editForm.full_name}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, full_name: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
                 />
               </div>
 
@@ -959,7 +959,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                   <button
                     type="button"
                     onClick={() => setEditForm((prev) => ({ ...prev, role: 'USER' }))}
-                    className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    className={`py-2 px-2.5 rounded-md text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                       editForm.role === 'USER'
                         ? 'bg-blue-600 text-white border-blue-600'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -971,7 +971,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                   <button
                     type="button"
                     onClick={() => setEditForm((prev) => ({ ...prev, role: 'STORE_ADMIN' }))}
-                    className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    className={`py-2 px-2.5 rounded-md text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                       editForm.role === 'STORE_ADMIN'
                         ? 'bg-purple-700 text-white border-purple-700'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -992,7 +992,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                   <select
                     value={editForm.store_id}
                     onChange={(e) => setEditForm((prev) => ({ ...prev, store_id: e.target.value }))}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
                     {stores.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -1011,7 +1011,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                     <button
                       type="button"
                       onClick={() => setEditForm((prev) => ({ ...prev, is_active: true }))}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`py-2 px-2 rounded-md text-xs font-bold border transition-all cursor-pointer ${
                         editForm.is_active
                           ? 'bg-emerald-600 text-white border-emerald-600'
                           : 'bg-slate-50 text-slate-700 border-slate-200'
@@ -1022,7 +1022,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                     <button
                       type="button"
                       onClick={() => setEditForm((prev) => ({ ...prev, is_active: false }))}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`py-2 px-2 rounded-md text-xs font-bold border transition-all cursor-pointer ${
                         !editForm.is_active
                           ? 'bg-slate-700 text-white border-slate-700'
                           : 'bg-slate-50 text-slate-700 border-slate-200'
@@ -1044,7 +1044,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                   value={editForm.password}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, password: e.target.value }))}
                   placeholder="New password (optional)"
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
@@ -1053,14 +1053,14 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 rounded-md text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updating}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="bg-[#5956c6] hover:bg-[#4d4ab5] text-white font-bold px-5 py-2 rounded-md text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {updating ? (
                     <>

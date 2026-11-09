@@ -15,7 +15,7 @@ export default function OrderDetailView({
 
   if (!order) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-12 text-center text-slate-500 shadow-xs space-y-4 max-w-[1550px] w-full">
+      <div className="bg-white rounded-md border border-slate-200/90 p-12 text-center text-slate-500 shadow-2xs space-y-4 max-w-[1550px] w-full">
         <h2 className="text-lg font-bold text-slate-900">No Purchase Order Selected</h2>
         <p className="text-xs text-slate-500 max-w-sm mx-auto">
           Please select an order from the purchase orders list to view its line items and details.
@@ -23,7 +23,7 @@ export default function OrderDetailView({
         <button
           type="button"
           onClick={onBack}
-          className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 transition-all cursor-pointer"
+          className="px-4 py-2 bg-[#5956c6] text-white font-bold rounded-md text-xs hover:bg-[#4d4ab5] transition-all cursor-pointer"
         >
           Back to Orders
         </button>
@@ -147,7 +147,7 @@ export default function OrderDetailView({
                             type="number"
                             value={item.qty}
                             onChange={(e) => handleManualQtyChange(item.id, e.target.value)}
-                            className="w-16 px-3 py-1.5 text-center text-sm font-semibold border border-slate-300 rounded-lg focus:outline-blue-500"
+                            className="w-16 px-3 py-1.5 text-center text-sm font-semibold border border-slate-300 rounded-md focus:outline-blue-500"
                           />
                         ) : (
                           <span className="font-semibold text-slate-900">{item.qty} units</span>
@@ -233,7 +233,7 @@ export default function OrderDetailView({
               )
             ) : (
               <div
-                className={`py-3 px-4 rounded-xl text-center text-xs font-bold ${
+                className={`py-3 px-4 rounded-md text-center text-xs font-bold ${
                   status === 'Approved'
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                     : 'bg-rose-50 text-rose-800 border border-rose-200'

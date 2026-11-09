@@ -218,14 +218,14 @@ export default function InventoryView({
                                 type="number"
                                 value={editCurrent}
                                 onChange={(e) => setEditCurrent(e.target.value)}
-                                className="w-14 px-2 py-1 text-xs border rounded-lg font-bold border-blue-400 focus:outline-blue-600"
+                                className="w-14 px-2 py-1 text-xs border rounded-md font-bold border-blue-400 focus:outline-blue-600"
                               />
                               <span className="text-slate-400">/</span>
                               <input
                                 type="number"
                                 value={editTarget}
                                 onChange={(e) => setEditTarget(e.target.value)}
-                                className="w-14 px-2 py-1 text-xs border rounded-lg font-bold border-blue-400 focus:outline-blue-600"
+                                className="w-14 px-2 py-1 text-xs border rounded-md font-bold border-blue-400 focus:outline-blue-600"
                               />
                             </div>
                           ) : (
@@ -254,7 +254,7 @@ export default function InventoryView({
 
                         <td className="px-4 py-4 text-right">
                           <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold border ${
                               isLow
                                 ? 'bg-rose-50 text-rose-700 border-rose-200/80'
                                 : 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
@@ -270,7 +270,7 @@ export default function InventoryView({
                               <div className="flex items-center justify-end gap-1">
                                 <button
                                   onClick={(e) => handleSaveEdit(item.id, e)}
-                                  className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-md bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
                                   title="Save changes"
                                 >
                                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -280,7 +280,7 @@ export default function InventoryView({
                                     e.stopPropagation()
                                     setEditingItem(null)
                                   }}
-                                  className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                                   title="Cancel"
                                 >
                                   <X className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -289,7 +289,7 @@ export default function InventoryView({
                             ) : (
                               <button
                                 onClick={(e) => startEdit(item, e)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                                 title="Edit stock quantities (Admin)"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -312,7 +312,7 @@ export default function InventoryView({
             {/* Header: Product Identity & Status Badge */}
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-md bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                   <Package className="w-5 h-5 stroke-[2]" />
                 </div>
                 <div className="min-w-0">
@@ -326,7 +326,7 @@ export default function InventoryView({
               </div>
 
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 border ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold shrink-0 border ${
                   isSelectedLow
                     ? 'bg-rose-50 text-rose-700 border-rose-200/80'
                     : 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
@@ -343,7 +343,7 @@ export default function InventoryView({
 
             {/* Quick Metrics KPI Tiles */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+              <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200/70">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                   Current On Shelf
                 </span>
@@ -360,7 +360,7 @@ export default function InventoryView({
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+              <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200/70">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                   Capacity Target
                 </span>
@@ -394,7 +394,7 @@ export default function InventoryView({
               </div>
 
               {/* Chart Visual Container */}
-              <div className="relative h-44 sm:h-48 pt-6 pb-2 px-2 bg-slate-50/50 rounded-xl border border-slate-200/60 flex flex-col justify-end">
+              <div className="relative h-44 sm:h-48 pt-6 pb-2 px-2 bg-slate-50/50 rounded-md border border-slate-200/60 flex flex-col justify-end">
                 {/* Dashed Target Line Across the Chart */}
                 <div
                   className="absolute left-2 right-2 border-b border-dashed border-slate-300 pointer-events-none flex items-center justify-end z-0"
@@ -437,7 +437,7 @@ export default function InventoryView({
                           {/* Bar Pillar */}
                           <div
                             style={{ height: `${heightPercent}%` }}
-                            className={`w-full max-w-[32px] sm:max-w-[36px] rounded-t-lg transition-all duration-300 shadow-2xs ${
+                            className={`w-full max-w-[32px] sm:max-w-[36px] rounded-t-md transition-all duration-300 shadow-2xs ${
                               isLast
                                 ? isLowVal
                                   ? 'bg-gradient-to-t from-rose-600 to-rose-400 ring-2 ring-rose-200'
@@ -473,12 +473,12 @@ export default function InventoryView({
 
               <div>
                 {isSelectedLow ? (
-                  <span className="inline-flex items-center gap-1 font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200/70">
+                  <span className="inline-flex items-center gap-1 font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/70">
                     <TrendingDown className="w-3.5 h-3.5" />
                     Restock advised
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/70">
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70">
                     <TrendingUp className="w-3.5 h-3.5" />
                     Stock healthy
                   </span>
@@ -504,7 +504,7 @@ export default function InventoryView({
             className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
             onClick={() => setIsAddModalOpen(false)}
           ></div>
-          <div className="relative bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl z-10 border border-slate-100">
+          <div className="relative bg-white rounded-md p-6 sm:p-7 max-w-md w-full shadow-2xl z-10 border border-slate-100">
             <h3 className="text-lg font-black text-slate-900 mb-1">Add Product to Inventory</h3>
             <p className="text-xs text-slate-500 mb-5">
               Register a new SKU with stock capacity and price.
@@ -521,7 +521,7 @@ export default function InventoryView({
                   placeholder="e.g. Marker Pen 12pk"
                   value={newProdName}
                   onChange={(e) => setNewProdName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-blue-600 font-medium"
+                  className="w-full px-3.5 py-2 rounded-md border border-slate-200 text-sm focus:outline-blue-600 font-medium"
                 />
               </div>
 
@@ -536,7 +536,7 @@ export default function InventoryView({
                     placeholder="0"
                     value={newProdCurrent}
                     onChange={(e) => setNewProdCurrent(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-blue-600 font-medium"
+                    className="w-full px-3.5 py-2 rounded-md border border-slate-200 text-sm focus:outline-blue-600 font-medium"
                   />
                 </div>
                 <div>
@@ -550,7 +550,7 @@ export default function InventoryView({
                     placeholder="10"
                     value={newProdTarget}
                     onChange={(e) => setNewProdTarget(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-blue-600 font-medium"
+                    className="w-full px-3.5 py-2 rounded-md border border-slate-200 text-sm focus:outline-blue-600 font-medium"
                   />
                 </div>
               </div>
@@ -566,7 +566,7 @@ export default function InventoryView({
                   placeholder="450"
                   value={newProdPrice}
                   onChange={(e) => setNewProdPrice(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-blue-600 font-medium"
+                  className="w-full px-3.5 py-2 rounded-md border border-slate-200 text-sm focus:outline-blue-600 font-medium"
                 />
               </div>
 
@@ -574,13 +574,13 @@ export default function InventoryView({
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-md cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 text-xs font-bold bg-[#5956c6] hover:bg-[#4d4ab5] text-white rounded-md shadow-xs cursor-pointer"
                 >
                   Save Product
                 </button>

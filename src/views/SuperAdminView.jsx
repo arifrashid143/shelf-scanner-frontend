@@ -356,7 +356,7 @@ export default function SuperAdminView({ user, onLogout }) {
       {/* Toast Alert */}
       {toastMessage && (
         <div
-          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
+          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
             toastMessage.type === 'error'
               ? 'bg-rose-900 border-rose-700'
               : toastMessage.type === 'success'
@@ -382,7 +382,7 @@ export default function SuperAdminView({ user, onLogout }) {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left Brand Identity: Scanner App Icon + Shelf Scanner + SUPERADMIN Badge */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-blue-500 flex items-center justify-center text-white shadow-xs shrink-0">
+            <div className="w-9 h-9 rounded-md bg-gradient-to-tr from-indigo-600 via-blue-600 to-blue-500 flex items-center justify-center text-white shadow-xs shrink-0">
               <Scan className="w-5 h-5" />
             </div>
             <div className="flex items-center gap-2.5">
@@ -409,7 +409,7 @@ export default function SuperAdminView({ user, onLogout }) {
 
             {/* Profile Dropdown Menu (Matching Provided Design) */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl border border-slate-100 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 mt-3 w-80 bg-white rounded-md border border-slate-100 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
                 {/* Top Section: User Avatar & Details */}
                 <div className="p-5 flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full bg-blue-600 ring-4 ring-blue-100/80 flex items-center justify-center text-white font-black text-xl shadow-xs shrink-0">
@@ -436,9 +436,9 @@ export default function SuperAdminView({ user, onLogout }) {
                       setIsProfileMenuOpen(false)
                       onLogout()
                     }}
-                    className="w-full flex items-center gap-3.5 p-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center gap-3.5 p-2 rounded-md hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
+                    <div className="w-10 h-10 rounded-md bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
                       <LogOut className="w-5 h-5" />
                     </div>
                     <span className="text-base font-bold text-rose-600">
@@ -456,7 +456,7 @@ export default function SuperAdminView({ user, onLogout }) {
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Error Alert from API if any */}
         {apiError && (
-          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between">
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>{apiError}</span>
@@ -464,7 +464,7 @@ export default function SuperAdminView({ user, onLogout }) {
             <button
               type="button"
               onClick={() => loadData()}
-              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs cursor-pointer font-bold"
+              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-xs cursor-pointer font-bold"
             >
               Retry
             </button>
@@ -474,7 +474,7 @@ export default function SuperAdminView({ user, onLogout }) {
         {/* ==================== 3 TOP METRIC CARDS (EXACT MATCH TO PHOTO) ==================== */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: TENANTS */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="bg-white p-5 rounded-md border border-slate-200/80 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 TENANTS
@@ -492,7 +492,7 @@ export default function SuperAdminView({ user, onLogout }) {
           </div>
 
           {/* Card 2: ACTIVE */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="bg-white p-5 rounded-md border border-slate-200/80 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 ACTIVE
@@ -513,7 +513,7 @@ export default function SuperAdminView({ user, onLogout }) {
           </div>
 
           {/* Card 3: STORES */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="bg-white p-5 rounded-md border border-slate-200/80 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 STORES
@@ -532,7 +532,7 @@ export default function SuperAdminView({ user, onLogout }) {
         </div>
 
         {/* ==================== TENANT COMPANIES DIRECTORY (EXACT MATCH TO PHOTO) ==================== */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div className="bg-white rounded-md border border-slate-200/80 shadow-2xs overflow-hidden">
           {/* Header & Controls Bar */}
           <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
@@ -552,7 +552,7 @@ export default function SuperAdminView({ user, onLogout }) {
                   placeholder="Search by company, slug, ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200/90 bg-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-slate-200/90 bg-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
                 />
                 {searchTerm && (
                   <button
@@ -566,11 +566,11 @@ export default function SuperAdminView({ user, onLogout }) {
               </div>
 
               {/* Status Segmented Control */}
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-xs font-semibold text-slate-600">
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-md text-xs font-semibold text-slate-600">
                 <button
                   type="button"
                   onClick={() => setStatusFilter('ALL')}
-                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
                     statusFilter === 'ALL'
                       ? 'bg-white text-slate-900 shadow-2xs font-bold'
                       : 'hover:text-slate-900'
@@ -581,7 +581,7 @@ export default function SuperAdminView({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('ACTIVE')}
-                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
                     statusFilter === 'ACTIVE'
                       ? 'bg-white text-emerald-700 shadow-2xs font-bold'
                       : 'hover:text-slate-900'
@@ -592,7 +592,7 @@ export default function SuperAdminView({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('SUSPENDED')}
-                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
                     statusFilter === 'SUSPENDED'
                       ? 'bg-white text-rose-700 shadow-2xs font-bold'
                       : 'hover:text-slate-900'
@@ -606,7 +606,7 @@ export default function SuperAdminView({ user, onLogout }) {
               <select
                 value={planFilter}
                 onChange={(e) => setPlanFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200/90 bg-white text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
+                className="px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-200/90 bg-white text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
               >
                 <option value="ALL">All Plans</option>
                 <option value="enterprise">Enterprise</option>
@@ -618,7 +618,7 @@ export default function SuperAdminView({ user, onLogout }) {
               <button
                 type="button"
                 onClick={() => setIsOnboardModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Onboard Tenant</span>
@@ -671,7 +671,7 @@ export default function SuperAdminView({ user, onLogout }) {
                         {/* Company Name */}
                         <td className="px-5 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                            <div className="w-7 h-7 rounded-md bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
                               {initial}
                             </div>
                             <span className="font-bold text-slate-900 text-sm">{tenant.name}</span>
@@ -744,7 +744,7 @@ export default function SuperAdminView({ user, onLogout }) {
                               type="button"
                               onClick={() => handleQuickToggleStatus(tenant)}
                               disabled={isBusy}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer border ${
+                              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer border ${
                                 tenant.is_active
                                   ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200/80'
                                   : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80'
@@ -763,7 +763,7 @@ export default function SuperAdminView({ user, onLogout }) {
                             <button
                               type="button"
                               onClick={() => openEditModal(tenant)}
-                              className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
+                              className="px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
                               title="Edit tenant details and status"
                             >
                               <Edit2 className="w-3.5 h-3.5 text-slate-500" />
@@ -784,10 +784,10 @@ export default function SuperAdminView({ user, onLogout }) {
       {/* ==================== ONBOARD NEW TENANT MODAL (POST /api/superadmin/tenants) ==================== */}
       {isOnboardModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden my-8">
+          <div className="bg-white rounded-md max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden my-8">
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-blue-50/60 to-white">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                <div className="w-10 h-10 rounded-md bg-blue-600 text-white flex items-center justify-center shadow-xs">
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
@@ -810,7 +810,7 @@ export default function SuperAdminView({ user, onLogout }) {
 
             <form onSubmit={handleOnboardSubmit} className="p-5 sm:p-6 space-y-4">
               {createErrors.server && (
-                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2">
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-md flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
                   <span>{createErrors.server}</span>
                 </div>
@@ -832,7 +832,7 @@ export default function SuperAdminView({ user, onLogout }) {
                       placeholder="e.g. Metro Mart Hypermarkets"
                       value={createForm.name}
                       onChange={handleNameChange}
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors font-medium"
                     />
                     {createErrors.name && (
                       <p className="text-[11px] text-rose-600 font-bold mt-1">
@@ -854,7 +854,7 @@ export default function SuperAdminView({ user, onLogout }) {
                         onChange={(e) =>
                           setCreateForm((p) => ({ ...p, id: e.target.value.toLowerCase().trim() }))
                         }
-                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 font-mono focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-md border border-slate-200 font-mono focus:outline-none focus:border-blue-500 transition-colors"
                       />
                       {createErrors.id && (
                         <p className="text-[11px] text-rose-600 font-bold mt-1">
@@ -874,7 +874,7 @@ export default function SuperAdminView({ user, onLogout }) {
                         onChange={(e) =>
                           setCreateForm((p) => ({ ...p, slug: e.target.value.toLowerCase().trim() }))
                         }
-                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 font-mono focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-md border border-slate-200 font-mono focus:outline-none focus:border-blue-500 transition-colors"
                       />
                       {createErrors.slug && (
                         <p className="text-[11px] text-rose-600 font-bold mt-1">
@@ -895,7 +895,7 @@ export default function SuperAdminView({ user, onLogout }) {
                           key={tier}
                           type="button"
                           onClick={() => setCreateForm((p) => ({ ...p, plan_tier: tier }))}
-                          className={`py-2 px-3 rounded-xl text-xs font-bold uppercase transition-all border cursor-pointer ${
+                          className={`py-2 px-3 rounded-md text-xs font-bold uppercase transition-all border cursor-pointer ${
                             createForm.plan_tier === tier
                               ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
                               : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -927,7 +927,7 @@ export default function SuperAdminView({ user, onLogout }) {
                       onChange={(e) =>
                         setCreateForm((p) => ({ ...p, admin_name: e.target.value }))
                       }
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                     {createErrors.admin_name && (
                       <p className="text-[11px] text-rose-600 font-bold mt-1">
@@ -948,7 +948,7 @@ export default function SuperAdminView({ user, onLogout }) {
                       onChange={(e) =>
                         setCreateForm((p) => ({ ...p, admin_email: e.target.value }))
                       }
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                     {createErrors.admin_email && (
                       <p className="text-[11px] text-rose-600 font-bold mt-1">
@@ -970,7 +970,7 @@ export default function SuperAdminView({ user, onLogout }) {
                         onChange={(e) =>
                           setCreateForm((p) => ({ ...p, admin_password: e.target.value }))
                         }
-                        className="w-full px-3.5 py-2.5 pr-10 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full px-3.5 py-2.5 pr-10 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
                       />
                       <button
                         type="button"
@@ -994,14 +994,14 @@ export default function SuperAdminView({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => setIsOnboardModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs cursor-pointer transition-colors"
+                  className="px-4 py-2.5 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingCreate}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 cursor-pointer shadow-xs transition-all disabled:opacity-60"
+                  className="px-5 py-2.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 cursor-pointer shadow-xs transition-all disabled:opacity-60"
                 >
                   {isSubmittingCreate ? (
                     <>
@@ -1024,7 +1024,7 @@ export default function SuperAdminView({ user, onLogout }) {
       {/* ==================== EDIT STATUS & PLAN MODAL (PUT /api/superadmin/tenants/{tenant_id}/status) ==================== */}
       {selectedTenantForEdit && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-md max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-black text-slate-900">
@@ -1053,7 +1053,7 @@ export default function SuperAdminView({ user, onLogout }) {
                   type="text"
                   value={editForm.name}
                   onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -1068,7 +1068,7 @@ export default function SuperAdminView({ user, onLogout }) {
                       key={tier}
                       type="button"
                       onClick={() => setEditForm((p) => ({ ...p, plan_tier: tier }))}
-                      className={`py-2 px-3 rounded-xl text-xs font-bold uppercase transition-all border cursor-pointer ${
+                      className={`py-2 px-3 rounded-md text-xs font-bold uppercase transition-all border cursor-pointer ${
                         editForm.plan_tier === tier
                           ? 'bg-blue-600 text-white border-blue-600'
                           : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -1089,7 +1089,7 @@ export default function SuperAdminView({ user, onLogout }) {
                   <button
                     type="button"
                     onClick={() => setEditForm((p) => ({ ...p, is_active: true }))}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                    className={`py-2.5 px-3 rounded-md text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
                       editForm.is_active
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
                         : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -1101,7 +1101,7 @@ export default function SuperAdminView({ user, onLogout }) {
                   <button
                     type="button"
                     onClick={() => setEditForm((p) => ({ ...p, is_active: false }))}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                    className={`py-2.5 px-3 rounded-md text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
                       !editForm.is_active
                         ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
                         : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -1118,14 +1118,14 @@ export default function SuperAdminView({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => setSelectedTenantForEdit(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs cursor-pointer"
+                  className="px-4 py-2 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingEdit}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSubmittingEdit ? (
                     <>

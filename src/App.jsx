@@ -891,7 +891,7 @@ function MainApp() {
       {/* Toast Notification Alert */}
       {toastMessage && (
         <div
-          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
+          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
             toastMessage.type === 'error'
               ? 'bg-rose-900 border-rose-700'
               : toastMessage.type === 'success'
@@ -944,7 +944,7 @@ function MainApp() {
           </button>
 
           {isProfileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
+            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-md border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
               {/* Top Section: User Avatar & Details */}
               <div className="p-4 sm:p-5 flex items-center gap-3.5">
                 <div className="relative shrink-0">
@@ -977,9 +977,9 @@ function MainApp() {
                     setIsProfileMenuOpen(false)
                     logout()
                   }}
-                  className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                  className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
+                  <div className="w-9 h-9 rounded-md bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
                     <LogOut className="w-4 h-4 text-rose-600" />
                   </div>
                   <span className="text-sm font-bold text-rose-600">
@@ -1009,7 +1009,7 @@ function MainApp() {
         <div className="flex-1 flex flex-col h-full min-w-0 bg-[#f8f9fa] overflow-hidden">
           <main className="flex-1 h-full min-h-0 overflow-y-auto px-3 sm:px-4 lg:px-5 py-3 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-16 md:pb-3 flex flex-col">
             {dataError && (
-              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center justify-between shrink-0">
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
                   <span>{dataError}</span>
@@ -1017,7 +1017,7 @@ function MainApp() {
                 <button
                   type="button"
                   onClick={loadData}
-                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-xs font-bold cursor-pointer"
                 >
                   Retry
                 </button>
