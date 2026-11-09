@@ -72,7 +72,7 @@ export default function DashboardView({
   )
 
   return (
-    <div className="flex flex-col h-full w-full min-h-0 space-y-2.5">
+    <div className="flex flex-col h-full w-full min-h-0 space-y-2">
       {/* Top Greeting Header Row + New scan button */}
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none truncate">
@@ -90,7 +90,7 @@ export default function DashboardView({
       </div>
 
       {/* 3 Stat KPI Cards matching mockup */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 shrink-0">
         {/* Card 1: Total scans */}
         <div className="bg-white p-3.5 sm:p-4 rounded-md border border-slate-200/90 shadow-2xs flex items-start justify-between">
           <div>
@@ -144,7 +144,7 @@ export default function DashboardView({
       </div>
 
       {/* Main 2-Column Content Grid: Scan history & Needs approval */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-2.5 items-stretch h-full">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-2 items-stretch h-full">
         {/* Left Column: Scan history */}
         <div className="bg-white rounded-md border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col h-full min-h-0">
           <div className="pb-2 border-b border-slate-100 shrink-0">

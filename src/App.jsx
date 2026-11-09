@@ -979,7 +979,7 @@ function MainApp() {
 
         {/* Right Column Content Area */}
         <div className="flex-1 flex flex-col h-full min-w-0 bg-[#EDEDED] overflow-hidden">
-          <main className="flex-1 h-full min-h-0 overflow-y-auto px-3 sm:px-4 lg:px-5 py-3 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-16 md:pb-3 flex flex-col">
+          <main className="flex-1 h-full min-h-0 overflow-y-auto px-2 sm:px-2.5 md:px-3 pt-2 md:pt-2.5 pb-14 md:pb-1.5 w-full flex flex-col">
             {dataError && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
