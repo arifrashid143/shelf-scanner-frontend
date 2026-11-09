@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
 
 export default function OrdersView({
@@ -10,18 +10,20 @@ export default function OrdersView({
 
   const filterTabs = ['All', 'Draft', 'Approved', 'Rejected']
 
-  const filteredOrders = purchaseOrders.filter((po) => {
-    if (statusFilter === 'All') return true
-    return po.status === statusFilter
-  })
+  // Ensure newest purchase orders are filtered & sorted efficiently
+  const sortedOrders = useMemo(() => {
+    const filtered = purchaseOrders.filter((po) => {
+      if (statusFilter === 'All') return true
+      return po.status === statusFilter
+    })
 
-  // Ensure newest purchase orders are always at the top of the table
-  const sortedOrders = [...filteredOrders].sort((a, b) => {
-    const timeA = a.createdAt || (a.rawCreatedAt ? new Date(a.rawCreatedAt).getTime() : 0)
-    const timeB = b.createdAt || (b.rawCreatedAt ? new Date(b.rawCreatedAt).getTime() : 0)
-    if (timeB !== timeA) return timeB - timeA
-    return String(b.id || '').localeCompare(String(a.id || ''), undefined, { numeric: true })
-  })
+    return [...filtered].sort((a, b) => {
+      const timeA = a.createdAt || (a.rawCreatedAt ? new Date(a.rawCreatedAt).getTime() : 0)
+      const timeB = b.createdAt || (b.rawCreatedAt ? new Date(b.rawCreatedAt).getTime() : 0)
+      if (timeB !== timeA) return timeB - timeA
+      return String(b.id || '').localeCompare(String(a.id || ''), undefined, { numeric: true })
+    })
+  }, [purchaseOrders, statusFilter])
 
   return (
     <div className="h-full flex-1 flex flex-col min-h-0 w-full">

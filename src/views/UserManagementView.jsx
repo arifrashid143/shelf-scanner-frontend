@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
+import { createStatusOverrideHelper } from '../utils/statusOverrides'
 import {
   Users,
   UserPlus,
@@ -19,42 +20,8 @@ import {
   User as UserIcon,
 } from 'lucide-react'
 
-// Local storage helpers to preserve user status across page refreshes
-// in case backend database does not persist is_active changes
-function getUserStatusOverrides() {
-  try {
-    const raw = localStorage.getItem('shelf_scanner_user_status_overrides')
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
-}
-
-function setUserStatusOverride(userId, isActive) {
-  try {
-    const overrides = getUserStatusOverrides()
-    overrides[String(userId)] = Boolean(isActive)
-    localStorage.setItem('shelf_scanner_user_status_overrides', JSON.stringify(overrides))
-  } catch (e) {
-    console.warn('Could not save user status override:', e)
-  }
-}
-
-function applyUserStatus(u) {
-  const overrides = getUserStatusOverrides()
-  const overrideVal = overrides[String(u.id)]
-  if (overrideVal !== undefined) {
-    return { ...u, is_active: overrideVal }
-  }
-
-  let active = true
-  if (u.is_active === false || u.is_active === 'false' || u.is_active === 0 || u.is_active === '0') {
-    active = false
-  } else if (u.status && ['inactive', 'suspended', 'deactivated', 'disabled'].includes(String(u.status).toLowerCase())) {
-    active = false
-  }
-  return { ...u, is_active: active }
-}
+const { setUserStatusOverride, applyStatus: applyUserStatus } =
+  createStatusOverrideHelper('shelf_scanner_user_status_overrides')
 
 export default function UserManagementView({ isAdmin, currentUser, onShowToast }) {
   const [users, setUsers] = useState([])

@@ -4,8 +4,7 @@ import { api } from './api/client'
 import Sidebar from './components/Sidebar'
 import BottomNav from './components/BottomNav'
 import LoginView from './views/LoginView'
-import AdminDashboardView from './views/AdminDashboardView'
-import UserDashboardView from './views/UserDashboardView'
+import DashboardView from './views/DashboardView'
 import NewScanView from './views/NewScanView'
 import ScanResultView from './views/ScanResultView'
 import OrdersView from './views/OrdersView'
@@ -57,6 +56,57 @@ function sortOrdersNewestFirst(ordersList) {
     if (timeB !== timeA) return timeB - timeA
     return String(b?.id || '').localeCompare(String(a?.id || ''), undefined, { numeric: true })
   })
+}
+
+function extractOrdersList(ordersData) {
+  if (!ordersData) return []
+  const rawOrders = Array.isArray(ordersData)
+    ? ordersData
+    : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
+  return rawOrders.map(normalizeOrder).filter(Boolean)
+}
+
+function mergeAndSortOrders(allOrders, newOrderData) {
+  const list = [...allOrders]
+  if (newOrderData?.id) {
+    const existingIdx = list.findIndex((o) => String(o.id) === String(newOrderData.id))
+    const normalizedNew = normalizeOrder(newOrderData)
+    if (existingIdx >= 0) {
+      list[existingIdx] = { ...list[existingIdx], ...normalizedNew }
+    } else {
+      list.unshift(normalizedNew)
+    }
+  }
+
+  const sorted = sortOrdersNewestFirst(list)
+  if (newOrderData?.id) {
+    const idx = sorted.findIndex((o) => String(o.id) === String(newOrderData.id))
+    if (idx > 0) {
+      const [target] = sorted.splice(idx, 1)
+      sorted.unshift(target)
+    }
+  }
+  return sorted
+}
+
+function extractInventoryList(invData) {
+  if (!invData) return []
+  const rawItems = invData.items || invData.inventory
+  if (!Array.isArray(rawItems)) return []
+  return rawItems.map((item) => ({
+    id: String(item.id || item.sku),
+    productId: item.id,
+    sku: item.sku || `SKU-${item.id}`,
+    name: item.name,
+    category: item.category || 'General',
+    current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
+    target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 0,
+    minThreshold: item.min_stock_threshold || 0,
+    price: item.unit_price || item.price || 0,
+    costPrice: item.cost_price || 0,
+    status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
+    history: item.history || [],
+  }))
 }
 
 function MainApp() {
@@ -135,22 +185,8 @@ function MainApp() {
   const refreshInventory = async () => {
     try {
       const invData = await api.getInventory().catch(() => null)
-      if (invData?.items || invData?.inventory) {
-        const rawItems = invData.items || invData.inventory
-        const normalized = rawItems.map((item) => ({
-          id: String(item.id || item.sku),
-          productId: item.id,
-          sku: item.sku || `SKU-${item.id}`,
-          name: item.name,
-          category: item.category || 'General',
-          current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
-          target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 0,
-          minThreshold: item.min_stock_threshold || 0,
-          price: item.unit_price || item.price || 0,
-          costPrice: item.cost_price || 0,
-          status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
-          history: item.history || [],
-        }))
+      const normalized = extractInventoryList(invData)
+      if (normalized.length > 0) {
         setInventory(normalized)
       }
     } catch (err) {
@@ -163,10 +199,7 @@ function MainApp() {
     try {
       const ordersData = await api.getOrders().catch(() => null)
       if (ordersData) {
-        const rawOrders = Array.isArray(ordersData)
-          ? ordersData
-          : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
-        const normalized = rawOrders.map(normalizeOrder).filter(Boolean)
+        const normalized = extractOrdersList(ordersData)
         setPurchaseOrders((prev) => {
           const combined = [...normalized]
           prev.forEach((p) => {
@@ -195,33 +228,14 @@ function MainApp() {
         api.getScans({ limit: 100 }).catch(() => null),
       ])
 
-      if (invData?.items || invData?.inventory) {
-        const rawItems = invData.items || invData.inventory
-        const normalized = rawItems.map((item) => ({
-          id: String(item.id || item.sku),
-          productId: item.id,
-          sku: item.sku || `SKU-${item.id}`,
-          name: item.name,
-          category: item.category || 'General',
-          current: item.current_stock !== undefined ? item.current_stock : (item.current || 0),
-          target: item.max_shelf_capacity || item.min_stock_threshold || item.target || 0,
-          minThreshold: item.min_stock_threshold || 0,
-          price: item.unit_price || item.price || 0,
-          costPrice: item.cost_price || 0,
-          status: item.is_low_stock || item.stock_status === 'low_stock' || item.status === 'Low' ? 'Low' : 'OK',
-          history: item.history || [],
-        }))
-        setInventory(normalized)
+      const normalizedInv = extractInventoryList(invData)
+      if (normalizedInv.length > 0) {
+        setInventory(normalizedInv)
       }
 
       if (ordersData) {
-        const rawOrders = Array.isArray(ordersData)
-          ? ordersData
-          : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
-        if (rawOrders.length > 0) {
-          const normalizedOrders = sortOrdersNewestFirst(
-            rawOrders.map(normalizeOrder).filter(Boolean)
-          )
+        const normalizedOrders = sortOrdersNewestFirst(extractOrdersList(ordersData))
+        if (normalizedOrders.length > 0) {
           setPurchaseOrders(normalizedOrders)
           setSelectedOrder(normalizedOrders[0] || null)
         }
@@ -307,36 +321,12 @@ function MainApp() {
 
       // Refresh orders list from backend and place newly generated PO at the top
       const ordersData = await api.getOrders().catch(() => null)
-      let allOrders = []
-      if (ordersData) {
-        const rawOrders = Array.isArray(ordersData)
-          ? ordersData
-          : ordersData.purchaseOrders || (ordersData.id ? [ordersData] : [])
-        allOrders = rawOrders.map(normalizeOrder).filter(Boolean)
-      }
-
-      if (res?.id) {
-        const existingIdx = allOrders.findIndex((o) => String(o.id) === String(res.id))
-        const normalizedNew = normalizeOrder({
-          ...res,
-          status: res.status || 'Draft',
-          created_at: res.created_at || new Date().toISOString(),
-        })
-        if (existingIdx >= 0) {
-          allOrders[existingIdx] = { ...allOrders[existingIdx], ...normalizedNew }
-        } else {
-          allOrders.unshift(normalizedNew)
-        }
-      }
-
-      const sortedOrders = sortOrdersNewestFirst(allOrders)
-      if (res?.id) {
-        const idx = sortedOrders.findIndex((o) => String(o.id) === String(res.id))
-        if (idx > 0) {
-          const [poToTop] = sortedOrders.splice(idx, 1)
-          sortedOrders.unshift(poToTop)
-        }
-      }
+      const allOrders = extractOrdersList(ordersData)
+      const sortedOrders = mergeAndSortOrders(allOrders, res?.id ? {
+        ...res,
+        status: res.status || 'Draft',
+        created_at: res.created_at || new Date().toISOString(),
+      } : null)
 
       setPurchaseOrders(sortedOrders)
       const target = (res?.id ? sortedOrders.find((o) => String(o.id) === String(res.id)) : null) || sortedOrders[0]
@@ -657,45 +647,16 @@ function MainApp() {
           fullScan.auto_po_items_count = itemsToReorder.length
         }
 
-        // Fetch refreshed orders list from backend
+        // Fetch refreshed orders list from backend and place newly generated PO at the top
         const freshOrdersData = await api.getOrders().catch(() => null)
-        let allOrders = []
-        if (freshOrdersData) {
-          const rawOrders = Array.isArray(freshOrdersData)
-            ? freshOrdersData
-            : freshOrdersData.purchaseOrders || (freshOrdersData.id ? [freshOrdersData] : [])
-          allOrders = rawOrders.map(normalizeOrder).filter(Boolean)
-        }
-
-        // If autoPoResponse was created, ensure it exists in orders list
-        if (autoPoResponse?.id) {
-          const existingIdx = allOrders.findIndex((o) => String(o.id) === String(autoPoResponse.id))
-          const normalizedNew = normalizeOrder({
-            ...autoPoResponse,
-            status: autoPoResponse.status || 'Draft',
-            created_at: autoPoResponse.created_at || new Date().toISOString(),
-            items: autoPoResponse.items || itemsToReorder,
-            notes: autoPoResponse.notes || `AI auto-generated Purchase Order from shelf scan ${scanId || ''}`,
-          })
-
-          if (existingIdx >= 0) {
-            allOrders[existingIdx] = { ...allOrders[existingIdx], ...normalizedNew }
-          } else {
-            allOrders.unshift(normalizedNew)
-          }
-        }
-
-        // Sort orders strictly newest first
-        const sortedOrders = sortOrdersNewestFirst(allOrders)
-
-        // Ensure the newly generated PO is placed at the very top (index 0) of the PO table
-        if (autoPoResponse?.id) {
-          const targetIdx = sortedOrders.findIndex((o) => String(o.id) === String(autoPoResponse.id))
-          if (targetIdx > 0) {
-            const [poToTop] = sortedOrders.splice(targetIdx, 1)
-            sortedOrders.unshift(poToTop)
-          }
-        }
+        const allOrders = extractOrdersList(freshOrdersData)
+        const sortedOrders = mergeAndSortOrders(allOrders, autoPoResponse?.id ? {
+          ...autoPoResponse,
+          status: autoPoResponse.status || 'Draft',
+          created_at: autoPoResponse.created_at || new Date().toISOString(),
+          items: autoPoResponse.items || itemsToReorder,
+          notes: autoPoResponse.notes || `AI auto-generated Purchase Order from shelf scan ${scanId || ''}`,
+        } : null)
 
         setPurchaseOrders(sortedOrders)
         if (sortedOrders.length > 0) {
@@ -810,9 +771,10 @@ function MainApp() {
   const renderContent = () => {
     switch (currentTab) {
       case 'dashboard':
-        return isAdmin ? (
-          <AdminDashboardView
+        return (
+          <DashboardView
             user={user}
+            isAdmin={isAdmin}
             onNavigate={setCurrentTab}
             onSelectOrder={handleSelectOrder}
             onSelectScan={handleSelectScan}
@@ -821,20 +783,8 @@ function MainApp() {
             inventory={inventory}
             totalScansCount={totalScansCount}
             isLoading={dataLoading}
-            onQuickApproveOrder={handleApprovePO}
-          />
-        ) : (
-          <UserDashboardView
-            user={user}
-            onNavigate={setCurrentTab}
-            onSelectOrder={handleSelectOrder}
-            onSelectScan={handleSelectScan}
             onGenerateOrder={() => handleGeneratePO()}
-            recentScans={recentScans}
-            inventory={inventory}
-            purchaseOrders={purchaseOrders}
-            totalScansCount={totalScansCount}
-            isLoading={dataLoading}
+            onQuickApproveOrder={handleApprovePO}
           />
         )
 

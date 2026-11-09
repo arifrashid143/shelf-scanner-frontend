@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { api } from '../api/client'
+import { createStatusOverrideHelper } from '../utils/statusOverrides'
 import {
   Building2,
   Store,
@@ -17,42 +18,8 @@ import {
   Edit2,
 } from 'lucide-react'
 
-// Local storage helpers to preserve tenant status across page refreshes
-// in case backend database does not persist is_active changes
-function getTenantStatusOverrides() {
-  try {
-    const raw = localStorage.getItem('shelf_scanner_tenant_status_overrides')
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
-}
-
-function setTenantStatusOverride(tenantId, isActive) {
-  try {
-    const overrides = getTenantStatusOverrides()
-    overrides[String(tenantId)] = Boolean(isActive)
-    localStorage.setItem('shelf_scanner_tenant_status_overrides', JSON.stringify(overrides))
-  } catch (e) {
-    console.warn('Could not save tenant status override:', e)
-  }
-}
-
-function applyTenantStatus(t) {
-  const overrides = getTenantStatusOverrides()
-  const overrideVal = overrides[String(t.id)]
-  if (overrideVal !== undefined) {
-    return { ...t, is_active: overrideVal }
-  }
-
-  let active = true
-  if (t.is_active === false || t.is_active === 'false' || t.is_active === 0 || t.is_active === '0') {
-    active = false
-  } else if (t.status && ['suspended', 'inactive', 'disabled'].includes(String(t.status).toLowerCase())) {
-    active = false
-  }
-  return { ...t, is_active: active }
-}
+const { setOverride: setTenantStatusOverride, applyStatus: applyTenantStatus } =
+  createStatusOverrideHelper('shelf_scanner_tenant_status_overrides')
 
 export default function SuperAdminView({ user, onLogout }) {
   // User Profile Dropdown Menu State
