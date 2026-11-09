@@ -118,11 +118,11 @@ export default function InventoryView({
     selectedProduct?.status === 'Low' || capacityPercent < 35
 
   return (
-    <div className="h-full flex-1 flex flex-col min-h-0 space-y-4 w-full">
+    <div className="h-full flex-1 flex flex-col min-h-0 space-y-2.5 w-full">
       {/* Header matching exact Sidebar logo height */}
       <div className="flex items-center justify-between shrink-0 h-10">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none">
             Inventory
           </h1>
         </div>
@@ -130,7 +130,7 @@ export default function InventoryView({
         {isAdmin && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            className="bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-md text-xs sm:text-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             Add new product
@@ -139,16 +139,16 @@ export default function InventoryView({
       </div>
 
       {saveError && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 shrink-0">
+        <div className="p-3.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 shrink-0">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {saveError}
         </div>
       )}
 
       {/* Main Grid: Inventory Table (Left) + Upgraded Product Information Chart (Right) */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 items-stretch w-full">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-stretch w-full">
         {/* Left Column: Full-Width Inventory Table with in-table scrolling */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden w-full flex flex-col h-full min-h-0">
+        <div className="lg:col-span-7 bg-white rounded-md border border-slate-200/90 shadow-2xs overflow-hidden w-full flex flex-col h-full min-h-0">
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto no-scrollbar">
             <table className="w-full text-left text-sm border-collapse min-w-[540px]">
               <thead className="bg-slate-50 border-b border-slate-200/80 sticky top-0 z-10 shadow-2xs">
@@ -308,7 +308,7 @@ export default function InventoryView({
 
         {/* Right Column: Upgraded Product Information Chart & Telemetry Card */}
         {selectedProduct ? (
-          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5 w-full h-full min-h-0 overflow-y-auto no-scrollbar">
+          <div className="lg:col-span-5 bg-white rounded-md border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-4 w-full h-full min-h-0 overflow-y-auto no-scrollbar">
             {/* Header: Product Identity & Status Badge */}
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3 min-w-0">
@@ -487,7 +487,7 @@ export default function InventoryView({
             </div>
           </div>
         ) : (
-          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-8 shadow-xs flex flex-col items-center justify-center text-center text-slate-400 gap-2 h-full">
+          <div className="lg:col-span-5 bg-white rounded-md border border-slate-200/90 p-8 shadow-2xs flex flex-col items-center justify-center text-center text-slate-400 gap-2 h-full">
             <Package className="w-10 h-10 text-slate-300 stroke-[1.5]" />
             <p className="text-sm font-semibold text-slate-700">No Product Selected</p>
             <p className="text-xs text-slate-400 max-w-xs">

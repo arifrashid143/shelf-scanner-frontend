@@ -357,11 +357,11 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
   const staffCount = totalCount - adminCount
 
   return (
-    <div className="h-full flex-1 flex flex-col min-h-0 space-y-4 w-full">
+    <div className="h-full flex-1 flex flex-col min-h-0 space-y-2.5 w-full">
       {/* Header Row aligned with Sidebar logo height */}
       <div className="flex items-center justify-between shrink-0 h-10">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none">
             User management
           </h1>
         </div>
@@ -372,13 +372,13 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+              className="bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-md text-xs sm:text-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <UserPlus className="w-4 h-4 stroke-[2.5]" />
               <span>Create user</span>
             </button>
           ) : (
-            <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/80">
+            <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200/80">
               Admin only creation
             </span>
           )}
@@ -387,16 +387,16 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
 
       {/* Error Banner if any */}
       {errorMsg && (
-        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-2 shrink-0">
+        <div className="p-3.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-2 shrink-0">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Quick KPI Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
+        <div className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
+          <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <Users className="w-4.5 h-4.5" />
           </div>
           <div>
@@ -405,8 +405,8 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <div className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
+          <div className="w-9 h-9 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-4.5 h-4.5" />
           </div>
           <div>
@@ -415,8 +415,8 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+        <div className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
+          <div className="w-9 h-9 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-4.5 h-4.5" />
           </div>
           <div>
@@ -425,8 +425,8 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+        <div className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
+          <div className="w-9 h-9 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
             <UserCheck className="w-4.5 h-4.5" />
           </div>
           <div>
@@ -437,7 +437,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+      <div className="bg-white rounded-md border border-slate-200/90 p-3 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
         {/* Search Input */}
         <div className="relative flex-1 min-w-[220px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -446,7 +446,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name or email..."
-            className="w-full pl-9 pr-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="w-full pl-9 pr-3.5 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5956c6]/20 focus:border-[#5956c6] transition-all"
           />
         </div>
 
@@ -517,7 +517,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
       </div>
 
       {/* Main Table: Full Width with in-table scrolling */}
-      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 bg-white rounded-md border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col">
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto no-scrollbar">
           <table className="w-full text-left text-sm border-collapse min-w-[700px]">
             <thead className="bg-slate-50 border-b border-slate-200/80 sticky top-0 z-10 shadow-2xs">

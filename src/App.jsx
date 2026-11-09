@@ -72,27 +72,8 @@ function MainApp() {
     'Apex Retail'
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
-  // Tailored page backgrounds that suit each view's theme and purpose
-  const getPageBg = () => {
-    switch (currentTab) {
-      case 'dashboard':
-        return 'bg-slate-100/80' // Clean, neutral slate for primary KPI overview
-      case 'new-scan':
-        return 'bg-blue-50/70' // Modern camera studio blue for scanning & photo capture
-      case 'scan-result':
-        return 'bg-indigo-50/60' // AI analytics indigo for gap visualizer & bounding boxes
-      case 'orders':
-        return 'bg-purple-50/60' // Refined purple for purchase orders ledger
-      case 'order-detail':
-        return 'bg-amber-50/50' // Warm document amber for order approval desk
-      case 'inventory':
-        return 'bg-emerald-50/50' // Fresh emerald for warehouse stock & product catalog
-      case 'users':
-        return 'bg-sky-50/50' // Clean workspace sky blue for user management
-      default:
-        return 'bg-slate-50'
-    }
-  }
+  // Consistent neutral background matching dashboard theme
+  const getPageBg = () => 'bg-[#f8f9fa]'
 
   const [currentTab, setCurrentTab] = useState('dashboard')
   const [selectedOrder, setSelectedOrder] = useState(null)

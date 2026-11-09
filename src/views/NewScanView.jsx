@@ -20,8 +20,8 @@ export default function NewScanView({
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [scanMode, setScanMode] = useState('check') // 'check' | 'baseline'
-  const [shelfName, setShelfName] = useState('Shelf Section 1')
+  const scanMode = 'check' // Default check mode
+  const shelfName = 'Shelf Section 1' // Default shelf section
   const [analysisStatus, setAnalysisStatus] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -269,46 +269,10 @@ export default function NewScanView({
       )}
 
       {/* ===================== MOBILE LAYOUT ===================== */}
-      <div className="md:hidden space-y-3.5 flex-1 flex flex-col min-h-0">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight shrink-0">New scan</h1>
-
-        {/* Shelf location input & Tab switcher */}
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200/90 shadow-2xs shrink-0">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Location:</span>
-          <input
-            type="text"
-            value={shelfName}
-            onChange={(e) => setShelfName(e.target.value)}
-            placeholder="e.g. Shelf Section 1"
-            className="flex-1 text-xs font-semibold text-slate-900 bg-transparent focus:outline-none"
-          />
-        </div>
-
-        {/* Tab switcher: Check shelf vs Set baseline */}
-        <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/80 shrink-0">
-          <button
-            type="button"
-            onClick={() => setScanMode('check')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
-              scanMode === 'check'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600'
-            }`}
-          >
-            Check shelf
-          </button>
-          <button
-            type="button"
-            onClick={() => setScanMode('baseline')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
-              scanMode === 'baseline'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600'
-            }`}
-          >
-            Set baseline
-          </button>
-        </div>
+      <div className="md:hidden space-y-3 flex-1 flex flex-col min-h-0">
+        <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none shrink-0">
+          New scan
+        </h1>
 
         {/* Mobile Viewfinder: Live Camera OR Image Preview OR Placeholder */}
         <div className="relative bg-slate-950 rounded-2xl aspect-[4/3] flex items-center justify-center text-center shadow-lg border border-slate-800 overflow-hidden shrink-0">
@@ -529,59 +493,18 @@ export default function NewScanView({
       </div>
 
       {/* ===================== DESKTOP LAYOUT (Appears fully in screen, Y = 72px baseline) ===================== */}
-      <div className="hidden md:flex flex-col flex-1 min-h-0 space-y-3.5 w-full">
+      <div className="hidden md:flex flex-col flex-1 min-h-0 space-y-2.5 w-full">
         {/* Header matching exact Sidebar logo height */}
         <div className="flex items-center justify-between shrink-0 h-10">
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
-              New scan
-            </h1>
-          </div>
-
-          {/* Shelf Location & Mode Switcher */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200/90 shadow-2xs">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Location:</span>
-              <input
-                type="text"
-                value={shelfName}
-                onChange={(e) => setShelfName(e.target.value)}
-                placeholder="e.g. Shelf Section 1"
-                className="w-36 text-xs font-semibold text-slate-900 bg-transparent focus:outline-none"
-              />
-            </div>
-
-            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => setScanMode('check')}
-                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  scanMode === 'check'
-                    ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Check shelf
-              </button>
-              <button
-                type="button"
-                onClick={() => setScanMode('baseline')}
-                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  scanMode === 'baseline'
-                    ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Set baseline
-              </button>
-            </div>
-          </div>
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none">
+            New scan
+          </h1>
         </div>
 
         {/* 2-Column Grid filling 100% of available height within the viewport */}
-        <div className="flex-1 min-h-0 grid grid-cols-12 gap-4 items-stretch">
+        <div className="flex-1 min-h-0 grid grid-cols-12 gap-2.5 items-stretch">
           {/* Left Column (7 cols): Camera / Preview / Upload Card */}
-          <div className="col-span-12 lg:col-span-7 xl:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between h-full min-h-0 overflow-hidden">
+          <div className="col-span-12 lg:col-span-7 xl:col-span-7 bg-white rounded-md border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between h-full min-h-0 overflow-hidden">
             {/* Viewfinder Area */}
             <div className="flex-1 min-h-0 flex flex-col justify-center relative">
               {isAnalyzing ? (
@@ -745,7 +668,7 @@ export default function NewScanView({
                       type="button"
                       onClick={handleAnalyzeClick}
                       disabled={isAnalyzing}
-                      className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-xs shadow-blue-500/25 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                      className="px-5 py-2 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-95 text-white font-bold text-xs sm:text-sm shadow-xs flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                     >
                       {isAnalyzing ? (
                         <>
@@ -770,7 +693,7 @@ export default function NewScanView({
                     <button
                       type="button"
                       disabled
-                      className="px-6 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs sm:text-sm border border-slate-200/80 cursor-not-allowed flex items-center gap-2 select-none opacity-60"
+                      className="px-5 py-2 rounded-md bg-slate-100 text-slate-400 font-bold text-xs sm:text-sm border border-slate-200/80 cursor-not-allowed flex items-center gap-2 select-none opacity-60"
                       title="Capture or upload a shelf photo first"
                     >
                       <Sparkles className="w-4 h-4 text-slate-400" />
@@ -783,7 +706,7 @@ export default function NewScanView({
           </div>
 
           {/* Right Column (5 cols): Recent Scans Table */}
-          <div className="col-span-12 lg:col-span-5 xl:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex flex-col h-full min-h-0 overflow-hidden">
+          <div className="col-span-12 lg:col-span-5 xl:col-span-5 bg-white rounded-md border border-slate-200/90 shadow-2xs flex flex-col h-full min-h-0 overflow-hidden">
             {/* Table Card Header */}
             <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">

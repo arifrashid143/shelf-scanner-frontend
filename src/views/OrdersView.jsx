@@ -26,18 +26,18 @@ export default function OrdersView({
   return (
     <div className="h-full flex-1 flex flex-col min-h-0 w-full">
       {/* ===================== MOBILE LAYOUT ===================== */}
-      <div className="md:hidden space-y-4 flex-1 flex flex-col min-h-0">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight shrink-0">Orders</h1>
+      <div className="md:hidden space-y-3 flex-1 flex flex-col min-h-0">
+        <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none shrink-0">Orders</h1>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar shrink-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar shrink-0">
           {filterTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 statusFilter === tab
-                  ? 'bg-slate-900 text-white shadow-xs'
+                  ? 'bg-[#5956c6] text-white shadow-xs'
                   : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
               }`}
             >
@@ -47,14 +47,14 @@ export default function OrdersView({
         </div>
 
         {/* Order Cards List */}
-        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-3 pb-2">
+        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-2.5 pb-2">
           {isLoading ? (
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-8 text-center text-slate-400 text-xs shadow-xs flex flex-col items-center justify-center gap-2">
+            <div className="bg-white rounded-md border border-slate-200/90 p-8 text-center text-slate-400 text-xs shadow-2xs flex flex-col items-center justify-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
               <span>Loading purchase orders from server...</span>
             </div>
           ) : sortedOrders.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-8 text-center text-slate-400 text-xs shadow-xs">
+            <div className="bg-white rounded-md border border-slate-200/90 p-8 text-center text-slate-400 text-xs shadow-2xs">
               No {statusFilter !== 'All' ? statusFilter.toLowerCase() : ''} purchase orders found.
             </div>
           ) : (
@@ -62,21 +62,21 @@ export default function OrdersView({
               <div
                 key={order.id}
                 onClick={() => onSelectOrder(order)}
-                className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs flex items-center justify-between cursor-pointer active:scale-98 transition-transform w-full"
+                className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex items-center justify-between cursor-pointer active:scale-98 transition-transform w-full"
               >
                 <div>
-                  <h3 className="font-black text-slate-900 text-sm">{order.id}</h3>
+                  <h3 className="font-bold text-slate-900 text-sm">{order.id}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {order.supplier} · {order.date}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <p className="font-black text-slate-900 text-sm">
+                  <p className="font-bold text-slate-900 text-sm">
                     ₹{order.total.toLocaleString()}
                   </p>
                   <span
-                    className={`inline-flex items-center text-[11px] font-bold mt-1 px-2 py-0.5 rounded-full border ${
+                    className={`inline-flex items-center text-[11px] font-bold mt-1 px-2 py-0.5 rounded border ${
                       order.status === 'Draft'
                         ? 'bg-amber-50 text-amber-700 border-amber-200/80'
                         : order.status === 'Approved'
@@ -94,20 +94,20 @@ export default function OrdersView({
       </div>
 
       {/* ===================== DESKTOP LAYOUT (In-table scrolling, no page scroll) ===================== */}
-      <div className="hidden md:flex flex-col flex-1 min-h-0 space-y-4 w-full">
+      <div className="hidden md:flex flex-col flex-1 min-h-0 space-y-2.5 w-full">
         {/* Fixed Header Row matching Sidebar logo height */}
         <div className="flex items-center justify-between shrink-0 h-10">
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">Purchase orders</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none">Purchase orders</h1>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {filterTabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                   statusFilter === tab
-                    ? 'bg-blue-600 text-white shadow-xs'
+                    ? 'bg-[#5956c6] text-white shadow-xs'
                     : 'bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
@@ -118,7 +118,7 @@ export default function OrdersView({
         </div>
 
         {/* Full-Width Table Card with scroll inside the table itself */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden w-full flex-1 min-h-0 flex flex-col">
+        <div className="bg-white rounded-md border border-slate-200/90 shadow-2xs overflow-hidden w-full flex-1 min-h-0 flex flex-col">
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto no-scrollbar">
             <table className="w-full text-left text-sm border-collapse min-w-[650px]">
               <thead className="bg-slate-50 border-b border-slate-200/80 sticky top-0 z-10 shadow-2xs">

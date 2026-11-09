@@ -81,21 +81,21 @@ export default function OrderDetailView({
   }
 
   return (
-    <div className="space-y-4 w-full max-w-[1550px]">
+    <div className="space-y-2.5 w-full max-w-[1550px]">
       {/* Header matching Sidebar logo height */}
       <div className="flex items-center justify-between shrink-0 h-10">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="text-xs font-semibold text-slate-400 hover:text-slate-700 mr-1"
+            className="text-xs font-semibold text-slate-400 hover:text-slate-700 mr-1 cursor-pointer"
           >
             ← Back
           </button>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none truncate">
             {order.id}
           </h1>
           <span
-            className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
+            className={`text-xs px-2.5 py-0.5 rounded-md font-bold ${
               status === 'Draft'
                 ? 'bg-amber-100 text-amber-800'
                 : status === 'Approved'
@@ -109,15 +109,15 @@ export default function OrderDetailView({
       </div>
 
       {actionError && (
-        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+        <div className="p-3.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {actionError}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
         {/* Left: Items Table (2 cols on lg) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white rounded-md border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col justify-between">
           <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
             <table className="w-full text-left text-sm min-w-[360px]">
               <thead>
@@ -170,7 +170,7 @@ export default function OrderDetailView({
         </div>
 
         {/* Right: Summary Card (1 col on lg) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-md border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900">Summary</h2>
@@ -199,14 +199,14 @@ export default function OrderDetailView({
             </div>
           </div>
 
-          <div className="pt-6 space-y-3">
+          <div className="pt-6 space-y-2.5">
             {status === 'Draft' ? (
               isAdmin ? (
                 <>
                   <button
                     onClick={handleApproveClick}
                     disabled={isSubmitting}
-                    className="w-full bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors text-center shadow-xs flex items-center justify-center gap-2"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-md text-sm transition-colors text-center shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
                     Approve order
@@ -214,14 +214,14 @@ export default function OrderDetailView({
                   <button
                     onClick={handleRejectClick}
                     disabled={isSubmitting}
-                    className="w-full text-slate-600 hover:text-rose-600 font-medium py-2 text-sm text-center transition-colors flex items-center justify-center gap-2"
+                    className="w-full text-slate-600 hover:text-rose-600 font-medium py-2 text-sm text-center transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                     Reject
                   </button>
                 </>
               ) : (
-                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
+                <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
                   <p className="font-bold flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5" />
                     Approval Restricted
