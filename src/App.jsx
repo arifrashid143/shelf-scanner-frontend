@@ -14,7 +14,7 @@ import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
 import logoImg from './assets/logo.png'
-import { Loader2, LogOut } from 'lucide-react'
+import { Loader2, LogOut, Menu } from 'lucide-react'
 
 function normalizeOrder(order) {
   if (!order) return null
@@ -86,7 +86,26 @@ function MainApp() {
   const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('shelf_sidebar_collapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
   const profileMenuRef = useRef(null)
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem('shelf_sidebar_collapsed', String(next))
+      } catch {
+        // ignore
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -913,9 +932,18 @@ function MainApp() {
       )}
 
       {/* Global Top Navbar spanning full width */}
-      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-4 sm:px-6 border-b border-white/10 shadow-2xs select-none">
-        {/* Left: Custom Brand Logo + Name */}
-        <div className="flex items-center gap-2.5">
+      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-white/10 shadow-2xs select-none">
+        {/* Left: Sidebar Collapse Toggle + Custom Brand Logo + Name */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="hidden md:flex p-1.5 rounded-md hover:bg-white/10 active:bg-white/15 text-white/80 hover:text-white transition-colors cursor-pointer"
+            title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           <img
             src={logoImg}
             alt="Shelf Scanner"
@@ -1002,6 +1030,8 @@ function MainApp() {
             user={user}
             isAdmin={isAdmin}
             onLogout={logout}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={toggleSidebar}
           />
         </div>
 
