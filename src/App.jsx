@@ -883,7 +883,7 @@ function MainApp() {
       )}
 
       {/* Global Top Navbar spanning full width */}
-      <header className="h-14 w-full bg-[#EDEDED] text-slate-900 shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-slate-300/70 shadow-2xs select-none">
+      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-white/10 shadow-2xs select-none">
         {/* Left: Custom Brand Logo + Name */}
         <div className="flex items-center gap-2">
           <img
@@ -891,7 +891,7 @@ function MainApp() {
             alt="Shelf Scanner"
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-md object-contain shrink-0 shadow-2xs"
           />
-          <span className="font-bold text-base tracking-tight text-slate-900 select-none">
+          <span className="font-bold text-base tracking-tight text-white select-none">
             Shelf Scanner
           </span>
         </div>
@@ -901,14 +901,14 @@ function MainApp() {
           <button
             type="button"
             onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-400/30 border border-slate-300/80"
+            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20"
             aria-label="User profile menu"
             aria-expanded={isProfileMenuOpen}
           >
             <span>{initial}</span>
             {/* Active online green indicator dot on bottom right */}
             <span
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#EDEDED]"
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#3F4168]"
               title="Online"
             />
           </button>
