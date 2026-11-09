@@ -122,8 +122,8 @@ function MainApp() {
     'Apex Retail'
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
-  // Consistent neutral background matching dashboard theme
-  const getPageBg = () => 'bg-[#f8f9fa]'
+  // Consistent background matching dashboard photo theme
+  const getPageBg = () => 'bg-[#EDEDED]'
 
   const [currentTab, setCurrentTab] = useState('dashboard')
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -883,7 +883,7 @@ function MainApp() {
       )}
 
       {/* Global Top Navbar spanning full width */}
-      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-white/10 shadow-2xs select-none">
+      <header className="h-14 w-full bg-[#EDEDED] text-slate-900 shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-slate-300/70 shadow-2xs select-none">
         {/* Left: Custom Brand Logo + Name */}
         <div className="flex items-center gap-2">
           <img
@@ -891,7 +891,7 @@ function MainApp() {
             alt="Shelf Scanner"
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-md object-contain shrink-0 shadow-2xs"
           />
-          <span className="font-bold text-base tracking-tight text-white select-none">
+          <span className="font-bold text-base tracking-tight text-slate-900 select-none">
             Shelf Scanner
           </span>
         </div>
@@ -901,14 +901,14 @@ function MainApp() {
           <button
             type="button"
             onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-400/30 border border-slate-300/80"
             aria-label="User profile menu"
             aria-expanded={isProfileMenuOpen}
           >
             <span>{initial}</span>
             {/* Active online green indicator dot on bottom right */}
             <span
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#3F4168]"
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#EDEDED]"
               title="Online"
             />
           </button>
@@ -978,7 +978,7 @@ function MainApp() {
         </div>
 
         {/* Right Column Content Area */}
-        <div className="flex-1 flex flex-col h-full min-w-0 bg-[#f8f9fa] overflow-hidden">
+        <div className="flex-1 flex flex-col h-full min-w-0 bg-[#EDEDED] overflow-hidden">
           <main className="flex-1 h-full min-h-0 overflow-y-auto px-3 sm:px-4 lg:px-5 py-3 max-w-[1600px] 2xl:max-w-[1720px] w-full mx-auto pb-16 md:pb-3 flex flex-col">
             {dataError && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between shrink-0">
