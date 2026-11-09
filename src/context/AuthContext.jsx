@@ -29,46 +29,60 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Verify stored token on app boot via GET /api/auth/me
-  useEffect(() => {
-    async function loadUser() {
-      const token = localStorage.getItem('shelf_scanner_token')
-      if (!token) {
-        setLoading(false)
-        return
+  // Verify stored token via GET /api/auth/me
+  const loadUser = async () => {
+    const token = localStorage.getItem('shelf_scanner_token')
+    if (!token) {
+      setUser(null)
+      setLoading(false)
+      return
+    }
+
+    try {
+      const data = await api.getMe()
+      const rawUser = data?.user || data?.data?.user || data
+      const jwtClaims = parseJwt(token)
+
+      const currentUser = {
+        ...rawUser,
+        name: rawUser.full_name || rawUser.name || rawUser.email?.split('@')[0] || 'User',
+        role: String(rawUser.role || jwtClaims?.role || 'user').toLowerCase(),
+        tenant_id: rawUser.tenant_id ?? jwtClaims?.tenant_id ?? null,
       }
+      setUser(currentUser)
+    } catch (err) {
+      console.warn('Session verification via GET /api/auth/me failed:', err.message)
+      const jwtClaims = parseJwt(token)
+      if (jwtClaims && jwtClaims.exp && jwtClaims.exp * 1000 > Date.now()) {
+        setUser({
+          ...jwtClaims,
+          name: jwtClaims.name || jwtClaims.full_name || jwtClaims.sub || 'User',
+          role: String(jwtClaims.role || 'user').toLowerCase(),
+        })
+      } else {
+        localStorage.removeItem('shelf_scanner_token')
+        setUser(null)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
 
-      try {
-        const data = await api.getMe()
-        const rawUser = data?.user || data?.data?.user || data
-        const jwtClaims = parseJwt(token)
+  // Verify stored token on app boot & listen to storage authentication changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadUser()
 
-        const currentUser = {
-          ...rawUser,
-          name: rawUser.full_name || rawUser.name || rawUser.email?.split('@')[0] || 'User',
-          role: String(rawUser.role || jwtClaims?.role || 'user').toLowerCase(),
-          tenant_id: rawUser.tenant_id ?? jwtClaims?.tenant_id ?? null,
-        }
-        setUser(currentUser)
-      } catch (err) {
-        console.warn('Session verification via GET /api/auth/me failed:', err.message)
-        const jwtClaims = parseJwt(token)
-        if (jwtClaims && jwtClaims.exp && jwtClaims.exp * 1000 > Date.now()) {
-          setUser({
-            ...jwtClaims,
-            name: jwtClaims.name || jwtClaims.full_name || jwtClaims.sub || 'User',
-            role: String(jwtClaims.role || 'user').toLowerCase(),
-          })
-        } else {
-          localStorage.removeItem('shelf_scanner_token')
-          setUser(null)
-        }
-      } finally {
-        setLoading(false)
+    const handleStorageChange = (e) => {
+      if (e.key === 'shelf_scanner_token') {
+        loadUser()
       }
     }
 
-    loadUser()
+    window.addEventListener('storage', handleStorageChange)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
   }, [])
 
   // POST /api/auth/login - Authenticates with https://ai-vs-scanner-be.aiiotgeeks.tech/api/auth/login

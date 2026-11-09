@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import logoImg from '../assets/logo.png'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react'
 
 export default function LoginView() {
   const { login } = useAuth()
@@ -13,10 +13,77 @@ export default function LoginView() {
 
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
+
+  // Real-time validation for email and password
+  const validateField = (fieldName, value) => {
+    let error = ''
+    if (fieldName === 'email') {
+      const val = (value ?? '').trim()
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+      if (!val) {
+        error = 'Email address is required'
+      } else if (!emailRegex.test(val)) {
+        error = 'Please enter a valid email address'
+      }
+    } else if (fieldName === 'password') {
+      if (!value) {
+        error = 'Password is required'
+      }
+    }
+    return error
+  }
+
+  // Real-time onChange handler for authentication fields
+  const handleEmailChange = (e) => {
+    const val = e.target.value
+    setEmail(val)
+    if (errorMsg) setErrorMsg('')
+
+    // Validate on change if field was already touched or has content
+    if (touched.email || val.length > 0) {
+      const err = validateField('email', val)
+      setErrors((prev) => ({ ...prev, email: err }))
+    }
+  }
+
+  const handlePasswordChange = (e) => {
+    const val = e.target.value
+    setPassword(val)
+    if (errorMsg) setErrorMsg('')
+
+    // Validate on change if field was already touched or has content
+    if (touched.password || val.length > 0) {
+      const err = validateField('password', val)
+      setErrors((prev) => ({ ...prev, password: err }))
+    }
+  }
+
+  const handleBlur = (fieldName) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }))
+    const val = fieldName === 'email' ? email : password
+    const err = validateField(fieldName, val)
+    setErrors((prev) => ({ ...prev, [fieldName]: err }))
+  }
 
   const handleSubmit = async (e) => {
     e?.preventDefault()
     setErrorMsg('')
+
+    const emailErr = validateField('email', email)
+    const pwdErr = validateField('password', password)
+    const newErrors = {}
+    if (emailErr) newErrors.email = emailErr
+    if (pwdErr) newErrors.password = pwdErr
+
+    setTouched({ email: true, password: true })
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length > 0) {
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -119,7 +186,7 @@ export default function LoginView() {
               </span>
             </p>
 
-            {/* Error Message */}
+            {/* Server Error Message */}
             {errorMsg && (
               <div className="w-full mb-4 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center justify-between">
                 <span>{errorMsg}</span>
@@ -134,43 +201,65 @@ export default function LoginView() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="w-full space-y-3.5">
-              {/* Email Address */}
+            <form onSubmit={handleSubmit} className="w-full space-y-3.5" noValidate>
+              {/* Email Address with real-time onChange authentication validation */}
               <div>
                 <input
                   type="email"
-                  required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
+                  onBlur={() => handleBlur('email')}
                   placeholder="Email address"
                   autoComplete="email"
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200/90 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none focus:border-[#4745B2] focus:ring-2 focus:ring-[#4745B2]/15 transition-all"
+                  className={`w-full px-4 py-2.5 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none transition-all ${
+                    touched.email && errors.email
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/15 bg-rose-50/10'
+                      : 'border-slate-200/90 focus:border-[#4745B2] focus:ring-2 focus:ring-[#4745B2]/15'
+                  }`}
                 />
+                {touched.email && errors.email && (
+                  <p className="flex items-center gap-1.5 text-[11px] text-rose-600 font-medium mt-1">
+                    <AlertCircle className="w-3 h-3 shrink-0 text-rose-500" />
+                    <span>{errors.email}</span>
+                  </p>
+                )}
               </div>
 
-              {/* Password with Eye Toggle */}
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  autoComplete="current-password"
-                  className="w-full px-4 py-2.5 pr-10 bg-white border border-slate-200/90 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none focus:border-[#4745B2] focus:ring-2 focus:ring-[#4745B2]/15 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? (
-                    <Eye className="w-4 h-4" />
-                  ) : (
-                    <EyeOff className="w-4 h-4" />
-                  )}
-                </button>
+              {/* Password with Eye Toggle and real-time onChange authentication validation */}
+              <div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={handlePasswordChange}
+                    onBlur={() => handleBlur('password')}
+                    placeholder="Password"
+                    autoComplete="current-password"
+                    className={`w-full px-4 py-2.5 pr-10 bg-white border rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none transition-all ${
+                      touched.password && errors.password
+                        ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/15 bg-rose-50/10'
+                        : 'border-slate-200/90 focus:border-[#4745B2] focus:ring-2 focus:ring-[#4745B2]/15'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {touched.password && errors.password && (
+                  <p className="flex items-center gap-1.5 text-[11px] text-rose-600 font-medium mt-1">
+                    <AlertCircle className="w-3 h-3 shrink-0 text-rose-500" />
+                    <span>{errors.password}</span>
+                  </p>
+                )}
               </div>
 
               {/* Terms agreement note: "By logging in you agree to our Terms of Use and Privacy Policy." */}
