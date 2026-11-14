@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Loader2, MoreVertical, FileText, Copy, Eye, X } from 'lucide-react'
 
-export default function OrdersView({
+export default function Orders({
   purchaseOrders = [],
   onSelectOrder,
   isLoading = false,

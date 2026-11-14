@@ -15,7 +15,7 @@ import {
   FileText,
 } from 'lucide-react'
 
-export default function SuppliersView({ isAdmin, onShowToast }) {
+export default function Suppliers({ isAdmin, onShowToast }) {
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')

@@ -11,7 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 
-export default function DashboardView({
+export default function Dashboard({
   user,
   isAdmin = false,
   onNavigate,

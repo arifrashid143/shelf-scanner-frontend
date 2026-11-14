@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 import { createStatusOverrideHelper } from '../utils/statusOverrides'
 import {
-  Users,
+  Users as UsersIcon,
   UserPlus,
   ShieldCheck,
   UserCheck,
@@ -26,7 +26,7 @@ import {
 const { setOverride: setUserStatusOverride, applyStatus: applyUserStatus } =
   createStatusOverrideHelper('shelf_scanner_user_status_overrides')
 
-export default function UserManagementView({ isAdmin, currentUser, onShowToast }) {
+export default function Users({ isAdmin, currentUser, onShowToast }) {
   const [users, setUsers] = useState([])
   const [stores, setStores] = useState([])
   const [loading, setLoading] = useState(true)
@@ -377,7 +377,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
         <div className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3">
           <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Users className="w-4.5 h-4.5" />
+            <UsersIcon className="w-4.5 h-4.5" />
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-500 leading-tight">Total Users</p>
@@ -521,7 +521,7 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
               ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin ? 6 : 5} className="py-16 text-center text-slate-400">
-                    <Users className="w-10 h-10 mx-auto mb-2 text-slate-300 stroke-1" />
+                    <UsersIcon className="w-10 h-10 mx-auto mb-2 text-slate-300 stroke-1" />
                     <p className="text-sm font-bold text-slate-700">No users found</p>
                     <p className="text-xs text-slate-400 mt-1">
                       {searchQuery

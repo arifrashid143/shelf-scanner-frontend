@@ -13,7 +13,7 @@ import {
   ShieldAlert,
 } from 'lucide-react'
 
-export default function AnalyticsView({ onShowToast, onNavigateToOrders }) {
+export default function Analytics({ onShowToast, onNavigateToOrders }) {
   const [lowStockData, setLowStockData] = useState(null)
   const [gapData, setGapData] = useState(null)
   const [recommendationsData, setRecommendationsData] = useState(null)

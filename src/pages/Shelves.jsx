@@ -15,7 +15,7 @@ import {
   BarChart2,
 } from 'lucide-react'
 
-export default function ShelvesView({ isAdmin, onShowToast }) {
+export default function Shelves({ isAdmin, onShowToast }) {
   const [shelves, setShelves] = useState([])
   const [stores, setStores] = useState([])
   const [hierarchy, setHierarchy] = useState(null)

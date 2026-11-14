@@ -3,18 +3,18 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { api } from './api/client'
 import Sidebar from './components/Sidebar'
 import BottomNav from './components/BottomNav'
-import LoginView from './views/LoginView'
-import DashboardView from './views/DashboardView'
-import NewScanView from './views/NewScanView'
-import ScanResultView from './views/ScanResultView'
-import OrdersView from './views/OrdersView'
-import OrderDetailView from './views/OrderDetailView'
-import InventoryView from './views/InventoryView'
-import UserManagementView from './views/UserManagementView'
-import SuperAdminView from './views/SuperAdminView'
-import ShelvesView from './views/ShelvesView'
-import SuppliersView from './views/SuppliersView'
-import AnalyticsView from './views/AnalyticsView'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Scan from './pages/Scan'
+import ScanResult from './pages/ScanResult'
+import Orders from './pages/Orders'
+import OrderDetail from './pages/OrderDetail'
+import Inventory from './pages/Inventory'
+import Users from './pages/Users'
+import SuperAdmin from './pages/SuperAdmin'
+import Shelves from './pages/Shelves'
+import Suppliers from './pages/Suppliers'
+import Analytics from './pages/Analytics'
 import logoImg from './assets/logo.png'
 import { Loader2, LogOut } from 'lucide-react'
 
@@ -762,12 +762,12 @@ function MainApp() {
   }
 
   if (!isAuthenticated) {
-    return <LoginView />
+    return <Login />
   }
 
   // Superadmin Single-Page Management (NO sidebar, NO store data, NO tabs)
   if (isSuperAdmin) {
-    return <SuperAdminView user={user} onLogout={logout} />
+    return <SuperAdmin user={user} onLogout={logout} />
   }
 
   // Render view depending on user role and selected tab
@@ -775,7 +775,7 @@ function MainApp() {
     switch (currentTab) {
       case 'dashboard':
         return (
-          <DashboardView
+          <Dashboard
             user={user}
             isAdmin={isAdmin}
             onNavigate={setCurrentTab}
@@ -793,7 +793,7 @@ function MainApp() {
 
       case 'new-scan':
         return (
-          <NewScanView
+          <Scan
             onScanComplete={handleScanComplete}
             recentScans={recentScans}
             onSelectScan={handleSelectScan}
@@ -803,7 +803,7 @@ function MainApp() {
 
       case 'scan-result':
         return (
-          <ScanResultView
+          <ScanResult
             scanData={currentScan}
             isAdmin={isAdmin}
             inventory={inventory}
@@ -816,7 +816,7 @@ function MainApp() {
 
       case 'orders':
         return (
-          <OrdersView
+          <Orders
             purchaseOrders={purchaseOrders}
             onSelectOrder={handleSelectOrder}
             isLoading={dataLoading}
@@ -825,7 +825,7 @@ function MainApp() {
 
       case 'order-detail':
         return (
-          <OrderDetailView
+          <OrderDetail
             order={selectedOrder || purchaseOrders[0]}
             isAdmin={isAdmin}
             onBack={() => setCurrentTab('orders')}
@@ -836,7 +836,7 @@ function MainApp() {
 
       case 'inventory':
         return (
-          <InventoryView
+          <Inventory
             inventory={inventory}
             isAdmin={isAdmin}
             onUpdateProduct={handleUpdateProduct}
@@ -847,7 +847,7 @@ function MainApp() {
 
       case 'users':
         return (
-          <UserManagementView
+          <Users
             isAdmin={isAdmin}
             currentUser={user}
             onShowToast={showToast}
@@ -856,7 +856,7 @@ function MainApp() {
 
       case 'shelves':
         return (
-          <ShelvesView
+          <Shelves
             isAdmin={isAdmin}
             onShowToast={showToast}
           />
@@ -864,7 +864,7 @@ function MainApp() {
 
       case 'suppliers':
         return (
-          <SuppliersView
+          <Suppliers
             isAdmin={isAdmin}
             onShowToast={showToast}
           />
@@ -872,7 +872,7 @@ function MainApp() {
 
       case 'analytics':
         return (
-          <AnalyticsView
+          <Analytics
             onShowToast={showToast}
             onNavigateToOrders={() => setCurrentTab('orders')}
           />

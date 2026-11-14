@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import logoImg from '../assets/logo.png'
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react'
 
-export default function LoginView() {
+export default function Login() {
   const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
 

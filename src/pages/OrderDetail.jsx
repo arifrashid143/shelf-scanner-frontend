@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Lock, AlertCircle, Check, X } from 'lucide-react'
 
-export default function OrderDetailView({
+export default function OrderDetail({
   order,
   isAdmin,
   onBack,

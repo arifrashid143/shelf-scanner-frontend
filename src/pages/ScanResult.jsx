@@ -7,7 +7,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 
-export default function ScanResultView({
+export default function ScanResult({
   scanData,
   inventory = [],
   onDone,

@@ -16,7 +16,7 @@ import {
   RotateCcw,
 } from 'lucide-react'
 
-export default function InventoryView({
+export default function Inventory({
   inventory = [],
   isAdmin,
   onUpdateProduct,

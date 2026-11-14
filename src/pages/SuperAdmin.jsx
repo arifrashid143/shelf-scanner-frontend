@@ -23,7 +23,7 @@ import {
 const { setOverride: setTenantStatusOverride, applyStatus: applyTenantStatus } =
   createStatusOverrideHelper('shelf_scanner_tenant_status_overrides')
 
-export default function SuperAdminView({ user, onLogout }) {
+export default function SuperAdmin({ user, onLogout }) {
   // User Profile Dropdown Menu State
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef(null)

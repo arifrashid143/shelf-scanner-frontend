@@ -8,13 +8,13 @@ import {
   Sparkles,
   AlertCircle,
   RotateCcw,
-  Scan,
+  Scan as ScanIcon,
   Check,
   MoreVertical,
   Copy,
 } from 'lucide-react'
 
-export default function NewScanView({
+export default function Scan({
   onScanComplete,
   recentScans = [],
   onSelectScan,
@@ -466,7 +466,7 @@ export default function NewScanView({
         <div className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex-1 min-h-0 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
             <div className="flex items-center gap-2">
-              <Scan className="w-3.5 h-3.5 text-blue-600" />
+              <ScanIcon className="w-3.5 h-3.5 text-blue-600" />
               <h2 className="text-xs font-bold text-slate-900">Recent Scans</h2>
             </div>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
@@ -763,7 +763,7 @@ export default function NewScanView({
             <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100/80">
-                  <Scan className="w-4 h-4 stroke-[2.2]" />
+                  <ScanIcon className="w-4 h-4 stroke-[2.2]" />
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none">
@@ -786,7 +786,7 @@ export default function NewScanView({
               ) : recentScans.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 text-xs">
                   <div className="w-12 h-12 rounded-md bg-slate-50 text-slate-400 flex items-center justify-center mb-2.5 border border-slate-100">
-                    <Scan className="w-6 h-6 stroke-[1.8]" />
+                    <ScanIcon className="w-6 h-6 stroke-[1.8]" />
                   </div>
                   <p className="font-bold text-slate-700 text-xs">No recent scans recorded</p>
                   <p className="text-[11px] text-slate-400 mt-1 max-w-[220px]">
@@ -894,7 +894,7 @@ export default function NewScanView({
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
-                  <Scan className="w-5 h-5 stroke-[2]" />
+                  <ScanIcon className="w-5 h-5 stroke-[2]" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-bold text-slate-900 truncate">
@@ -949,7 +949,7 @@ export default function NewScanView({
                 className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
               >
                 <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                  <Scan className="w-4 h-4" />
+                  <ScanIcon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
