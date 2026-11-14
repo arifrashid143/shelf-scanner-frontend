@@ -12,6 +12,9 @@ import OrderDetailView from './views/OrderDetailView'
 import InventoryView from './views/InventoryView'
 import UserManagementView from './views/UserManagementView'
 import SuperAdminView from './views/SuperAdminView'
+import ShelvesView from './views/ShelvesView'
+import SuppliersView from './views/SuppliersView'
+import AnalyticsView from './views/AnalyticsView'
 import logoImg from './assets/logo.png'
 import { Loader2, LogOut } from 'lucide-react'
 
@@ -851,6 +854,30 @@ function MainApp() {
           />
         )
 
+      case 'shelves':
+        return (
+          <ShelvesView
+            isAdmin={isAdmin}
+            onShowToast={showToast}
+          />
+        )
+
+      case 'suppliers':
+        return (
+          <SuppliersView
+            isAdmin={isAdmin}
+            onShowToast={showToast}
+          />
+        )
+
+      case 'analytics':
+        return (
+          <AnalyticsView
+            onShowToast={showToast}
+            onNavigateToOrders={() => setCurrentTab('orders')}
+          />
+        )
+
       default:
         return null
     }
@@ -894,6 +921,10 @@ function MainApp() {
           <span className="font-bold text-base tracking-tight text-white select-none">
             Shelf Scanner
           </span>
+          <div className="hidden sm:inline-flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>API Online</span>
+          </div>
         </div>
 
         {/* Right: User Profile Avatar with dropdown */}

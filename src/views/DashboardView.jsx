@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { api } from '../api/client'
 import {
   Plus,
   Scan,
@@ -71,6 +72,28 @@ export default function DashboardView({
     [visibleScans]
   )
 
+  // Live analytics telemetry from /api/analytics
+  const [liveAnalytics, setLiveAnalytics] = useState(null)
+
+  useEffect(() => {
+    let isSubscribed = true
+    Promise.all([
+      api.getLowStockAnalytics().catch(() => null),
+      api.getGapAnalytics().catch(() => null),
+    ])
+      .then(([lowRes, gapRes]) => {
+        if (!isSubscribed) return
+        setLiveAnalytics({
+          lowStockCount: lowRes?.total_low_stock_count,
+          totalGaps: gapRes?.total_gaps_recorded,
+        })
+      })
+      .catch(() => {})
+    return () => {
+      isSubscribed = false
+    }
+  }, [])
+
   return (
     <div className="flex flex-col h-full w-full min-h-0 space-y-2">
       {/* Top Greeting Header Row + New scan button */}
@@ -116,7 +139,9 @@ export default function DashboardView({
               <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
             ) : (
               <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {lowStockItems.length}
+                {liveAnalytics?.lowStockCount !== undefined
+                  ? liveAnalytics.lowStockCount
+                  : lowStockItems.length}
               </p>
             )}
           </div>
@@ -133,7 +158,9 @@ export default function DashboardView({
               <Loader2 className="w-5 h-5 animate-spin text-slate-400 mt-1" />
             ) : (
               <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {totalGaps}
+                {liveAnalytics?.totalGaps !== undefined
+                  ? liveAnalytics.totalGaps
+                  : totalGaps}
               </p>
             )}
           </div>

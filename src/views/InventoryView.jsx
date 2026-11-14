@@ -12,6 +12,8 @@ import {
   BarChart3,
   MoreVertical,
   Copy,
+  Trash2,
+  RotateCcw,
 } from 'lucide-react'
 
 export default function InventoryView({
@@ -65,6 +67,33 @@ export default function InventoryView({
       setSaveError('')
     } catch (err) {
       setSaveError(err.message || 'Failed to update inventory')
+    }
+  }
+
+  const handleDeleteProduct = async (product) => {
+    if (!isAdmin) return
+    if (!window.confirm(`Are you sure you want to archive product "${product.name}"?`)) return
+    try {
+      await api.deleteProduct(product.id)
+      showToast(`Product "${product.name}" archived!`, 'success')
+      if (onUpdateProduct) {
+        onUpdateProduct({ ...product, status: 'Archived', is_active: false })
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to archive product', 'error')
+    }
+  }
+
+  const handleRestoreProduct = async (product) => {
+    if (!isAdmin) return
+    try {
+      await api.restoreProduct(product.id)
+      showToast(`Product "${product.name}" restored!`, 'success')
+      if (onUpdateProduct) {
+        onUpdateProduct({ ...product, status: 'Active', is_active: true })
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to restore product', 'error')
     }
   }
 
@@ -754,6 +783,56 @@ export default function InventoryView({
                     </p>
                     <p className="text-[11px] font-mono text-slate-400 truncate">
                       {actionModalItem.id}
+                    </p>
+                  </div>
+                </button>
+              )}
+
+              {/* Option 5: Archive / Delete Product */}
+              {isAdmin && actionModalItem.status !== 'Archived' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const item = actionModalItem
+                    setActionModalItem(null)
+                    handleDeleteProduct(item)
+                  }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-rose-50 text-left transition-colors cursor-pointer border border-transparent hover:border-rose-200 group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 group-hover:bg-rose-100 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-rose-700">
+                      Archive / Delete Product
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Soft-delete SKU from active inventory tracking
+                    </p>
+                  </div>
+                </button>
+              )}
+
+              {/* Option 6: Restore Product */}
+              {isAdmin && actionModalItem.status === 'Archived' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const item = actionModalItem
+                    setActionModalItem(null)
+                    handleRestoreProduct(item)
+                  }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-emerald-50 text-left transition-colors cursor-pointer border border-transparent hover:border-emerald-200 group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
+                    <RotateCcw className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-700">
+                      Restore Product
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Re-enable SKU into active stock count
                     </p>
                   </div>
                 </button>

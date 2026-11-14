@@ -1,4 +1,4 @@
-import { Home, Scan, ShoppingBag, Package, Users, Building2, LayoutDashboard } from 'lucide-react'
+import { Home, Scan, ShoppingBag, Package, Users, Building2, LayoutDashboard, Layers } from 'lucide-react'
 
 export default function BottomNav({ currentTab, onNavigate, isAdmin, isSuperAdmin }) {
   const tabs = isSuperAdmin
@@ -11,6 +11,7 @@ export default function BottomNav({ currentTab, onNavigate, isAdmin, isSuperAdmi
         { id: 'new-scan', label: 'Scan', icon: Scan },
         { id: 'orders', label: 'Orders', icon: ShoppingBag },
         { id: 'inventory', label: 'Stock', icon: Package },
+        { id: 'shelves', label: 'Shelves', icon: Layers },
         ...(isAdmin ? [{ id: 'users', label: 'Users', icon: Users }] : []),
       ]
 

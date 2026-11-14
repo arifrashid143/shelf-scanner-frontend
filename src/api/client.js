@@ -235,4 +235,109 @@ export const api = {
 
   // GET /api/superadmin/analytics - Get Superadmin Analytics
   getSuperadminAnalytics: () => request('/superadmin/analytics'),
+
+  // ==================== TENANT SHELVES & HIERARCHY ====================
+  // GET /api/tenant/shelves - List Company Shelves
+  getTenantShelves: (params = {}) => {
+    const query = new URLSearchParams()
+    if (params.store_id) query.append('store_id', params.store_id)
+    const qs = query.toString() ? `?${query.toString()}` : ''
+    return request(`/tenant/shelves${qs}`)
+  },
+
+  // POST /api/tenant/shelves - Create Shelf
+  createTenantShelf: (data) =>
+    request('/tenant/shelves', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // GET /api/tenant/stores/{store_id}/shelves - List Store Shelves
+  getStoreShelves: (storeId) =>
+    request(`/tenant/stores/${encodeURIComponent(storeId)}/shelves`),
+
+  // POST /api/tenant/stores/{store_id}/shelves - Create Store Shelf
+  createStoreShelf: (storeId, data) =>
+    request(`/tenant/stores/${encodeURIComponent(storeId)}/shelves`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // GET /api/tenant/shelves/{shelf_id} - Get Shelf Details
+  getShelfById: (shelfId) =>
+    request(`/tenant/shelves/${encodeURIComponent(shelfId)}`),
+
+  // PUT /api/tenant/shelves/{shelf_id} - Update Shelf
+  updateShelf: (shelfId, data) =>
+    request(`/tenant/shelves/${encodeURIComponent(shelfId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // DELETE /api/tenant/shelves/{shelf_id} - Deactivate Shelf
+  deleteShelf: (shelfId) =>
+    request(`/tenant/shelves/${encodeURIComponent(shelfId)}`, {
+      method: 'DELETE',
+    }),
+
+  // GET /api/tenant/hierarchy - Get Tenant Hierarchy
+  getTenantHierarchy: () => request('/tenant/hierarchy'),
+
+  // ==================== SUPPLIERS & CATALOGS ====================
+  // GET /api/suppliers - List Suppliers
+  getSuppliers: () => request('/suppliers'),
+
+  // POST /api/suppliers - Create Supplier
+  createSupplier: (data) =>
+    request('/suppliers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // GET /api/suppliers/{supplier_id} - Get Supplier
+  getSupplierById: (supplierId) =>
+    request(`/suppliers/${encodeURIComponent(supplierId)}`),
+
+  // ==================== ANALYTICS & INSIGHTS ====================
+  // GET /api/analytics/low-stock - Get Low Stock Summary
+  getLowStockAnalytics: () => request('/analytics/low-stock'),
+
+  // GET /api/analytics/gaps - Get Shelf Gap Analytics
+  getGapAnalytics: () => request('/analytics/gaps'),
+
+  // ==================== INVENTORY RECOMMENDATIONS ====================
+  // GET /api/inventory/reorder-recommendations
+  getReorderRecommendations: (params = {}) => {
+    const query = new URLSearchParams()
+    if (params.history_window_days) query.append('history_window_days', params.history_window_days)
+    if (params.review_period_days) query.append('review_period_days', params.review_period_days)
+    if (params.reorder_only !== undefined) query.append('reorder_only', String(params.reorder_only))
+    if (params.category) query.append('category', params.category)
+    const qs = query.toString() ? `?${query.toString()}` : ''
+    return request(`/inventory/reorder-recommendations${qs}`)
+  },
+
+  // GET /api/inventory/recommendations
+  getInventoryRecommendations: (params = {}) => {
+    const query = new URLSearchParams()
+    if (params.history_window_days) query.append('history_window_days', params.history_window_days)
+    if (params.review_period_days) query.append('review_period_days', params.review_period_days)
+    if (params.reorder_only !== undefined) query.append('reorder_only', String(params.reorder_only))
+    if (params.category) query.append('category', params.category)
+    const qs = query.toString() ? `?${query.toString()}` : ''
+    return request(`/inventory/recommendations${qs}`)
+  },
+
+  // ==================== HEALTH & ROOT ====================
+  // GET /health - Health Check
+  getHealth: () => {
+    const rootBase = API_BASE.replace(/\/api\/?$/, '')
+    return fetch(`${rootBase}/health`).then((r) => r.json())
+  },
+
+  // GET / - Root API Info
+  getRoot: () => {
+    const rootBase = API_BASE.replace(/\/api\/?$/, '')
+    return fetch(`${rootBase}/`).then((r) => r.json())
+  },
 }

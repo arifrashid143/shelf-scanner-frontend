@@ -7,6 +7,9 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Layers,
+  Truck,
+  BarChart3,
 } from 'lucide-react'
 
 export default function Sidebar({
@@ -37,6 +40,21 @@ export default function Sidebar({
       id: 'inventory',
       label: 'Inventory',
       icon: Package,
+    },
+    {
+      id: 'shelves',
+      label: 'Shelves & Stores',
+      icon: Layers,
+    },
+    {
+      id: 'suppliers',
+      label: 'Suppliers',
+      icon: Truck,
+    },
+    {
+      id: 'analytics',
+      label: 'Vision Analytics',
+      icon: BarChart3,
     },
     {
       id: 'users',

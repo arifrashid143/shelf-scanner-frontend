@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { api } from '../api/client'
 import {
   Camera,
   Image as ImageIcon,
@@ -26,6 +27,23 @@ export default function NewScanView({
   const shelfName = 'Shelf Section 1' // Default shelf section
   const [analysisStatus, setAnalysisStatus] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+
+  // Configured Shelves from API
+  const [configuredShelves, setConfiguredShelves] = useState([])
+  const [selectedShelfId, setSelectedShelfId] = useState('')
+
+  useEffect(() => {
+    api
+      .getTenantShelves()
+      .then((res) => {
+        const raw = Array.isArray(res) ? res : res?.items || res?.shelves || []
+        setConfiguredShelves(raw)
+        if (raw.length > 0) {
+          setSelectedShelfId(raw[0].id)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Actions Modal State (Three Dots)
   const [actionModalScan, setActionModalScan] = useState(null)
@@ -141,11 +159,16 @@ export default function NewScanView({
     setErrorMsg('')
     setAnalysisStatus('Uploading photo to AI shelf vision engine (POST /api/scans)...')
 
+    const selectedShelf = configuredShelves.find((s) => s.id === selectedShelfId)
+    const finalShelfName = selectedShelf?.name || shelfName.trim() || 'Shelf Section 1'
+    const finalShelfId = selectedShelf?.id || undefined
+
     try {
       await onScanComplete({
         file: fileToUpload,
         previewUrl: localPreview,
-        shelfName: shelfName.trim() || 'Shelf Section 1',
+        shelfName: finalShelfName,
+        shelf_id: finalShelfId,
         scanMode,
       })
     } catch (err) {
@@ -510,6 +533,24 @@ export default function NewScanView({
           <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none">
             New scan
           </h1>
+
+          {/* Configured Shelf Selector */}
+          {configuredShelves.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 text-xs shadow-2xs">
+              <span className="text-slate-400 font-medium">Target Shelf:</span>
+              <select
+                value={selectedShelfId}
+                onChange={(e) => setSelectedShelfId(e.target.value)}
+                className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
+              >
+                {configuredShelves.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} {s.aisle ? `(Aisle ${s.aisle})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* 2-Column Grid filling 100% of available height within the viewport */}
