@@ -348,7 +348,7 @@ export default function SuperAdminView({ user, onLogout }) {
       )}
 
       {/* ==================== TOP HEADER (MATCHING OTHER PAGES) ==================== */}
-      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-white/10 shadow-2xs select-none sticky top-0">
+      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-2.5 sm:px-3 border-b border-white/10 shadow-2xs select-none sticky top-0">
         {/* Left: Custom Brand Logo + Name + SUPERADMIN Badge */}
         <div className="flex items-center gap-2">
           <img
@@ -432,7 +432,7 @@ export default function SuperAdminView({ user, onLogout }) {
       </header>
 
       {/* ==================== MAIN SINGLE-PAGE BODY ==================== */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-4 lg:px-5 py-4 space-y-4">
+      <main className="flex-1 w-full px-2 sm:px-2.5 md:px-3 py-2.5 md:py-3 space-y-3">
         {/* Error Alert from API if any */}
         {apiError && (
           <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between">
@@ -451,7 +451,7 @@ export default function SuperAdminView({ user, onLogout }) {
         )}
 
         {/* ==================== 3 TOP METRIC CARDS (EXACT MATCH TO PHOTO) ==================== */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           {/* Card 1: TENANTS */}
           <div className="bg-white p-5 rounded-md border border-slate-200/80 shadow-2xs">
             <div className="flex items-center justify-between">
