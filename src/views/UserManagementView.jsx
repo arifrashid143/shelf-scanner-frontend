@@ -9,7 +9,6 @@ import {
   Search,
   CheckCircle2,
   Edit2,
-  Trash2,
   Lock,
   Eye,
   EyeOff,
@@ -18,6 +17,10 @@ import {
   Store,
   Mail,
   User as UserIcon,
+  MoreVertical,
+  Copy,
+  X,
+  Power,
 } from 'lucide-react'
 
 const { setOverride: setUserStatusOverride, applyStatus: applyUserStatus } =
@@ -33,6 +36,16 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('ALL') // ALL | ADMIN | USER
   const [statusFilter, setStatusFilter] = useState('ALL') // ALL | ACTIVE | INACTIVE
+
+  // Actions Modal State (Three Dots)
+  const [actionModalUser, setActionModalUser] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null)
+
+  const notify = (msg, type = 'info') => {
+    if (onShowToast) onShowToast(msg, type)
+    setToastMessage({ text: msg, type })
+    setTimeout(() => setToastMessage(null), 3000)
+  }
 
   // Create User Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -621,32 +634,16 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
 
                       {/* Admin Actions */}
                       {isAdmin && (
-                        <td className="px-4 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end">
                             <button
                               type="button"
-                              onClick={() => openEditModal(user)}
-                              title="Edit user"
-                              className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                              onClick={() => setActionModalUser(user)}
+                              className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer"
+                              title={`Actions for ${name}`}
+                              aria-label={`Actions for ${name}`}
                             >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleToggleActive(user)}
-                              title={isActive ? 'Deactivate user' : 'Reactivate user'}
-                              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                                isActive
-                                  ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                                  : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
-                              }`}
-                            >
-                              {isActive ? (
-                                <Trash2 className="w-4 h-4" />
-                              ) : (
-                                <CheckCircle2 className="w-4 h-4" />
-                              )}
+                              <MoreVertical className="w-4 h-4 stroke-[2]" />
                             </button>
                           </div>
                         </td>
@@ -1041,6 +1038,224 @@ export default function UserManagementView({ isAdmin, currentUser, onShowToast }
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* ==================== USER ACTIONS MODAL (THREE DOTS MENU) ==================== */}
+      {actionModalUser && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-md max-w-sm w-full border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={`w-9 h-9 rounded-full font-black text-xs flex items-center justify-center shrink-0 border ${
+                    (actionModalUser.role || '').toUpperCase().includes('ADMIN')
+                      ? 'bg-purple-100 text-purple-700 border-purple-200'
+                      : 'bg-blue-100 text-blue-700 border-blue-200'
+                  }`}
+                >
+                  {(actionModalUser.full_name || actionModalUser.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-900 truncate">
+                    {actionModalUser.full_name || actionModalUser.name || 'Unnamed'}
+                  </h3>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    {actionModalUser.email}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionModalUser(null)}
+                className="w-7 h-7 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* User Meta Badges */}
+            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500 font-medium">Status:</span>
+                {actionModalUser.is_active !== false ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    Inactive
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500 font-medium">Role:</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                  {(actionModalUser.role || 'USER').toUpperCase().includes('ADMIN') ? 'Store Admin' : 'Store Staff'}
+                </span>
+              </div>
+            </div>
+
+            {/* Options List */}
+            <div className="p-3 space-y-1.5">
+              {/* Option 1: Edit User Details */}
+              <button
+                type="button"
+                onClick={() => {
+                  const targetUser = actionModalUser
+                  setActionModalUser(null)
+                  openEditModal(targetUser)
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
+                    Edit User Details
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Update role, assigned store, or name
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: Toggle Status (Activate / Deactivate) */}
+              <button
+                type="button"
+                onClick={() => {
+                  const targetUser = actionModalUser
+                  setActionModalUser(null)
+                  handleToggleActive(targetUser)
+                }}
+                className={`w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors cursor-pointer border border-transparent group ${
+                  actionModalUser.is_active !== false
+                    ? 'hover:bg-rose-50/70 hover:border-rose-200'
+                    : 'hover:bg-emerald-50/70 hover:border-emerald-200'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                    actionModalUser.is_active !== false
+                      ? 'bg-rose-50 text-rose-600 group-hover:bg-rose-100'
+                      : 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100'
+                  }`}
+                >
+                  {actionModalUser.is_active !== false ? (
+                    <Power className="w-4 h-4" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`text-xs font-bold ${
+                      actionModalUser.is_active !== false
+                        ? 'text-slate-900 group-hover:text-rose-700'
+                        : 'text-slate-900 group-hover:text-emerald-700'
+                    }`}
+                  >
+                    {actionModalUser.is_active !== false ? 'Deactivate User Account' : 'Reactivate User Account'}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    {actionModalUser.is_active !== false
+                      ? 'Temporarily disable user access to this store'
+                      : 'Restore user login and store access'}
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 3: Copy User Email */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (actionModalUser?.email) {
+                    navigator.clipboard?.writeText(actionModalUser.email)
+                    notify(`Email "${actionModalUser.email}" copied!`, 'success')
+                    setActionModalUser(null)
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                  <Copy className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                    Copy Email Address
+                  </p>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    {actionModalUser.email}
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 4: Copy User ID */}
+              {actionModalUser?.id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(String(actionModalUser.id))
+                    notify(`User ID "${actionModalUser.id}" copied!`, 'success')
+                    setActionModalUser(null)
+                  }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                    <UserIcon className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                      Copy User ID
+                    </p>
+                    <p className="text-[11px] font-mono text-slate-400 truncate">
+                      {actionModalUser.id}
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setActionModalUser(null)}
+                className="px-3.5 py-1.5 rounded-md border border-slate-200 hover:bg-white text-slate-600 font-semibold text-xs cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Local Toast Alert */}
+      {toastMessage && (
+        <div
+          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
+            toastMessage.type === 'error'
+              ? 'bg-rose-900 border-rose-700'
+              : toastMessage.type === 'success'
+              ? 'bg-emerald-900 border-emerald-700'
+              : 'bg-slate-900 border-slate-700'
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              toastMessage.type === 'error'
+                ? 'bg-rose-400'
+                : toastMessage.type === 'success'
+                ? 'bg-emerald-400'
+                : 'bg-blue-400'
+            }`}
+          ></span>
+          {toastMessage.text}
         </div>
       )}
     </div>

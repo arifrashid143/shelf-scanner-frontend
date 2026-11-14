@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, MoreVertical, FileText, Copy, Eye, X } from 'lucide-react'
 
 export default function OrdersView({
   purchaseOrders = [],
@@ -7,6 +7,13 @@ export default function OrdersView({
   isLoading = false,
 }) {
   const [statusFilter, setStatusFilter] = useState('All')
+  const [actionModalOrder, setActionModalOrder] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null)
+
+  const showToast = (text, type = 'info') => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 3000)
+  }
 
   const filterTabs = ['All', 'Draft', 'Approved', 'Rejected']
 
@@ -73,21 +80,36 @@ export default function OrdersView({
                   </p>
                 </div>
 
-                <div className="text-right">
-                  <p className="font-bold text-slate-900 text-sm">
-                    ₹{order.total.toLocaleString()}
-                  </p>
-                  <span
-                    className={`inline-flex items-center text-[11px] font-bold mt-1 px-2 py-0.5 rounded border ${
-                      order.status === 'Draft'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200/80'
-                        : order.status === 'Approved'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
-                        : 'bg-rose-50 text-rose-700 border-rose-200/80'
-                    }`}
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="font-bold text-slate-900 text-sm">
+                      ₹{order.total.toLocaleString()}
+                    </p>
+                    <span
+                      className={`inline-flex items-center text-[11px] font-bold mt-1 px-2 py-0.5 rounded border ${
+                        order.status === 'Draft'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200/80'
+                          : order.status === 'Approved'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                          : 'bg-rose-50 text-rose-700 border-rose-200/80'
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setActionModalOrder(order)
+                    }}
+                    className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                    title={`Actions for order ${order.id}`}
+                    aria-label={`Actions for order ${order.id}`}
                   >
-                    {order.status}
-                  </span>
+                    <MoreVertical className="w-4 h-4 stroke-[2]" />
+                  </button>
                 </div>
               </div>
             ))
@@ -129,12 +151,13 @@ export default function OrdersView({
                   <th className="px-6 py-3.5 bg-slate-50">Date</th>
                   <th className="px-6 py-3.5 bg-slate-50">Total</th>
                   <th className="px-6 py-3.5 text-right bg-slate-50">Status</th>
+                  <th className="px-5 py-3.5 text-right bg-slate-50">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={4} className="py-14 text-center text-slate-400 text-sm">
+                    <td colSpan={5} className="py-14 text-center text-slate-400 text-sm">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                         <span className="text-xs">Loading purchase orders from server...</span>
@@ -143,7 +166,7 @@ export default function OrdersView({
                   </tr>
                 ) : sortedOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-14 text-center text-slate-400 text-sm">
+                    <td colSpan={5} className="py-14 text-center text-slate-400 text-sm">
                       No {statusFilter !== 'All' ? statusFilter.toLowerCase() : ''} purchase orders found.
                     </td>
                   </tr>
@@ -183,6 +206,22 @@ export default function OrdersView({
                           {order.status}
                         </span>
                       </td>
+                      <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setActionModalOrder(order)
+                            }}
+                            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer"
+                            title={`Actions for order ${order.id}`}
+                            aria-label={`Actions for order ${order.id}`}
+                          >
+                            <MoreVertical className="w-4 h-4 stroke-[2]" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -191,6 +230,175 @@ export default function OrdersView({
           </div>
         </div>
       </div>
+
+      {/* ==================== PURCHASE ORDER ACTIONS MODAL (THREE DOTS MENU) ==================== */}
+      {actionModalOrder && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-md max-w-sm w-full border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                  <FileText className="w-5 h-5 stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-900 truncate">
+                    {actionModalOrder.id}
+                  </h3>
+                  <p className="text-[11px] font-medium text-slate-400 truncate">
+                    {actionModalOrder.supplier}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionModalOrder(null)}
+                className="w-7 h-7 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Order Meta Badges */}
+            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500 font-medium">Total:</span>
+                <span className="font-bold text-slate-900">
+                  ₹{actionModalOrder.total.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                    actionModalOrder.status === 'Draft'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200/80'
+                      : actionModalOrder.status === 'Approved'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                      : 'bg-rose-50 text-rose-700 border-rose-200/80'
+                  }`}
+                >
+                  {actionModalOrder.status}
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  {actionModalOrder.date}
+                </span>
+              </div>
+            </div>
+
+            {/* Options List */}
+            <div className="p-3 space-y-1.5">
+              {/* Option 1: View Order Details */}
+              <button
+                type="button"
+                onClick={() => {
+                  const targetOrder = actionModalOrder
+                  setActionModalOrder(null)
+                  onSelectOrder(targetOrder)
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
+                    View Order Details
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Review line items, pricing, and approve/reject
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: Copy Purchase Order ID */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (actionModalOrder?.id) {
+                    navigator.clipboard?.writeText(actionModalOrder.id)
+                    showToast(`Order ID "${actionModalOrder.id}" copied!`, 'success')
+                    setActionModalOrder(null)
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                  <Copy className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                    Copy Purchase Order ID
+                  </p>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    {actionModalOrder.id}
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 3: Copy Supplier Name */}
+              {actionModalOrder?.supplier && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(actionModalOrder.supplier)
+                    showToast(`Supplier "${actionModalOrder.supplier}" copied!`, 'success')
+                    setActionModalOrder(null)
+                  }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                      Copy Supplier Name
+                    </p>
+                    <p className="text-[11px] font-medium text-slate-400 truncate">
+                      {actionModalOrder.supplier}
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setActionModalOrder(null)}
+                className="px-3.5 py-1.5 rounded-md border border-slate-200 hover:bg-white text-slate-600 font-semibold text-xs cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Local Toast Alert */}
+      {toastMessage && (
+        <div
+          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
+            toastMessage.type === 'error'
+              ? 'bg-rose-900 border-rose-700'
+              : toastMessage.type === 'success'
+              ? 'bg-emerald-900 border-emerald-700'
+              : 'bg-slate-900 border-slate-700'
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              toastMessage.type === 'error'
+                ? 'bg-rose-400'
+                : toastMessage.type === 'success'
+                ? 'bg-emerald-400'
+                : 'bg-blue-400'
+            }`}
+          ></span>
+          {toastMessage.text}
+        </div>
+      )}
     </div>
   )
 }

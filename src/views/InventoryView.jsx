@@ -10,6 +10,8 @@ import {
   TrendingDown,
   TrendingUp,
   BarChart3,
+  MoreVertical,
+  Copy,
 } from 'lucide-react'
 
 export default function InventoryView({
@@ -31,6 +33,15 @@ export default function InventoryView({
   const [newProdTarget, setNewProdTarget] = useState('')
   const [newProdPrice, setNewProdPrice] = useState('')
   const [saveError, setSaveError] = useState('')
+
+  // Actions Modal State (Three Dots)
+  const [actionModalItem, setActionModalItem] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null)
+
+  const showToast = (text, type = 'info') => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 3000)
+  }
 
   const startEdit = (item, e) => {
     e.stopPropagation()
@@ -157,7 +168,7 @@ export default function InventoryView({
                   <th className="px-4 py-3.5 bg-slate-50">Stock / Target</th>
                   <th className="px-4 py-3.5 bg-slate-50">Level</th>
                   <th className="px-4 py-3.5 text-right bg-slate-50">Status</th>
-                  {isAdmin && <th className="px-4 py-3.5 text-right bg-slate-50">Admin</th>}
+                  {isAdmin && <th className="px-4 py-3.5 text-right bg-slate-50">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -287,13 +298,20 @@ export default function InventoryView({
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                onClick={(e) => startEdit(item, e)}
-                                className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                title="Edit stock quantities (Admin)"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
+                              <div className="flex items-center justify-end">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setActionModalItem(item)
+                                  }}
+                                  className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer"
+                                  title={`Actions for ${item.name}`}
+                                  aria-label={`Actions for ${item.name}`}
+                                >
+                                  <MoreVertical className="w-4 h-4 stroke-[2]" />
+                                </button>
+                              </div>
                             )}
                           </td>
                         )}
@@ -587,6 +605,196 @@ export default function InventoryView({
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* ==================== PRODUCT ACTIONS MODAL (THREE DOTS MENU) ==================== */}
+      {actionModalItem && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-md max-w-sm w-full border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                  <Package className="w-5 h-5 stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-900 truncate">
+                    {actionModalItem.name}
+                  </h3>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    SKU: {actionModalItem.id}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionModalItem(null)}
+                className="w-7 h-7 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Product Meta Badges */}
+            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500 font-medium">Stock:</span>
+                <span className="font-bold text-slate-900">
+                  {actionModalItem.current}{' '}
+                  <span className="text-slate-400 font-normal">/ {actionModalItem.target}</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                    actionModalItem.status === 'Low'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200/80'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                  }`}
+                >
+                  {actionModalItem.status}
+                </span>
+                <span className="text-[11px] font-bold text-slate-700">
+                  ₹{actionModalItem.price}
+                </span>
+              </div>
+            </div>
+
+            {/* Options List */}
+            <div className="p-3 space-y-1.5">
+              {/* Option 1: Edit Stock Quantities */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  const itm = actionModalItem
+                  setActionModalItem(null)
+                  startEdit(itm, e)
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
+                    Edit Stock Quantities
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Adjust current shelf count and target threshold
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: View Telemetry & Analytics */}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedProductId(actionModalItem.id)
+                  setActionModalItem(null)
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-700">
+                    View Telemetry & Analytics
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Inspect scan history and capacity performance
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 3: Copy Product Name */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (actionModalItem?.name) {
+                    navigator.clipboard?.writeText(actionModalItem.name)
+                    showToast(`Product name "${actionModalItem.name}" copied!`, 'success')
+                    setActionModalItem(null)
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                  <Copy className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                    Copy Product Name
+                  </p>
+                  <p className="text-[11px] font-medium text-slate-400 truncate">
+                    {actionModalItem.name}
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 4: Copy Product ID / SKU */}
+              {actionModalItem?.id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(String(actionModalItem.id))
+                    showToast(`SKU / ID "${actionModalItem.id}" copied!`, 'success')
+                    setActionModalItem(null)
+                  }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                      Copy Product ID / SKU
+                    </p>
+                    <p className="text-[11px] font-mono text-slate-400 truncate">
+                      {actionModalItem.id}
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setActionModalItem(null)}
+                className="px-3.5 py-1.5 rounded-md border border-slate-200 hover:bg-white text-slate-600 font-semibold text-xs cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Local Toast Alert */}
+      {toastMessage && (
+        <div
+          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
+            toastMessage.type === 'error'
+              ? 'bg-rose-900 border-rose-700'
+              : toastMessage.type === 'success'
+              ? 'bg-emerald-900 border-emerald-700'
+              : 'bg-slate-900 border-slate-700'
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              toastMessage.type === 'error'
+                ? 'bg-rose-400'
+                : toastMessage.type === 'success'
+                ? 'bg-emerald-400'
+                : 'bg-blue-400'
+            }`}
+          ></span>
+          {toastMessage.text}
         </div>
       )}
     </div>

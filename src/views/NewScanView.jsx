@@ -9,6 +9,8 @@ import {
   RotateCcw,
   Scan,
   Check,
+  MoreVertical,
+  Copy,
 } from 'lucide-react'
 
 export default function NewScanView({
@@ -24,6 +26,15 @@ export default function NewScanView({
   const shelfName = 'Shelf Section 1' // Default shelf section
   const [analysisStatus, setAnalysisStatus] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+
+  // Actions Modal State (Three Dots)
+  const [actionModalScan, setActionModalScan] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null)
+
+  const showToast = (text, type = 'info') => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 3000)
+  }
 
   // Live Camera states
   const [isCameraActive, setIsCameraActive] = useState(false)
@@ -749,6 +760,7 @@ export default function NewScanView({
                       <th className="px-3 py-2.5 bg-slate-50 text-center">Items &amp; Gaps</th>
                       <th className="px-3 py-2.5 bg-slate-50 text-right">Time</th>
                       <th className="px-4 py-2.5 bg-slate-50 text-right">Status</th>
+                      <th className="px-3 py-2.5 bg-slate-50 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -805,6 +817,23 @@ export default function NewScanView({
                               </span>
                             </div>
                           </td>
+
+                          <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setActionModalScan(scan)
+                                }}
+                                className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer"
+                                title={`Actions for scan ${scan.id}`}
+                                aria-label={`Actions for scan ${scan.id}`}
+                              >
+                                <MoreVertical className="w-3.5 h-3.5 stroke-[2]" />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       )
                     })}
@@ -815,6 +844,145 @@ export default function NewScanView({
           </div>
         </div>
       </div>
+
+      {/* ==================== SCAN ACTIONS MODAL (THREE DOTS MENU) ==================== */}
+      {actionModalScan && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-md max-w-sm w-full border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                  <Scan className="w-5 h-5 stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-900 truncate">
+                    {actionModalScan.shelf || actionModalScan.shelf_id || 'Shelf Section'}
+                  </h3>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    {actionModalScan.id}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionModalScan(null)}
+                className="w-7 h-7 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scan Meta Badges */}
+            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/80 text-slate-700">
+                  {actionModalScan.total_detected_count ?? actionModalScan.items ?? 0} items
+                </span>
+                {(actionModalScan.empty_gaps_count ?? actionModalScan.gaps ?? 0) > 0 ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    {actionModalScan.empty_gaps_count ?? actionModalScan.gaps ?? 0} gaps
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    0 gaps
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] font-medium text-slate-500">
+                {actionModalScan.time || actionModalScan.date || 'Today'}
+              </span>
+            </div>
+
+            {/* Options List */}
+            <div className="p-3 space-y-1.5">
+              {/* Option 1: View Scan Results */}
+              <button
+                type="button"
+                onClick={() => {
+                  const targetScan = actionModalScan
+                  setActionModalScan(null)
+                  if (onSelectScan) onSelectScan(targetScan)
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                  <Scan className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
+                    View Scan Results & Detections
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Inspect AI bounding boxes, shelf counts, and gaps
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: Copy Scan ID */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (actionModalScan?.id) {
+                    navigator.clipboard?.writeText(actionModalScan.id)
+                    showToast(`Scan ID "${actionModalScan.id}" copied!`, 'success')
+                    setActionModalScan(null)
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                  <Copy className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                    Copy Scan ID
+                  </p>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    {actionModalScan.id}
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setActionModalScan(null)}
+                className="px-3.5 py-1.5 rounded-md border border-slate-200 hover:bg-white text-slate-600 font-semibold text-xs cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Local Toast Alert */}
+      {toastMessage && (
+        <div
+          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
+            toastMessage.type === 'error'
+              ? 'bg-rose-900 border-rose-700'
+              : toastMessage.type === 'success'
+              ? 'bg-emerald-900 border-emerald-700'
+              : 'bg-slate-900 border-slate-700'
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              toastMessage.type === 'error'
+                ? 'bg-rose-400'
+                : toastMessage.type === 'success'
+                ? 'bg-emerald-400'
+                : 'bg-blue-400'
+            }`}
+          ></span>
+          {toastMessage.text}
+        </div>
+      )}
     </div>
   )
 }
