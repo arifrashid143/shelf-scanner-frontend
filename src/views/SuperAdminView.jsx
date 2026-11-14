@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { api } from '../api/client'
 import { createStatusOverrideHelper } from '../utils/statusOverrides'
+import logoImg from '../assets/logo.png'
 import {
   Building2,
   Store,
-  Scan,
   Search,
   Plus,
   Power,
@@ -16,6 +16,8 @@ import {
   EyeOff,
   LogOut,
   Edit2,
+  MoreVertical,
+  Copy,
 } from 'lucide-react'
 
 const { setOverride: setTenantStatusOverride, applyStatus: applyTenantStatus } =
@@ -40,6 +42,7 @@ export default function SuperAdminView({ user, onLogout }) {
   // Modal States
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false)
   const [selectedTenantForEdit, setSelectedTenantForEdit] = useState(null)
+  const [actionModalTenant, setActionModalTenant] = useState(null)
 
   // Form State: POST /api/superadmin/tenants
   const [createForm, setCreateForm] = useState({
@@ -319,7 +322,7 @@ export default function SuperAdminView({ user, onLogout }) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] font-sans text-slate-900 antialiased flex flex-col">
+    <div className="min-h-screen w-full bg-[#EDEDED] font-sans text-slate-900 antialiased flex flex-col">
       {/* Toast Alert */}
       {toastMessage && (
         <div
@@ -344,83 +347,92 @@ export default function SuperAdminView({ user, onLogout }) {
         </div>
       )}
 
-      {/* ==================== TOP HEADER (MATCHING PHOTO) ==================== */}
-      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-2xs">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          {/* Left Brand Identity: Scanner App Icon + Shelf Scanner + SUPERADMIN Badge */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md bg-gradient-to-tr from-indigo-600 via-blue-600 to-blue-500 flex items-center justify-center text-white shadow-xs shrink-0">
-              <Scan className="w-5 h-5" />
-            </div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">
-                Shelf Scanner
-              </h1>
-              <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fde68a] tracking-wider">
-                SUPERADMIN
-              </span>
-            </div>
-          </div>
+      {/* ==================== TOP HEADER (MATCHING OTHER PAGES) ==================== */}
+      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-white/10 shadow-2xs select-none sticky top-0">
+        {/* Left: Custom Brand Logo + Name + SUPERADMIN Badge */}
+        <div className="flex items-center gap-2">
+          <img
+            src={logoImg}
+            alt="Shelf Scanner"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-md object-contain shrink-0 shadow-2xs"
+          />
+          <span className="font-bold text-base tracking-tight text-white select-none">
+            Shelf Scanner
+          </span>
+          <span className="ml-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-300/30 tracking-wider">
+            SUPERADMIN
+          </span>
+        </div>
 
-          {/* Right Corner: Circular Profile Avatar with Dropdown Menu */}
-          <div className="relative" ref={profileMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-              className="w-9 h-9 rounded-full bg-[#c26d24] hover:bg-[#b05f1d] text-white font-bold text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-              aria-label="User profile menu"
-              aria-expanded={isProfileMenuOpen}
-            >
-              {userInitial}
-            </button>
+        {/* Right: User Profile Avatar with dropdown */}
+        <div className="relative shrink-0 flex items-center" ref={profileMenuRef}>
+          <button
+            type="button"
+            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20"
+            aria-label="User profile menu"
+            aria-expanded={isProfileMenuOpen}
+          >
+            <span>{userInitial}</span>
+            {/* Active online green indicator dot on bottom right */}
+            <span
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#3F4168]"
+              title="Online"
+            />
+          </button>
 
-            {/* Profile Dropdown Menu (Matching Provided Design) */}
-            {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-3 w-80 bg-white rounded-md border border-slate-100 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                {/* Top Section: User Avatar & Details */}
-                <div className="p-5 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-blue-600 ring-4 ring-blue-100/80 flex items-center justify-center text-white font-black text-xl shadow-xs shrink-0">
+          {/* Profile Dropdown Menu (Matching Provided Design) */}
+          {isProfileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-md border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
+              {/* Top Section: User Avatar & Details */}
+              <div className="p-4 sm:p-5 flex items-center gap-3.5">
+                <div className="relative shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-[#d8c4d9] text-[#4a3952] ring-4 ring-[#ecd8ec]/60 flex items-center justify-center font-black text-lg shadow-xs">
                     {userInitial}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
-                      {displayName}
-                    </h3>
-                    <p className="text-xs font-mono text-slate-400 truncate mt-1">
-                      {userEmail}
-                    </p>
-                  </div>
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#52b757] ring-2 ring-white" />
                 </div>
-
-                {/* Divider Line */}
-                <div className="border-t border-slate-100"></div>
-
-                {/* Bottom Section: Log Out Button */}
-                <div className="p-4 sm:p-5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false)
-                      onLogout()
-                    }}
-                    className="w-full flex items-center gap-3.5 p-2 rounded-md hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="w-10 h-10 rounded-md bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
-                      <LogOut className="w-5 h-5" />
-                    </div>
-                    <span className="text-base font-bold text-rose-600">
-                      Log out
-                    </span>
-                  </button>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight truncate">
+                    {displayName}
+                  </h3>
+                  <p className="text-xs font-mono text-slate-400 truncate mt-0.5">
+                    {userEmail}
+                  </p>
+                  <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/80">
+                    Platform Superadmin · Root
+                  </span>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* Divider Line */}
+              <div className="border-t border-slate-100"></div>
+
+              {/* Bottom Section: Log Out Button */}
+              <div className="p-3 sm:p-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileMenuOpen(false)
+                    onLogout()
+                  }}
+                  className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                >
+                  <div className="w-9 h-9 rounded-md bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
+                    <LogOut className="w-4 h-4 text-rose-600" />
+                  </div>
+                  <span className="text-sm font-bold text-rose-600">
+                    Log out
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       {/* ==================== MAIN SINGLE-PAGE BODY ==================== */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-4 lg:px-5 py-4 space-y-4">
         {/* Error Alert from API if any */}
         {apiError && (
           <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between">
@@ -705,36 +717,20 @@ export default function SuperAdminView({ user, onLogout }) {
 
                         {/* Actions */}
                         <td className="px-5 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {/* Toggle Status (PUT /api/superadmin/tenants/{tenant_id}/status) */}
+                          <div className="flex items-center justify-end">
                             <button
                               type="button"
-                              onClick={() => handleQuickToggleStatus(tenant)}
+                              onClick={() => setActionModalTenant(tenant)}
                               disabled={isBusy}
-                              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer border ${
-                                tenant.is_active
-                                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200/80'
-                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80'
-                              }`}
-                              title={tenant.is_active ? 'Suspend Tenant' : 'Activate Tenant'}
+                              className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer"
+                              title={`Actions for ${tenant.name}`}
+                              aria-label={`Actions for ${tenant.name}`}
                             >
                               {isBusy ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                               ) : (
-                                <Power className="w-3.5 h-3.5" />
+                                <MoreVertical className="w-4 h-4 stroke-[2]" />
                               )}
-                              <span>{tenant.is_active ? 'Suspend' : 'Activate'}</span>
-                            </button>
-
-                            {/* Edit Button */}
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(tenant)}
-                              className="px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
-                              title="Edit tenant details and status"
-                            >
-                              <Edit2 className="w-3.5 h-3.5 text-slate-500" />
-                              <span>Edit</span>
                             </button>
                           </div>
                         </td>
@@ -1105,6 +1101,173 @@ export default function SuperAdminView({ user, onLogout }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ==================== TENANT ACTIONS MODAL (THREE DOTS MENU) ==================== */}
+      {actionModalTenant && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-md max-w-sm w-full border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                  {(actionModalTenant.name || actionModalTenant.id || 'T').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-900 truncate">
+                    {actionModalTenant.name}
+                  </h3>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    {actionModalTenant.id}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionModalTenant(null)}
+                className="w-7 h-7 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Tenant Meta Badges */}
+            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500 font-medium">Status:</span>
+                {actionModalTenant.is_active ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    Suspended
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500 font-medium">Plan:</span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getPlanBadge(
+                    actionModalTenant.plan_tier
+                  )}`}
+                >
+                  {actionModalTenant.plan_tier || 'ENTERPRISE'}
+                </span>
+              </div>
+            </div>
+
+            {/* Options List */}
+            <div className="p-3 space-y-1.5">
+              {/* Option 1: Edit Tenant Details & Plan */}
+              <button
+                type="button"
+                onClick={() => {
+                  const t = actionModalTenant
+                  setActionModalTenant(null)
+                  openEditModal(t)
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
+                    Edit Details & Plan Tier
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Update company name, plan tier, or status
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: Toggle Status (Activate / Suspend) */}
+              <button
+                type="button"
+                disabled={statusToggleLoading[actionModalTenant.id]}
+                onClick={async () => {
+                  const t = actionModalTenant
+                  setActionModalTenant(null)
+                  await handleQuickToggleStatus(t)
+                }}
+                className={`w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors cursor-pointer border border-transparent group ${
+                  actionModalTenant.is_active
+                    ? 'hover:bg-rose-50/70 hover:border-rose-200'
+                    : 'hover:bg-emerald-50/70 hover:border-emerald-200'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                    actionModalTenant.is_active
+                      ? 'bg-rose-50 text-rose-600 group-hover:bg-rose-100'
+                      : 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100'
+                  }`}
+                >
+                  {actionModalTenant.is_active ? (
+                    <Power className="w-4 h-4" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`text-xs font-bold ${
+                      actionModalTenant.is_active
+                        ? 'text-slate-900 group-hover:text-rose-700'
+                        : 'text-slate-900 group-hover:text-emerald-700'
+                    }`}
+                  >
+                    {actionModalTenant.is_active ? 'Suspend Tenant Access' : 'Activate Tenant Access'}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    {actionModalTenant.is_active
+                      ? 'Disable tenant and employee platform access'
+                      : 'Restore full platform permissions'}
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 3: Copy Tenant ID */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (actionModalTenant?.id) {
+                    navigator.clipboard?.writeText(actionModalTenant.id)
+                    showToast(`Tenant ID "${actionModalTenant.id}" copied!`, 'success')
+                    setActionModalTenant(null)
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+              >
+                <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                  <Copy className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                    Copy Tenant ID
+                  </p>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                    {actionModalTenant.id}
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setActionModalTenant(null)}
+                className="px-3.5 py-1.5 rounded-md border border-slate-200 hover:bg-white text-slate-600 font-semibold text-xs cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
