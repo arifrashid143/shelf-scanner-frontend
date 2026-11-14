@@ -49,5 +49,13 @@ export function createStatusOverrideHelper(storageKey) {
     return { ...item, is_active: active }
   }
 
-  return { getOverrides, setOverride, applyStatus }
+  return {
+    getOverrides,
+    setOverride,
+    setUserStatusOverride: setOverride,
+    setTenantStatusOverride: setOverride,
+    applyStatus,
+    applyUserStatus: applyStatus,
+    applyTenantStatus: applyStatus,
+  }
 }

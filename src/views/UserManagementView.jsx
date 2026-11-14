@@ -20,7 +20,7 @@ import {
   User as UserIcon,
 } from 'lucide-react'
 
-const { setUserStatusOverride, applyStatus: applyUserStatus } =
+const { setOverride: setUserStatusOverride, applyStatus: applyUserStatus } =
   createStatusOverrideHelper('shelf_scanner_user_status_overrides')
 
 export default function UserManagementView({ isAdmin, currentUser, onShowToast }) {
