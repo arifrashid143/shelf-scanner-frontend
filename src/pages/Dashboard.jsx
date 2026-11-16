@@ -30,6 +30,7 @@ function formatCurrency(val) {
 }
 
 export default function Dashboard({
+  // eslint-disable-next-line no-unused-vars
   user,
   isAdmin = false,
   onNavigate,
@@ -44,16 +45,6 @@ export default function Dashboard({
   onGenerateOrder,
   onQuickApproveOrder,
 }) {
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const displayName = user?.full_name || user?.name || (isAdmin ? 'Store Admin' : 'Store Associate')
-  const tenantName =
-    user?.tenant_name ||
-    user?.tenant?.name ||
-    user?.store_name ||
-    user?.company_name ||
-    'Apex Retail'
-
   const pendingOrders = useMemo(
     () =>
       purchaseOrders.filter(
@@ -135,34 +126,6 @@ export default function Dashboard({
 
   return (
     <div className="flex flex-col h-full w-full min-h-0 space-y-2.5">
-      {/* ==================== TOP OPERATIONS HEADER ==================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none truncate">
-              Store Operations Dashboard
-            </h1>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200/90 text-slate-700">
-              {tenantName}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 truncate">
-            {greeting}, {displayName} · Live shelf monitoring & replenishment status
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => onNavigate('new-scan')}
-            className="px-3.5 py-1.5 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer shrink-0"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Scan shelf</span>
-          </button>
-        </div>
-      </div>
-
       {/* ==================== 4 PURPOSEFUL OPERATIONAL KPI CARDS ==================== */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
         {/* Card 1: Total Scans */}
@@ -287,10 +250,10 @@ export default function Dashboard({
             <button
               type="button"
               onClick={() => onNavigate('new-scan')}
-              className="text-xs font-semibold text-[#5956c6] hover:text-[#4d4ab5] flex items-center gap-1 cursor-pointer transition-colors"
+              className="px-2.5 py-1 rounded bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
             >
-              <span>View scan history</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>New scan</span>
             </button>
           </div>
 

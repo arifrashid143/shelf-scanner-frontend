@@ -349,19 +349,13 @@ export default function SuperAdmin({ user, onLogout }) {
 
       {/* ==================== TOP HEADER (MATCHING OTHER PAGES) ==================== */}
       <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-2.5 sm:px-3 border-b border-white/10 shadow-2xs select-none sticky top-0">
-        {/* Left: Custom Brand Logo + Name + SUPERADMIN Badge */}
+        {/* Left: Brand Logo */}
         <div className="flex items-center gap-2">
           <img
             src={logoImg}
             alt="Shelf Scanner"
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-md object-contain shrink-0 shadow-2xs"
+            className="w-8 h-8 rounded-md object-contain shrink-0 shadow-2xs"
           />
-          <span className="font-bold text-base tracking-tight text-white select-none">
-            Shelf Scanner
-          </span>
-          <span className="ml-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-300/30 tracking-wider">
-            SUPERADMIN
-          </span>
         </div>
 
         {/* Right: User Profile Avatar with dropdown */}

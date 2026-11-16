@@ -911,20 +911,13 @@ function MainApp() {
 
       {/* Global Top Navbar spanning full width */}
       <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-white/10 shadow-2xs select-none">
-        {/* Left: Custom Brand Logo + Name */}
+        {/* Left: Brand Logo */}
         <div className="flex items-center gap-2">
           <img
             src={logoImg}
             alt="Shelf Scanner"
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-md object-contain shrink-0 shadow-2xs"
+            className="w-8 h-8 rounded-md object-contain shrink-0 shadow-2xs"
           />
-          <span className="font-bold text-base tracking-tight text-white select-none">
-            Shelf Scanner
-          </span>
-          <div className="hidden sm:inline-flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold tracking-wide">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>API Online</span>
-          </div>
         </div>
 
         {/* Right: User Profile Avatar with dropdown */}
