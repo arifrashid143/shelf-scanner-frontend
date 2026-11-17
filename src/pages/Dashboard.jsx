@@ -1,10 +1,9 @@
-import { useMemo, useState, useEffect } from 'react'
-import { api } from '../api/client'
+import { useMemo, useState } from 'react'
 import {
   Package,
-  Scan as ScanIcon,
+  DollarSign,
   TrendingDown,
-  AlertTriangle,
+  AlertCircle,
   Check,
   Loader2,
   FileText,
@@ -13,12 +12,12 @@ import {
   Camera,
   Layers,
   BarChart3,
-  Truck,
   RotateCcw,
+  Plus,
 } from 'lucide-react'
 
 function formatCurrency(val) {
-  if (typeof val !== 'number' || isNaN(val) || val <= 0) return null
+  if (typeof val !== 'number' || isNaN(val) || val < 0) return '$0.00'
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val)
 }
 
@@ -41,14 +40,13 @@ export default function Dashboard({
   onQuickApproveOrder,
   onUpdateProduct,
 }) {
-  // Inventory Filtering & Search State
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL') // ALL | LOW | OUT | IN
   const [updatingItemId, setUpdatingItemId] = useState(null)
   const [approvingOrderId, setApprovingOrderId] = useState(null)
   const [isGeneratingPO, setIsGeneratingPO] = useState(false)
 
-  // Pending Purchase Orders awaiting shopkeeper approval
+  // Pending Purchase Orders awaiting manager approval
   const pendingOrders = useMemo(
     () =>
       purchaseOrders.filter(
@@ -57,7 +55,16 @@ export default function Dashboard({
     [purchaseOrders]
   )
 
-  // Stock Classification for Shopkeeper
+  // Total Inventory Value ($ valuation)
+  const totalInventoryValue = useMemo(() => {
+    return inventory.reduce((sum, item) => {
+      const cur = typeof item.current === 'number' ? item.current : 0
+      const price = typeof item.price === 'number' ? item.price : 0
+      return sum + cur * price
+    }, 0)
+  }, [inventory])
+
+  // Low Stock Items
   const lowStockItems = useMemo(
     () =>
       inventory.filter((item) => {
@@ -71,11 +78,13 @@ export default function Dashboard({
     [inventory]
   )
 
+  // Out of Stock Items
   const outOfStockItems = useMemo(
     () => inventory.filter((item) => (item.current ?? 0) === 0),
     [inventory]
   )
 
+  // In Stock / Healthy Items
   const inStockItems = useMemo(
     () =>
       inventory.filter((item) => {
@@ -88,27 +97,37 @@ export default function Dashboard({
     [inventory]
   )
 
-  // Filtered inventory based on search query and active tab
+  // Category Distribution & Health
+  const categorySummary = useMemo(() => {
+    const map = {}
+    inventory.forEach((item) => {
+      const cat = item.category || 'General'
+      if (!map[cat]) map[cat] = { count: 0, lowCount: 0, outCount: 0 }
+      map[cat].count += 1
+      const cur = item.current ?? 0
+      const min = item.minThreshold || 5
+      if (cur === 0) map[cat].outCount += 1
+      else if (cur <= min || item.status === 'Low') map[cat].lowCount += 1
+    })
+    return Object.entries(map).map(([name, data]) => ({ name, ...data }))
+  }, [inventory])
+
+  // Filtered inventory based on search and status tabs
   const filteredInventory = useMemo(() => {
     return inventory.filter((item) => {
-      // Status filter
+      const cur = item.current ?? 0
+      const min = item.minThreshold || 5
+      const isLow =
+        item.status === 'Low' || item.is_low_stock === true || (cur > 0 && cur <= min)
+
       if (statusFilter === 'LOW') {
-        const cur = item.current ?? 0
-        const min = item.minThreshold || 5
-        const isLow =
-          item.status === 'Low' || item.is_low_stock === true || (cur > 0 && cur <= min)
         if (!isLow || cur === 0) return false
       } else if (statusFilter === 'OUT') {
-        if ((item.current ?? 0) > 0) return false
+        if (cur > 0) return false
       } else if (statusFilter === 'IN') {
-        const cur = item.current ?? 0
-        const min = item.minThreshold || 5
-        const isLow =
-          item.status === 'Low' || item.is_low_stock === true || (cur > 0 && cur <= min)
         if (cur === 0 || isLow) return false
       }
 
-      // Text search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
         const nameMatch = (item.name || '').toLowerCase().includes(q)
@@ -121,29 +140,7 @@ export default function Dashboard({
     })
   }, [inventory, statusFilter, searchQuery])
 
-  // Live analytics telemetry from /api/analytics
-  const [liveAnalytics, setLiveAnalytics] = useState(null)
-
-  useEffect(() => {
-    let isSubscribed = true
-    Promise.all([
-      api.getLowStockAnalytics().catch(() => null),
-      api.getGapAnalytics().catch(() => null),
-    ])
-      .then(([lowRes, gapRes]) => {
-        if (!isSubscribed) return
-        setLiveAnalytics({
-          lowStockCount: lowRes?.total_low_stock_count,
-          totalGaps: gapRes?.total_gaps_recorded,
-        })
-      })
-      .catch(() => {})
-    return () => {
-      isSubscribed = false
-    }
-  }, [])
-
-  // Quick Restock Action for Shopkeepers
+  // Quick Restock Action
   const handleQuickRestock = async (e, item) => {
     e.stopPropagation()
     if (!onUpdateProduct || updatingItemId) return
@@ -161,7 +158,7 @@ export default function Dashboard({
     }
   }
 
-  // Quick Approve Order for Shopkeepers
+  // Quick Approve Order
   const handleQuickApprove = async (e, orderId) => {
     e.stopPropagation()
     if (!onQuickApproveOrder || approvingOrderId) return
@@ -173,7 +170,7 @@ export default function Dashboard({
     }
   }
 
-  // Handle Triggering Draft PO for Low Stock Items
+  // Handle Triggering Draft PO
   const handleTriggerPO = async () => {
     if (!onGenerateOrder || isGeneratingPO) return
     setIsGeneratingPO(true)
@@ -184,64 +181,70 @@ export default function Dashboard({
     }
   }
 
-  const effectiveLowStockCount =
-    liveAnalytics?.lowStockCount !== undefined
-      ? liveAnalytics.lowStockCount
-      : lowStockItems.length
-
-  const effectiveGapsCount =
-    liveAnalytics?.totalGaps !== undefined
-      ? liveAnalytics.totalGaps
-      : outOfStockItems.length
-
   return (
     <div className="flex flex-col h-full w-full min-h-0 space-y-2.5">
-      {/* ==================== SHOPKEEPER AI SCANNER ACTION BANNER ==================== */}
-      <div className="bg-gradient-to-r from-slate-900 via-[#2e2b5e] to-[#3F4168] rounded-md p-3 sm:p-3.5 text-white shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-md bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white shadow-inner">
-            <Camera className="w-5 h-5 stroke-[2]" />
+      {/* ==================== CLEAN TOP ACTION BAR ==================== */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none">
+              Store Inventory & Operations
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>AI Reorder Active</span>
+            </span>
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight leading-none">
-                AI Shelf Vision Scanner
-              </h2>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Vision Agent Active</span>
-              </span>
-            </div>
-            <p className="text-[11px] sm:text-xs text-slate-300 mt-1 truncate">
-              Point camera or upload shelf photos to detect empty gaps, count inventory, and auto-trigger replenishment orders.
-            </p>
-          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Real-time shelf stock levels, automated replenishment & catalog management
+          </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => onNavigate('new-scan')}
-            className="px-3.5 py-1.5 sm:py-2 rounded-md bg-[#5956c6] hover:bg-[#6c69d8] active:scale-98 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-md cursor-pointer border border-white/20"
+            className="px-3.5 py-1.5 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
-            <ScanIcon className="w-4 h-4 stroke-[2.2]" />
-            <span>Scan Shelf Now</span>
+            <Camera className="w-3.5 h-3.5 stroke-[2.2]" />
+            <span>AI Camera Scan</span>
           </button>
           <button
             type="button"
             onClick={() => onNavigate('inventory')}
-            className="px-3 py-1.5 sm:py-2 rounded-md bg-white/10 hover:bg-white/20 active:scale-98 text-white font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer border border-white/10"
-            title="Open complete inventory management"
+            className="px-3 py-1.5 rounded-md bg-white hover:bg-slate-50 active:scale-98 border border-slate-200/90 text-slate-700 font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
-            <Package className="w-4 h-4" />
-            <span className="hidden sm:inline">Catalog</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Product</span>
           </button>
         </div>
       </div>
 
-      {/* ==================== 4 SHOPKEEPER INVENTORY KPI METRICS ==================== */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
-        {/* Metric 1: Total Store Products */}
+      {/* ==================== 4 PROFESSIONAL KPI CARDS ==================== */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
+        {/* Card 1: Inventory Valuation */}
+        <div className="bg-white p-3 sm:p-3.5 rounded-md border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Stock Valuation
+            </span>
+            <div className="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+              <DollarSign className="w-4 h-4 stroke-[2.2]" />
+            </div>
+          </div>
+          <div className="mt-1.5 flex items-baseline justify-between">
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+            ) : (
+              <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                {formatCurrency(totalInventoryValue)}
+              </span>
+            )}
+            <span className="text-[11px] font-medium text-slate-400">on-shelf value</span>
+          </div>
+        </div>
+
+        {/* Card 2: Total Store SKUs */}
         <div
           onClick={() => {
             setStatusFilter('ALL')
@@ -257,26 +260,28 @@ export default function Dashboard({
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Store Products
             </span>
-            <Package className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+            <div className="w-7 h-7 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 group-hover:bg-blue-100 transition-colors">
+              <Package className="w-4 h-4 stroke-[2]" />
+            </div>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
             ) : (
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {inventory.length}
               </span>
             )}
-            <span className="text-[11px] font-medium text-slate-400">active SKUs</span>
+            <span className="text-[11px] font-medium text-slate-400">active catalog SKUs</span>
           </div>
         </div>
 
-        {/* Metric 2: Low Stock Alerts */}
+        {/* Card 3: Low Stock Alerts */}
         <div
           onClick={() => setStatusFilter(statusFilter === 'LOW' ? 'ALL' : 'LOW')}
           className={`p-3 sm:p-3.5 rounded-md border shadow-2xs transition-all cursor-pointer group flex flex-col justify-between ${
             statusFilter === 'LOW'
-              ? 'bg-amber-50 border-amber-300'
+              ? 'bg-amber-50/60 border-amber-300'
               : 'bg-white border-slate-200/90 hover:border-slate-300'
           }`}
         >
@@ -284,108 +289,77 @@ export default function Dashboard({
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Low Stock Alerts
             </span>
-            <TrendingDown className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition-colors" />
+            <div className="w-7 h-7 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100 group-hover:bg-amber-100 transition-colors">
+              <TrendingDown className="w-4 h-4 stroke-[2.2]" />
+            </div>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
             ) : (
               <span
-                className={`text-2xl sm:text-3xl font-black tracking-tight ${
-                  effectiveLowStockCount > 0 ? 'text-amber-600' : 'text-slate-900'
+                className={`text-xl sm:text-2xl font-black tracking-tight ${
+                  lowStockItems.length > 0 ? 'text-amber-600' : 'text-slate-900'
                 }`}
               >
-                {effectiveLowStockCount}
+                {lowStockItems.length}
               </span>
             )}
             <span className="text-[11px] font-medium text-slate-400">needs restock</span>
           </div>
         </div>
 
-        {/* Metric 3: Out of Stock / Shelf Gaps */}
-        <div
-          onClick={() => setStatusFilter(statusFilter === 'OUT' ? 'ALL' : 'OUT')}
-          className={`p-3 sm:p-3.5 rounded-md border shadow-2xs transition-all cursor-pointer group flex flex-col justify-between ${
-            statusFilter === 'OUT'
-              ? 'bg-rose-50 border-rose-300'
-              : 'bg-white border-slate-200/90 hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              Shelf Gaps (Out)
-            </span>
-            <AlertTriangle className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition-colors" />
-          </div>
-          <div className="mt-1.5 flex items-baseline justify-between">
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-            ) : (
-              <span
-                className={`text-2xl sm:text-3xl font-black tracking-tight ${
-                  effectiveGapsCount > 0 ? 'text-rose-600' : 'text-slate-900'
-                }`}
-              >
-                {effectiveGapsCount}
-              </span>
-            )}
-            <span className="text-[11px] font-medium text-slate-400">
-              {effectiveGapsCount > 0 ? 'empty on shelf' : 'shelves stocked'}
-            </span>
-          </div>
-        </div>
-
-        {/* Metric 4: Auto-Reorder Orders Pending */}
+        {/* Card 4: Orders to Approve */}
         <div
           onClick={() => onNavigate('orders')}
           className="bg-white p-3 sm:p-3.5 rounded-md border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              Reorders to Approve
+              Pending Reorders
             </span>
-            <FileText className="w-4 h-4 text-slate-400 group-hover:text-[#5956c6] transition-colors" />
+            <div className="w-7 h-7 rounded-md bg-purple-50 text-[#5956c6] flex items-center justify-center shrink-0 border border-purple-100 group-hover:bg-purple-100 transition-colors">
+              <FileText className="w-4 h-4 stroke-[2]" />
+            </div>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
             ) : (
               <span
-                className={`text-2xl sm:text-3xl font-black tracking-tight ${
+                className={`text-xl sm:text-2xl font-black tracking-tight ${
                   pendingOrders.length > 0 ? 'text-[#5956c6]' : 'text-slate-900'
                 }`}
               >
                 {pendingOrders.length}
               </span>
             )}
-            <span className="text-[11px] font-medium text-slate-400">draft POs</span>
+            <span className="text-[11px] font-medium text-slate-400">draft POs to approve</span>
           </div>
         </div>
       </div>
 
       {/* ==================== MAIN 2-COLUMN OPERATIONAL PANELS ==================== */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-stretch h-full">
-        {/* Left Column (7 cols): Live Shelf Inventory for Shopkeeper */}
+        {/* Left Column (7 cols): Store Shelf Inventory Catalog */}
         <div className="lg:col-span-7 bg-white rounded-md border border-slate-200/90 shadow-2xs flex flex-col h-full min-h-0 overflow-hidden">
           {/* Panel Header */}
           <div className="px-3.5 py-2.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 bg-slate-50/60">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-900">Live Shelf Inventory</h2>
+              <h2 className="text-sm font-bold text-slate-900">Store Shelf Products</h2>
               <span className="text-[11px] font-semibold text-slate-500">
                 ({filteredInventory.length} of {inventory.length})
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onNavigate('inventory')}
-                className="text-xs font-semibold text-[#5956c6] hover:text-[#4d4ab5] flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <span>Full catalog</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate('inventory')}
+              className="text-xs font-semibold text-[#5956c6] hover:text-[#4d4ab5] flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span>Manage catalog</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Search Bar + Filter Tabs */}
@@ -404,7 +378,7 @@ export default function Dashboard({
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
                 >
                   ×
                 </button>
@@ -480,7 +454,7 @@ export default function Dashboard({
                 <p className="text-[11px] text-slate-400">
                   {searchQuery
                     ? `No products found matching "${searchQuery}".`
-                    : 'No inventory items in this status filter.'}
+                    : 'No inventory items currently in this status.'}
                 </p>
                 {(searchQuery || statusFilter !== 'ALL') && (
                   <button
@@ -528,7 +502,7 @@ export default function Dashboard({
                       <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
                         <span className="font-mono text-slate-500 font-semibold">{item.sku}</span>
                         <span>·</span>
-                        <span>{priceFormatted || '$0.00'}</span>
+                        <span className="text-slate-600 font-medium">{priceFormatted}</span>
                         {item.shelf_location && (
                           <>
                             <span>·</span>
@@ -561,7 +535,7 @@ export default function Dashboard({
                     <div className="shrink-0 flex items-center gap-2">
                       {isOutOfStock ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                          <AlertTriangle className="w-3 h-3 text-rose-600" />
+                          <AlertCircle className="w-3 h-3 text-rose-600" />
                           <span>Out of Stock</span>
                         </span>
                       ) : isLow ? (
@@ -583,7 +557,7 @@ export default function Dashboard({
                           onClick={(e) => handleQuickRestock(e, item)}
                           disabled={isUpdatingThis}
                           className="px-2.5 py-1 text-xs font-semibold rounded bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-95 text-white transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
-                          title="Quick restock item by adding target units"
+                          title="Restock units"
                         >
                           {isUpdatingThis ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
@@ -603,156 +577,197 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Right Column (5 cols): Auto-Reorder Orders for Shopkeeper */}
-        <div className="lg:col-span-5 bg-white rounded-md border border-slate-200/90 shadow-2xs flex flex-col h-full min-h-0 overflow-hidden">
-          {/* Panel Header */}
-          <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/60">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-900">Auto-Reorder Orders</h2>
-              <span className="text-[11px] font-semibold text-slate-500">
-                ({pendingOrders.length} pending)
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('orders')}
-              className="text-xs font-semibold text-[#5956c6] hover:text-[#4d4ab5] flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              <span>All orders</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Subheader Hint for Shopkeeper */}
-          <div className="px-3 py-2 bg-indigo-50/50 border-b border-indigo-100/60 flex items-center justify-between text-xs text-indigo-900 shrink-0">
-            <div className="flex items-center gap-1.5 truncate">
-              <Truck className="w-3.5 h-3.5 text-[#5956c6] shrink-0" />
-              <span className="text-[11px] font-medium text-slate-600 truncate">
-                Triggered automatically by AI shelf vision & low stock gaps
-              </span>
-            </div>
-            {effectiveLowStockCount > 0 && onGenerateOrder && (
-              <button
-                type="button"
-                onClick={handleTriggerPO}
-                disabled={isGeneratingPO}
-                className="text-[11px] font-bold text-[#5956c6] hover:text-[#4d4ab5] shrink-0 flex items-center gap-1 cursor-pointer"
-              >
-                {isGeneratingPO ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <span>+ Create PO</span>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* List Content */}
-          <div className="flex-1 min-h-0 p-2.5 space-y-2 overflow-y-auto no-scrollbar">
-            {isLoading ? (
-              <div className="py-16 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
-                <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
-                <span>Loading pending reorders...</span>
+        {/* Right Column (5 cols): Reorders & Category Stock Summary */}
+        <div className="lg:col-span-5 flex flex-col h-full min-h-0 space-y-2.5">
+          {/* Top Half: Reorders to Approve */}
+          <div className="bg-white rounded-md border border-slate-200/90 shadow-2xs flex flex-col flex-1 min-h-0 overflow-hidden">
+            {/* Panel Header */}
+            <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/60">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-slate-900">Reorders to Approve</h2>
+                <span className="text-[11px] font-semibold text-slate-500">
+                  ({pendingOrders.length})
+                </span>
               </div>
-            ) : pendingOrders.length === 0 ? (
-              <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
-                <Check className="w-8 h-8 text-emerald-500 stroke-[1.5]" />
-                <p className="font-semibold text-slate-700">All shelves replenished</p>
-                <p className="text-[11px] text-slate-400 max-w-[240px]">
-                  No draft purchase orders are pending approval. Run an AI Shelf Scan to inspect aisles for new gaps.
-                </p>
+
+              <div className="flex items-center gap-2">
+                {lowStockItems.length > 0 && onGenerateOrder && (
+                  <button
+                    type="button"
+                    onClick={handleTriggerPO}
+                    disabled={isGeneratingPO}
+                    className="text-[11px] font-bold text-[#5956c6] hover:text-[#4d4ab5] flex items-center gap-1 cursor-pointer"
+                  >
+                    {isGeneratingPO ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <span>+ Create PO</span>
+                    )}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => onNavigate('new-scan')}
-                  className="mt-2 px-3 py-1.5 bg-[#5956c6] hover:bg-[#4d4ab5] text-white rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  onClick={() => onNavigate('orders')}
+                  className="text-xs font-semibold text-[#5956c6] hover:text-[#4d4ab5] flex items-center gap-1 cursor-pointer transition-colors"
                 >
-                  <ScanIcon className="w-3.5 h-3.5" />
-                  <span>Scan Shelves</span>
+                  <span>All</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
-            ) : (
-              pendingOrders.map((order) => {
-                const itemCount = order.items?.length ?? 0
-                const formattedTotal = formatCurrency(order.total)
-                const isApprovingThis = approvingOrderId === order.id
+            </div>
 
-                return (
-                  <div
-                    key={order.id}
-                    onClick={() => onSelectOrder && onSelectOrder(order)}
-                    className="p-3 rounded-md border border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/70 transition-all cursor-pointer group shadow-2xs flex flex-col gap-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-xs sm:text-sm text-slate-900 group-hover:text-[#5956c6] transition-colors">
-                          {order.id}
-                        </span>
-                        {formattedTotal && (
-                          <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
-                            {formattedTotal}
+            {/* Orders List */}
+            <div className="flex-1 min-h-0 p-2.5 space-y-2 overflow-y-auto no-scrollbar">
+              {isLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
+                  <span>Loading pending reorders...</span>
+                </div>
+              ) : pendingOrders.length === 0 ? (
+                <div className="py-10 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
+                  <Check className="w-7 h-7 text-emerald-500 stroke-[1.5]" />
+                  <p className="font-semibold text-slate-700">All purchase orders approved</p>
+                  <p className="text-[11px] text-slate-400 max-w-[220px]">
+                    No draft orders are currently pending. All shelves are adequately stocked.
+                  </p>
+                </div>
+              ) : (
+                pendingOrders.map((order) => {
+                  const itemCount = order.items?.length ?? 0
+                  const formattedTotal = formatCurrency(order.total)
+                  const isApprovingThis = approvingOrderId === order.id
+
+                  return (
+                    <div
+                      key={order.id}
+                      onClick={() => onSelectOrder && onSelectOrder(order)}
+                      className="p-3 rounded-md border border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/70 transition-all cursor-pointer group shadow-2xs flex flex-col gap-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-xs sm:text-sm text-slate-900 group-hover:text-[#5956c6] transition-colors">
+                            {order.id}
                           </span>
-                        )}
+                          {formattedTotal && (
+                            <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
+                              {formattedTotal}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                          Draft
+                        </span>
                       </div>
 
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                        Draft
-                      </span>
-                    </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                        <span className="truncate max-w-[180px]">
+                          {order.supplier || order.supplier_name || 'Primary Supplier'}
+                        </span>
+                        <span>
+                          {itemCount} {itemCount === 1 ? 'item' : 'items'} · {order.date || 'Today'}
+                        </span>
+                      </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span className="truncate max-w-[180px]">
-                        {order.supplier || order.supplier_name || 'Primary Supplier'}
-                      </span>
-                      <span>
-                        {itemCount} {itemCount === 1 ? 'item' : 'items'} · {order.date || 'Today'}
-                      </span>
-                    </div>
-
-                    {/* Action Buttons for Shopkeeper */}
-                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onSelectOrder && onSelectOrder(order)
-                        }}
-                        className="px-2.5 py-1 text-xs font-semibold rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                      >
-                        Review
-                      </button>
-
-                      {isAdmin && onQuickApproveOrder && (
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
                         <button
                           type="button"
-                          onClick={(e) => handleQuickApprove(e, order.id)}
-                          disabled={isApprovingThis}
-                          className="px-3 py-1 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
-                          title="Approve purchase order and restock store inventory"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onSelectOrder && onSelectOrder(order)
+                          }}
+                          className="px-2.5 py-1 text-xs font-semibold rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                         >
-                          {isApprovingThis ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                          )}
-                          <span>Approve & Restock</span>
+                          Review
                         </button>
-                      )}
+
+                        {isAdmin && onQuickApproveOrder && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleQuickApprove(e, order.id)}
+                            disabled={isApprovingThis}
+                            className="px-3 py-1 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                            title="Approve order and restock inventory"
+                          >
+                            {isApprovingThis ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                            )}
+                            <span>Approve</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })
-            )}
+                  )
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Half: Category Stock Health Breakdown */}
+          <div className="bg-white rounded-md border border-slate-200/90 shadow-2xs flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/60">
+              <h2 className="text-sm font-bold text-slate-900">Category Stock Health</h2>
+              <span className="text-[11px] font-semibold text-slate-500">
+                {categorySummary.length} categories
+              </span>
+            </div>
+
+            <div className="flex-1 min-h-0 p-3 space-y-2.5 overflow-y-auto no-scrollbar">
+              {categorySummary.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">
+                  No category data available.
+                </div>
+              ) : (
+                categorySummary.map((cat) => {
+                  const hasAlerts = cat.lowCount > 0 || cat.outCount > 0
+                  return (
+                    <div
+                      key={cat.name}
+                      onClick={() => {
+                        setSearchQuery(cat.name)
+                        setStatusFilter('ALL')
+                      }}
+                      className="p-2.5 rounded-md border border-slate-100 hover:border-slate-200 hover:bg-slate-50/60 transition-all cursor-pointer flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{cat.name}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {cat.count} {cat.count === 1 ? 'product' : 'products'} tracked
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {hasAlerts ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <TrendingDown className="w-3 h-3 text-amber-600" />
+                            <span>{cat.lowCount + cat.outCount} alert</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span>Healthy</span>
+                          </span>
+                        )}
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ==================== BOTTOM SHOPKEEPER STATUS STRIP ==================== */}
+      {/* ==================== BOTTOM STATUS STRIP ==================== */}
       <div className="bg-white rounded-md border border-slate-200/90 px-3 py-2 shrink-0 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2 shadow-2xs">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="font-semibold text-slate-700">AI Shelf Scanner for Shopkeepers:</span>
-          <span>Automatic gap detection & inventory restocking active</span>
+          <span className="font-semibold text-slate-700">Store Operations Engine:</span>
+          <span>Live catalog monitoring & smart replenishment active</span>
         </div>
 
         <div className="flex items-center gap-4">
