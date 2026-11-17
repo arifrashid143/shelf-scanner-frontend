@@ -788,6 +788,8 @@ function MainApp() {
             isLoading={dataLoading}
             onGenerateOrder={() => handleGeneratePO()}
             onQuickApproveOrder={handleApprovePO}
+            onUpdateProduct={handleUpdateProduct}
+            onAddProduct={handleAddProduct}
           />
         )
 
