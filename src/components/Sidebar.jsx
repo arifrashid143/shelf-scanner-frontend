@@ -23,12 +23,12 @@ export default function Sidebar({
   const navItems = [
     {
       id: 'dashboard',
-      label: 'Store Dashboard',
+      label: 'Dashboard',
       icon: LayoutDashboard,
     },
     {
       id: 'new-scan',
-      label: 'AI Shelf Scanner',
+      label: 'Scan shelf',
       icon: Scan,
     },
     {
