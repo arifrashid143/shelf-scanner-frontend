@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Image as ImageIcon,
   Check,
@@ -5,6 +6,9 @@ import {
   ShoppingCart,
   Sparkles,
   ArrowRight,
+  Eye,
+  Layers,
+  Cpu,
 } from 'lucide-react'
 
 export default function ScanResult({
@@ -13,6 +17,7 @@ export default function ScanResult({
   onDone,
   onNavigate,
 }) {
+  const [viewMode, setViewMode] = useState('annotated') // 'annotated' | 'raw'
   const scanId = scanData?.id || scanData?.scan_id || 'Scan'
   const shelfName = scanData?.shelf_id || scanData?.shelfName || 'Shelf Section 1'
 
@@ -44,8 +49,6 @@ export default function ScanResult({
       )
     : (scanData?.accuracy ?? scanData?.confidence ?? null)
 
-
-
   // Helper to resolve relative backend image URLs
   const resolveImageUrl = (url) => {
     if (!url) return null
@@ -55,18 +58,23 @@ export default function ScanResult({
     return `https://ai-vs-scanner-be.aiiotgeeks.tech${url.startsWith('/') ? '' : '/'}${url}`
   }
 
-  // Photo URL (supports live camera blob preview or backend hosted image)
-  const photoUrl =
-    scanData?.previewUrl ||
-    resolveImageUrl(scanData?.annotated_image_url) ||
-    resolveImageUrl(scanData?.raw_image_url) ||
-    null
+  // Annotated image URL from backend (with colored AI bounding boxes)
+  const annotatedUrl = resolveImageUrl(scanData?.annotated_image_url)
+  // Raw / preview photo URL
+  const rawUrl = scanData?.previewUrl || resolveImageUrl(scanData?.raw_image_url)
+  // Display photo URL based on selected view mode
+  const photoUrl = viewMode === 'annotated' && annotatedUrl ? annotatedUrl : (rawUrl || annotatedUrl)
 
   // Products detected from backend
   const rawProducts = Array.isArray(scanData?.product_counts) ? scanData.product_counts : []
   const rawLowStock = Array.isArray(scanData?.low_stock_summary) ? scanData.low_stock_summary : []
+  const uncatalogedSummary = Array.isArray(scanData?.uncataloged_summary)
+    ? scanData.uncataloged_summary
+    : Array.isArray(scanData?.unregistered_products)
+    ? scanData.unregistered_products.map((p) => ({ label: p, detected_count: 1 }))
+    : []
 
-  // Build counts mapping from rawProducts or apiDetections
+  // Build counts mapping from rawProducts or apiDetections or uncatalogedSummary
   const detectedCountsByProductId = {}
   const detectedCountsByName = {}
 
@@ -75,7 +83,9 @@ export default function ScanResult({
       if (p.product_id != null) detectedCountsByProductId[String(p.product_id)] = p.detected_count ?? 0
       if (p.name) detectedCountsByName[p.name.toLowerCase().trim()] = p.detected_count ?? 0
     })
-  } else if (hasApiDetections) {
+  }
+
+  if (hasApiDetections) {
     apiDetections.forEach((d) => {
       if (d.is_empty_gap) return
       if (d.product_id != null) {
@@ -89,69 +99,133 @@ export default function ScanResult({
     })
   }
 
-  // Combine product counts with inventory data for complete shelf-to-inventory audit
-  const detectedProducts = inventory.length > 0
-    ? inventory.map((invItem) => {
-        const prodId = String(invItem.productId || invItem.id)
-        const nameKey = (invItem.name || '').toLowerCase().trim()
+  if (uncatalogedSummary.length > 0) {
+    uncatalogedSummary.forEach((u) => {
+      if (u.label) {
+        const clean = u.label.toLowerCase().trim()
+        if (!detectedCountsByName[clean]) {
+          detectedCountsByName[clean] = u.detected_count || 1
+        }
+      }
+    })
+  }
 
-        let detectedCount = 0
-        if (detectedCountsByProductId[prodId] !== undefined) {
-          detectedCount = detectedCountsByProductId[prodId]
-        } else if (detectedCountsByName[nameKey] !== undefined) {
-          detectedCount = detectedCountsByName[nameKey]
-        } else {
-          const matchingKey = Object.keys(detectedCountsByName).find(
-            (k) => nameKey.includes(k) || k.includes(nameKey)
-          )
-          if (matchingKey) {
-            detectedCount = detectedCountsByName[matchingKey]
+  // Synonym keywords mapping for shelf object recognition
+  const synonymMapping = {
+    soda: ['soda', 'bottle', 'can', 'beverage', 'drink', 'spices', 'coke', 'pepsi', 'sprite', 'fanta'],
+    milk: ['milk', 'carton', 'package', 'dairy', 'cereal'],
+    candy: ['candy', 'package', 'bag', 'chocolate', 'chips', 'jelly', 'beans'],
+    beans: ['beans', 'package', 'bag', 'candy', 'chocolate', 'chips'],
+  }
+
+  // Match inventory products against detected counts
+  const matchedInventoryProducts = inventory.map((invItem) => {
+    const prodId = String(invItem.productId || invItem.id)
+    const nameKey = (invItem.name || '').toLowerCase().trim()
+
+    let detectedCount = 0
+    if (detectedCountsByProductId[prodId] !== undefined) {
+      detectedCount = detectedCountsByProductId[prodId]
+    } else if (detectedCountsByName[nameKey] !== undefined) {
+      detectedCount = detectedCountsByName[nameKey]
+    } else {
+      // Direct substring match
+      const matchingKey = Object.keys(detectedCountsByName).find(
+        (k) => nameKey.includes(k) || k.includes(nameKey)
+      )
+      if (matchingKey) {
+        detectedCount = detectedCountsByName[matchingKey]
+      } else {
+        // Synonym-based shelf recognition fallback
+        const synonyms = synonymMapping[nameKey] || []
+        for (const syn of synonyms) {
+          if (detectedCountsByName[syn] !== undefined) {
+            detectedCount = detectedCountsByName[syn]
+            break
           }
         }
+      }
+    }
 
-        const minThreshold = invItem.minThreshold ?? invItem.min_stock_threshold ?? 0
-        const maxCapacity = invItem.target ?? invItem.max_shelf_capacity ?? 0
-        const isLow = minThreshold > 0 ? detectedCount < minThreshold : false
-        const isMissing = detectedCount === 0
+    const minThreshold = invItem.minThreshold ?? invItem.min_stock_threshold ?? 0
+    const maxCapacity = invItem.target ?? invItem.max_shelf_capacity ?? 0
+    const isLow = minThreshold > 0 ? detectedCount < minThreshold : false
+    const isMissing = detectedCount === 0
 
-        return {
-          product_id: invItem.productId || invItem.id,
-          sku: invItem.sku || `SKU-${invItem.id}`,
-          name: invItem.name,
-          category: invItem.category || 'General',
-          detected_count: detectedCount,
-          current_stock: invItem.current !== undefined ? invItem.current : 0,
-          min_stock_threshold: minThreshold,
-          max_shelf_capacity: maxCapacity,
-          unit_price: invItem.price || 0,
-          cost_price: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : 0),
-          is_low_stock: isLow,
-          is_missing: isMissing,
-          reorder_recommended_qty: maxCapacity > detectedCount ? maxCapacity - detectedCount : (minThreshold > detectedCount ? minThreshold - detectedCount : 0),
-        }
-      })
-    : rawProducts.length > 0
-    ? rawProducts.map((p) => {
-        const minThresh = p.min_stock_threshold ?? 0
-        const maxCap = p.max_shelf_capacity ?? 0
-        const detected = p.detected_count !== undefined ? p.detected_count : 0
-        return {
-          product_id: p.product_id,
-          sku: p.sku || `SKU-${p.product_id}`,
-          name: p.name || `Product #${p.product_id}`,
-          category: p.category || 'General',
-          detected_count: detected,
-          current_stock: detected,
-          min_stock_threshold: minThresh,
-          max_shelf_capacity: maxCap,
-          unit_price: p.unit_price || p.price || 0,
-          cost_price: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 0),
-          is_low_stock: p.is_low_stock || (minThresh > 0 && detected < minThresh),
-          is_missing: detected === 0,
-          reorder_recommended_qty: p.reorder_recommended_qty || (maxCap > detected ? maxCap - detected : 0),
-        }
-      })
-    : []
+    return {
+      product_id: invItem.productId || invItem.id,
+      sku: invItem.sku || `SKU-${invItem.id}`,
+      name: invItem.name,
+      category: invItem.category || 'General',
+      detected_count: detectedCount,
+      current_stock: invItem.current !== undefined ? invItem.current : 0,
+      min_stock_threshold: minThreshold,
+      max_shelf_capacity: maxCapacity,
+      unit_price: invItem.price || 0,
+      cost_price: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : 0),
+      is_low_stock: isLow,
+      is_missing: isMissing,
+      reorder_recommended_qty:
+        maxCapacity > detectedCount
+          ? maxCapacity - detectedCount
+          : minThreshold > detectedCount
+          ? minThreshold - detectedCount
+          : 0,
+    }
+  })
+
+  // Explicit uncataloged detections list from AI vision (so no detected items are hidden)
+  const uncatalogedProducts = uncatalogedSummary.map((item, idx) => {
+    const labelClean = (item.label || 'Item').replace(/\[.*?\]/g, '').trim()
+    const capLabel = labelClean.charAt(0).toUpperCase() + labelClean.slice(1)
+    const count = item.detected_count || 1
+    return {
+      product_id: `ai_uncataloged_${idx}`,
+      sku: `AI-DET-${labelClean.toUpperCase().replace(/\s+/g, '-')}`,
+      name: `${capLabel} (AI Vision Detected)`,
+      category: 'Computer Vision',
+      detected_count: count,
+      current_stock: count,
+      min_stock_threshold: 5,
+      max_shelf_capacity: Math.max(10, count),
+      unit_price: 2.5,
+      cost_price: 1.5,
+      is_low_stock: false,
+      is_missing: false,
+      is_uncataloged: true,
+      reorder_recommended_qty: 0,
+    }
+  })
+
+  // Fallback: If inventory is empty but rawProducts exists
+  const fallbackRawProducts = rawProducts.map((p) => {
+    const minThresh = p.min_stock_threshold ?? 0
+    const maxCap = p.max_shelf_capacity ?? 0
+    const detected = p.detected_count !== undefined ? p.detected_count : 0
+    return {
+      product_id: p.product_id,
+      sku: p.sku || `SKU-${p.product_id}`,
+      name: p.name || `Product #${p.product_id}`,
+      category: p.category || 'General',
+      detected_count: detected,
+      current_stock: detected,
+      min_stock_threshold: minThresh,
+      max_shelf_capacity: maxCap,
+      unit_price: p.unit_price || p.price || 0,
+      cost_price: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 0),
+      is_low_stock: p.is_low_stock || (minThresh > 0 && detected < minThresh),
+      is_missing: detected === 0,
+      reorder_recommended_qty: p.reorder_recommended_qty || (maxCap > detected ? maxCap - detected : 0),
+    }
+  })
+
+  // Combined detected products list
+  const detectedProducts =
+    inventory.length > 0
+      ? [...matchedInventoryProducts, ...uncatalogedProducts]
+      : fallbackRawProducts.length > 0
+      ? [...fallbackRawProducts, ...uncatalogedProducts]
+      : uncatalogedProducts
 
   // Items identified for replenishment (low stock or zero detected)
   const lowStockCandidates =
@@ -210,6 +284,51 @@ export default function ScanResult({
         </div>
       )}
 
+      {/* AI Vision Engine Telemetry Banner */}
+      <div className="p-3.5 rounded-md bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white border border-blue-200/90 text-slate-800 space-y-2 shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-blue-600 shrink-0" />
+            <h2 className="text-xs sm:text-sm font-bold text-slate-900">
+              AI Vision Engine: {scanData?.vision_engine === 'grounding_dino' ? 'Grounding-DINO Multimodal Model' : 'YOLO Neural Detector'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {scanData?.scan_duration_ms > 0 && (
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-100/70 text-blue-800 border border-blue-200 font-semibold">
+                ⏱ {(scanData.scan_duration_ms / 1000).toFixed(1)}s inference
+              </span>
+            )}
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+              <Check className="w-3 h-3 stroke-[2.5]" /> Completed
+            </span>
+          </div>
+        </div>
+
+        {uncatalogedSummary.length > 0 && (
+          <div className="pt-1 flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-slate-500 font-medium text-[11px] flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-slate-400" />
+              Detected Object Classes:
+            </span>
+            {uncatalogedSummary.map((u, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-white text-slate-800 border border-blue-100 font-bold text-[11px] shadow-2xs"
+              >
+                <span className="capitalize">{u.label}</span>:
+                <span className="text-blue-600 font-black">{u.detected_count || 1}</span>
+              </span>
+            ))}
+            {emptyGaps > 0 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-bold text-[11px]">
+                Empty Gaps: <span className="font-black text-rose-600">{emptyGaps}</span>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* 4 Summary Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         <div className="bg-white p-3.5 sm:p-4 rounded-md border border-slate-200/90 shadow-2xs">
@@ -244,38 +363,71 @@ export default function ScanResult({
 
       {/* Uploaded Shelf Photo Inspection Box */}
       <div className="bg-white rounded-md border border-slate-200/90 p-4 sm:p-5 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="flex flex-wrap items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div className="flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-blue-600" />
             <h2 className="text-base sm:text-lg font-bold text-slate-900">
               Uploaded Shelf Photo
             </h2>
           </div>
-          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md">
-            {shelfName}
-          </span>
+
+          <div className="flex items-center gap-2">
+            {annotatedUrl && rawUrl && (
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-md text-xs font-bold border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('annotated')}
+                  className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1 cursor-pointer ${
+                    viewMode === 'annotated'
+                      ? 'bg-white text-blue-600 shadow-2xs font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>AI Detection Boxes</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('raw')}
+                  className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1 cursor-pointer ${
+                    viewMode === 'raw'
+                      ? 'bg-white text-blue-600 shadow-2xs font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Original Photo</span>
+                </button>
+              </div>
+            )}
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+              {shelfName}
+            </span>
+          </div>
         </div>
 
         {/* Viewfinder Content */}
-          <div className="rounded-md overflow-hidden bg-slate-950 aspect-[16/9] max-h-[460px] flex items-center justify-center relative border border-slate-800">
-            {photoUrl ? (
-              <img
-                src={photoUrl}
-                alt="Uploaded Shelf Scan"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <div className="p-8 text-center text-slate-400 space-y-2">
-                <ImageIcon className="w-10 h-10 mx-auto text-slate-600" />
-                <p className="font-bold text-sm">No uploaded shelf image available</p>
-                <p className="text-xs text-slate-500">Preview generated from backend telemetry data</p>
-              </div>
-            )}
-            <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-xs font-bold px-3 py-1.5 rounded-md border border-white/20 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>AI Processed: {itemsCounted} items detected · {emptyGaps} empty gaps</span>
+        <div className="rounded-md overflow-hidden bg-slate-950 aspect-[16/9] max-h-[500px] flex items-center justify-center relative border border-slate-800">
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt="Uploaded Shelf Scan"
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <div className="p-8 text-center text-slate-400 space-y-2">
+              <ImageIcon className="w-10 h-10 mx-auto text-slate-600" />
+              <p className="font-bold text-sm">No uploaded shelf image available</p>
+              <p className="text-xs text-slate-500">Preview generated from backend telemetry data</p>
             </div>
+          )}
+          <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-xs font-bold px-3 py-1.5 rounded-md border border-white/20 flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+            <span>
+              {viewMode === 'annotated' && annotatedUrl ? 'AI Annotated View' : 'Original Capture'}: {itemsCounted} items detected · {emptyGaps} empty gaps
+            </span>
           </div>
+        </div>
       </div>
 
       {/* Detected Products on Shelf Table */}
@@ -321,17 +473,21 @@ export default function ScanResult({
                     <td className="py-3 text-slate-500">{p.min_stock_threshold}</td>
                     <td className="py-3 text-slate-500">{p.max_shelf_capacity}</td>
                     <td className="py-3 text-right">
-                      {p.detected_count === 0 ? (
+                      {p.is_uncataloged ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                          <Sparkles className="w-3 h-3 text-blue-600" /> AI Detected ({p.detected_count})
+                        </span>
+                      ) : p.detected_count === 0 ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200">
                           <AlertTriangle className="w-3 h-3 text-red-600" /> Out of Stock (0)
                         </span>
                       ) : p.is_low_stock ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
-                          <AlertTriangle className="w-3 h-3 text-rose-600" /> Low Stock
+                          <AlertTriangle className="w-3 h-3 text-rose-600" /> Low Stock ({p.detected_count})
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <Check className="w-3 h-3 text-emerald-600" /> In Stock
+                          <Check className="w-3 h-3 text-emerald-600" /> In Stock ({p.detected_count})
                         </span>
                       )}
                     </td>

@@ -432,18 +432,29 @@ function MainApp() {
       let fullScan = { ...res, previewUrl: scanData.previewUrl }
       if (res?.id) {
         try {
-          // If scan is still pending, poll briefly until verified
+          // If scan is still pending, poll until verified or completed (AI vision can take 20-45s)
           let attempts = 0
+          const maxAttempts = 35
           while (
-            attempts < 5 &&
+            attempts < maxAttempts &&
             (fullScan.status?.toLowerCase() === 'pending' || fullScan.status?.toLowerCase() === 'processing')
           ) {
             attempts++
-            await new Promise((resolve) => setTimeout(resolve, 1200))
+            if (attempts % 3 === 0) {
+              showToast(
+                `AI Vision Engine analyzing shelf items (${Math.round(attempts * 1.5)}s)...`,
+                'info'
+              )
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1500))
             const check = await api.getScanById(res.id).catch(() => null)
             if (check) {
               fullScan = { ...fullScan, ...check }
-              if (check.status?.toLowerCase() === 'completed' || check.status?.toLowerCase() === 'done') {
+              if (
+                check.status?.toLowerCase() === 'completed' ||
+                check.status?.toLowerCase() === 'done' ||
+                check.status?.toLowerCase() === 'failed'
+              ) {
                 break
               }
             }
@@ -465,12 +476,13 @@ function MainApp() {
 
       setCurrentScan(fullScan)
 
-      // Only show the scan in history after it successfully gets verified
+      // Only show the scan in history after it successfully gets verified or completed
       const isVerified =
         fullScan.status?.toLowerCase() === 'completed' ||
         fullScan.status?.toLowerCase() === 'done' ||
         fullScan.status?.toLowerCase() === 'verified' ||
-        (Number(fullScan.total_detected_count) > 0)
+        Number(fullScan.total_detected_count) > 0 ||
+        (Array.isArray(fullScan.detections) && fullScan.detections.length > 0)
 
       if (isVerified) {
         setRecentScans((prev) => [
@@ -511,6 +523,18 @@ function MainApp() {
           if (d.label) {
             const cleanLabel = d.label.replace(/\[.*?\]/g, '').toLowerCase().trim()
             detectedCountsByName[cleanLabel] = (detectedCountsByName[cleanLabel] || 0) + 1
+          }
+        })
+
+        const uncatSummary = Array.isArray(fullScan?.uncataloged_summary)
+          ? fullScan.uncataloged_summary
+          : []
+        uncatSummary.forEach((u) => {
+          if (u.label) {
+            const cleanLabel = u.label.toLowerCase().trim()
+            if (!detectedCountsByName[cleanLabel]) {
+              detectedCountsByName[cleanLabel] = u.detected_count || 1
+            }
           }
         })
 
