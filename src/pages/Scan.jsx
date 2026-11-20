@@ -495,20 +495,38 @@ export default function Scan({
                     onClick={() => onSelectScan && onSelectScan(scan)}
                     className="p-2.5 rounded-md border border-slate-100 hover:border-slate-200 hover:bg-slate-50/80 active:scale-98 transition-all cursor-pointer flex items-center justify-between gap-2"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-slate-900 text-xs truncate">
-                        {scan.shelf || scan.shelf_id || 'Shelf Section'}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400">
-                        <span>{scan.time || scan.date || 'Today'}</span>
-                        <span>·</span>
-                        <span>{itemsCount} items</span>
-                        {gapsCount > 0 && (
-                          <>
-                            <span>·</span>
-                            <span className="text-rose-600 font-bold">{gapsCount} gaps</span>
-                          </>
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {/* Photo Thumbnail */}
+                      <div className="w-10 h-8 rounded bg-slate-100 border border-slate-200/80 overflow-hidden shrink-0 flex items-center justify-center bg-slate-900/5">
+                        {scan.annotated_image_url || scan.raw_image_url ? (
+                          <img
+                            src={`https://ai-vs-scanner-be.aiiotgeeks.tech${(scan.annotated_image_url || scan.raw_image_url).startsWith('/') ? '' : '/'}${scan.annotated_image_url || scan.raw_image_url}`}
+                            alt="Shelf thumbnail"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        ) : (
+                          <ScanIcon className="w-3.5 h-3.5 text-slate-400" />
                         )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-slate-900 text-xs truncate">
+                          {scan.shelf || scan.shelf_id || 'Shelf Section'}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400">
+                          <span>{scan.time || scan.date || 'Today'}</span>
+                          <span>·</span>
+                          <span>{itemsCount} items</span>
+                          {gapsCount > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="text-rose-600 font-bold">{gapsCount} gaps</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -817,13 +835,30 @@ export default function Scan({
                           title="Click to view scan results and visual detections"
                         >
                           <td className="px-4 py-3">
-                            <div className="flex flex-col min-w-0">
-                              <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[130px] sm:max-w-[170px]">
-                                {scan.shelf || scan.shelf_id || 'Shelf Section'}
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
-                                {scan.id}
-                              </span>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {/* Photo Thumbnail */}
+                              <div className="w-10 h-8 rounded bg-slate-100 border border-slate-200/80 overflow-hidden shrink-0 flex items-center justify-center bg-slate-900/5">
+                                {scan.annotated_image_url || scan.raw_image_url ? (
+                                  <img
+                                    src={`https://ai-vs-scanner-be.aiiotgeeks.tech${(scan.annotated_image_url || scan.raw_image_url).startsWith('/') ? '' : '/'}${scan.annotated_image_url || scan.raw_image_url}`}
+                                    alt="Shelf preview"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none'
+                                    }}
+                                  />
+                                ) : (
+                                  <ScanIcon className="w-4 h-4 text-slate-400" />
+                                )}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[130px] sm:max-w-[170px]">
+                                  {scan.shelf || scan.shelf_id || 'Shelf Section'}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
+                                  {scan.id}
+                                </span>
+                              </div>
                             </div>
                           </td>
 
