@@ -413,6 +413,13 @@ export default function ScanResult({
               src={photoUrl}
               alt="Uploaded Shelf Scan"
               className="w-full h-full object-contain"
+              onError={(e) => {
+                if (viewMode === 'annotated' && rawUrl) {
+                  setViewMode('raw')
+                } else {
+                  e.currentTarget.style.display = 'none'
+                }
+              }}
             />
           ) : (
             <div className="p-8 text-center text-slate-400 space-y-2">
