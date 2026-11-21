@@ -841,7 +841,7 @@ export default function Shelves({ isAdmin, onShowToast }) {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Apex Retail - North Branch"
+                  placeholder="e.g. Shelf Scanner - North Branch"
                   value={storeForm.name}
                   onChange={(e) => setStoreForm({ ...storeForm, name: e.target.value })}
                   className="w-full px-3 py-1.5 rounded-md border border-slate-200 text-xs font-medium focus:outline-blue-600"

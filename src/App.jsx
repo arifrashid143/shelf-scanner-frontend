@@ -16,7 +16,7 @@ import Shelves from './pages/Shelves'
 import Suppliers from './pages/Suppliers'
 import Analytics from './pages/Analytics'
 import logoImg from './assets/logo.png'
-import { Loader2, LogOut, Sun, Moon, Monitor } from 'lucide-react'
+import { Loader2, LogOut, Sun, Moon, Monitor, User, SunMoon, ChevronRight, ChevronLeft, Check } from 'lucide-react'
 
 function normalizeOrder(order) {
   if (!order) return null
@@ -184,6 +184,7 @@ function MainApp() {
   const [dataError, setDataError] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const [mobileSettingsView, setMobileSettingsView] = useState('menu') // 'menu' | 'profile' | 'theme'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     try {
       return localStorage.getItem('shelf_sidebar_collapsed') === 'true'
@@ -209,11 +210,13 @@ function MainApp() {
     const handleClickOutside = (e) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
         setIsProfileMenuOpen(false)
+        setMobileSettingsView('menu')
       }
     }
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setIsProfileMenuOpen(false)
+        setMobileSettingsView('menu')
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -984,10 +987,10 @@ function MainApp() {
         <div className="flex items-center gap-2">
           <img
             src={logoImg}
-            alt="ApexShelf"
+            alt="Shelf Scanner"
             className="w-7 h-7 rounded-lg object-contain shrink-0 shadow-2xs ring-1 ring-slate-200/90 dark:ring-slate-700 bg-white"
           />
-          <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white">ApexShelf</span>
+          <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white">Shelf Scanner</span>
           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800">
             Visual AI
           </span>
@@ -997,7 +1000,10 @@ function MainApp() {
         <div className="relative shrink-0 flex items-center" ref={profileMenuRef}>
           <button
             type="button"
-            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+            onClick={() => {
+              setIsProfileMenuOpen((prev) => !prev)
+              setMobileSettingsView('menu')
+            }}
             className="relative w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black text-xs flex items-center justify-center shadow-2xs cursor-pointer focus:outline-none ring-1.5 ring-slate-200 dark:ring-slate-700"
             aria-label="User settings menu"
             aria-expanded={isProfileMenuOpen}
@@ -1010,70 +1016,188 @@ function MainApp() {
           </button>
 
           {isProfileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 text-slate-900 dark:text-slate-100">
-              <div className="p-3 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
-                <p className="text-[11px] font-mono text-slate-400 dark:text-slate-400 truncate mt-0.5">
-                  {user?.email || 'user@retail.com'}
-                </p>
-                <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800">
-                  {isAdmin ? 'Store Admin' : 'Store Associate'} · {tenantName}
-                </span>
-              </div>
-              {/* Theme Modes for Mobile */}
-              <div className="p-2.5 border-b border-slate-100 dark:border-slate-800">
-                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 text-slate-900 dark:text-slate-100 ring-1 ring-black/5">
+              {/* VIEW 1: Main Menu Options */}
+              {mobileSettingsView === 'menu' && (
+                <div className="p-1.5 space-y-1">
+                  {/* 1. Profile Option */}
                   <button
                     type="button"
-                    onClick={() => handleThemeChange('light')}
-                    className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                      theme === 'light'
-                        ? 'bg-white text-indigo-700 shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-300'
-                    }`}
+                    onClick={() => setMobileSettingsView('profile')}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer text-xs font-bold text-left group"
                   >
-                    <Sun className="w-3 h-3" />
-                    <span>Light</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate leading-tight text-slate-900 dark:text-white">Profile</p>
+                        <p className="text-[10px] font-normal text-slate-400 dark:text-slate-400 truncate leading-tight mt-0.5">
+                          {displayName}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
                   </button>
+
+                  {/* 2. Theme Option */}
                   <button
                     type="button"
-                    onClick={() => handleThemeChange('dark')}
-                    className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                      theme === 'dark'
-                        ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-300'
-                    }`}
+                    onClick={() => setMobileSettingsView('theme')}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer text-xs font-bold text-left group"
                   >
-                    <Moon className="w-3 h-3" />
-                    <span>Dark</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                        <SunMoon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate leading-tight text-slate-900 dark:text-white">Theme</p>
+                        <p className="text-[10px] font-normal text-slate-400 dark:text-slate-400 truncate capitalize leading-tight mt-0.5">
+                          {theme} mode
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
                   </button>
+
+                  {/* Divider */}
+                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+                  {/* 3. Sign Out Option */}
                   <button
                     type="button"
-                    onClick={() => handleThemeChange('system')}
-                    className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                      theme === 'system'
-                        ? 'bg-white dark:bg-indigo-600 text-indigo-700 dark:text-white shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-300'
-                    }`}
+                    onClick={() => {
+                      setIsProfileMenuOpen(false)
+                      setMobileSettingsView('menu')
+                      logout()
+                    }}
+                    className="w-full flex items-center gap-2.5 p-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer text-xs font-bold text-left group"
                   >
-                    <Monitor className="w-3 h-3" />
-                    <span>Auto</span>
+                    <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center group-hover:bg-rose-100 dark:group-hover:bg-rose-900/60 transition-colors shrink-0">
+                      <LogOut className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                    </div>
+                    <span className="truncate">Sign out</span>
                   </button>
                 </div>
-              </div>
-              <div className="p-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsProfileMenuOpen(false)
-                    logout()
-                  }}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer text-xs font-bold text-left"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign out</span>
-                </button>
-              </div>
+              )}
+
+              {/* VIEW 2: Profile Details */}
+              {mobileSettingsView === 'profile' && (
+                <div className="animate-in fade-in slide-in-from-right-2 duration-150">
+                  <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMobileSettingsView('menu')}
+                      className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      title="Back to options"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Profile Details</span>
+                  </div>
+
+                  <div className="p-3.5 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black text-sm flex items-center justify-center shadow-xs">
+                          {initial}
+                        </div>
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {displayName}
+                        </p>
+                        <p className="text-[11px] font-mono text-slate-400 dark:text-slate-400 truncate mt-0.5">
+                          {user?.email || 'user@retail.com'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400">Role</span>
+                        <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/60">
+                          {isAdmin ? 'Store Admin' : 'Store Associate'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400">Store / Org</span>
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">
+                          {tenantName}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 3: Theme Modes */}
+              {mobileSettingsView === 'theme' && (
+                <div className="animate-in fade-in slide-in-from-right-2 duration-150">
+                  <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMobileSettingsView('menu')}
+                      className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      title="Back to options"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Choose Theme</span>
+                  </div>
+
+                  <div className="p-3 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => handleThemeChange('light')}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                        theme === 'light'
+                          ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 font-bold shadow-2xs'
+                          : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Sun className="w-4 h-4 text-amber-500" />
+                        <span className="text-xs">Light mode</span>
+                      </div>
+                      {theme === 'light' && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleThemeChange('dark')}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                        theme === 'dark'
+                          ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 font-bold shadow-2xs'
+                          : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Moon className="w-4 h-4 text-indigo-400" />
+                        <span className="text-xs">Dark mode</span>
+                      </div>
+                      {theme === 'dark' && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleThemeChange('system')}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                        theme === 'system'
+                          ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 font-bold shadow-2xs'
+                          : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Monitor className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs">System default</span>
+                      </div>
+                      {theme === 'system' && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1097,8 +1221,8 @@ function MainApp() {
         </div>
 
         {/* Right Column Content Area */}
-        <div className="flex-1 flex flex-col h-full min-w-0 bg-[#F8FAFC] overflow-hidden">
-          <main className="flex-1 h-full min-h-0 overflow-y-auto px-2 sm:px-3 md:px-4 pt-2.5 md:pt-3 pb-14 md:pb-2 w-full flex flex-col">
+        <div className="flex-1 flex flex-col h-full min-w-0 bg-[#F8FAFC] dark:bg-[#090d16] overflow-hidden">
+          <main className="flex-1 h-full min-h-0 overflow-y-auto px-2 sm:px-3 md:px-4 pt-2.5 md:pt-3 pb-14 md:pb-2 w-full flex flex-col text-slate-900 dark:text-slate-100">
             {dataError && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">

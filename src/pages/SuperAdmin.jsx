@@ -357,7 +357,7 @@ export default function SuperAdmin({ user, onLogout }) {
             className="w-8 h-8 rounded-lg object-contain shrink-0 shadow-sm ring-1 ring-white/10"
           />
           <div className="hidden sm:flex items-center gap-2">
-            <span className="font-extrabold text-sm tracking-tight text-white">ApexShelf</span>
+            <span className="font-extrabold text-sm tracking-tight text-white">Shelf Scanner</span>
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
               Superadmin
             </span>
