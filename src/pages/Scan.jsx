@@ -344,54 +344,21 @@ export default function Scan({
       </div>
 
       {/* ========================================================================= */}
-      {/* ANIMATED FULL-WIDTH CAMERA BOX WITH RICH VIBRANT NON-BLACK BACKGROUND     */}
+      {/* FULL-WIDTH CAMERA BOX WITH CLEAN VIEW & RICH NON-BLACK BACKGROUND        */}
       {/* ========================================================================= */}
-      <div className="w-full flex-1 min-h-0 bg-white/90 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border-2 animate-camera-box p-3 sm:p-4 shadow-xl flex flex-col justify-between overflow-hidden relative">
-        {/* Full-Width Viewfinder Area with Vibrant Sci-Fi Background (Royal Indigo / Twilight Sapphire, NOT BLACK) */}
-        <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[460px] md:min-h-[520px] rounded-xl overflow-hidden bg-gradient-to-br from-[#0c142c] via-[#151c44] to-[#0f1d38] flex items-center justify-center border border-indigo-500/40 shadow-2xl">
-          {/* Luminous Animated Plasma Glow Orbs in Rich Violet & Cyan (NOT BLACK) */}
-          <div className="absolute -top-16 -left-16 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none animate-orb-1"></div>
-          <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-cyan-400/25 rounded-full blur-3xl pointer-events-none animate-orb-2"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-fuchsia-600/15 rounded-full blur-3xl pointer-events-none animate-scanner-pulse"></div>
-
-          {/* Sci-Fi Ambient Grid & Dot Patterns */}
-          <div className="absolute inset-0 cool-scan-grid opacity-35 pointer-events-none"></div>
-          <div className="absolute inset-0 cool-scan-dots opacity-25 pointer-events-none"></div>
-
-          {/* Sweeping Laser Beam Scanning Overlay Active Across the Entire Viewfinder */}
-          <div className="absolute inset-x-0 z-15 pointer-events-none animate-scan-sweep flex flex-col items-center">
-            <div className="w-full h-16 sm:h-28 bg-gradient-to-b from-transparent via-cyan-500/15 to-indigo-500/30"></div>
-            <div className="w-full h-[3px] bg-gradient-to-r from-transparent via-cyan-400 via-indigo-300 to-transparent shadow-[0_0_18px_#38bdf8,0_0_35px_#818cf8]"></div>
-            <div className="w-32 h-1 bg-cyan-300 rounded-full blur-[1px] -mt-0.5 shadow-[0_0_12px_#38bdf8]"></div>
-          </div>
-
-          {/* Futuristic HUD Corner Reticles (Pulsing Animation) */}
-          <div className="absolute inset-4 sm:inset-10 z-15 pointer-events-none animate-hud-pulse">
-            {/* Top-Left Corner */}
-            <div className="absolute top-0 left-0 w-8 h-8 sm:w-14 sm:h-14 border-t-2 border-l-2 border-cyan-400 rounded-tl-xl shadow-[0_0_14px_rgba(56,189,248,0.7)]"></div>
-            {/* Top-Right Corner */}
-            <div className="absolute top-0 right-0 w-8 h-8 sm:w-14 sm:h-14 border-t-2 border-r-2 border-cyan-400 rounded-tr-xl shadow-[0_0_14px_rgba(56,189,248,0.7)]"></div>
-            {/* Bottom-Left Corner */}
-            <div className="absolute bottom-0 left-0 w-8 h-8 sm:w-14 sm:h-14 border-b-2 border-l-2 border-cyan-400 rounded-bl-xl shadow-[0_0_14px_rgba(56,189,248,0.7)]"></div>
-            {/* Bottom-Right Corner */}
-            <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-14 sm:h-14 border-b-2 border-r-2 border-cyan-400 rounded-br-xl shadow-[0_0_14px_rgba(56,189,248,0.7)]"></div>
-
-            {/* Center Target Reticle & Rotating Dashed Ring */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full border border-dashed border-cyan-400/40 flex items-center justify-center animate-spin-slow">
-                <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_12px_#38bdf8]"></div>
-              </div>
-            </div>
-          </div>
+      <div className="w-full flex-1 min-h-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-xl flex flex-col justify-between overflow-hidden relative">
+        {/* Full-Width Viewfinder Area with Rich Indigo Sapphire Background (NOT BLACK) */}
+        <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[460px] md:min-h-[520px] rounded-xl overflow-hidden bg-gradient-to-br from-[#0c142c] via-[#151c44] to-[#0f1d38] flex items-center justify-center border border-indigo-500/30 shadow-2xl">
+          {/* Luminous Ambient Glow Orbs in Rich Violet & Cyan (NOT BLACK) */}
+          <div className="absolute -top-16 -left-16 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none animate-orb-1"></div>
+          <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none animate-orb-2"></div>
+          <div className="absolute inset-0 cool-scan-grid opacity-30 pointer-events-none"></div>
 
           {isAnalyzing ? (
-            /* ================= STATE 1: ANALYZING STATE WITH AI RADAR ================= */
+            /* ================= STATE 1: ANALYZING STATE ================= */
             <div className="relative w-full h-full min-h-0 flex flex-col items-center justify-center p-8 text-center space-y-4 z-20">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-indigo-600/30 border border-indigo-400/50 text-indigo-300 flex items-center justify-center shadow-xl shadow-indigo-500/30">
-                  <Loader2 className="w-10 h-10 animate-spin text-cyan-300" />
-                </div>
-                <div className="absolute -inset-2.5 rounded-2xl border-2 border-dashed border-cyan-400/60 animate-spin-slow pointer-events-none"></div>
+              <div className="w-20 h-20 rounded-2xl bg-indigo-600/30 border border-indigo-400/50 text-indigo-300 flex items-center justify-center shadow-xl shadow-indigo-500/30">
+                <Loader2 className="w-10 h-10 animate-spin text-cyan-300" />
               </div>
 
               <div className="max-w-md">
@@ -402,7 +369,7 @@ export default function Scan({
               </div>
             </div>
           ) : isCameraActive ? (
-            /* ================= STATE 2: LIVE CAMERA STREAM ================= */
+            /* ================= STATE 2: CLEAN LIVE CAMERA STREAM (NO OVERLAYS BLOCKING VIEW) ================= */
             <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
               <video
                 ref={videoRef}
@@ -412,23 +379,7 @@ export default function Scan({
                 className="w-full h-full object-contain sm:object-cover relative z-10"
               />
 
-              {/* Bottom Shelf Guide Hint */}
-              <div className="absolute bottom-3 inset-x-0 z-20 flex justify-center pointer-events-none">
-                <span className="text-cyan-200 text-[11px] font-mono font-bold px-3.5 py-1 rounded-lg bg-indigo-950/80 backdrop-blur-md border border-cyan-400/30 shadow-lg">
-                  ALIGN SHELF ROW HORIZONTALLY IN VIEW
-                </span>
-              </div>
-
-              {/* Top Live Camera Badge */}
-              <div className="absolute top-3.5 left-3.5 z-20 bg-indigo-950/85 backdrop-blur-md border border-cyan-400/40 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                </span>
-                <span className="tracking-wider text-cyan-300 font-mono">LIVE AI VISION</span>
-              </div>
-
-              {/* Camera Header Actions */}
+              {/* Minimal Clean Camera Controls (Top-Right Only, Clean & Unobtrusive) */}
               <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
                 <button
                   type="button"
@@ -449,7 +400,7 @@ export default function Scan({
               </div>
             </div>
           ) : previewUrl ? (
-            /* ================= STATE 3: PHOTO PREVIEW WITH HUD FRAME ================= */
+            /* ================= STATE 3: CLEAN PHOTO PREVIEW ================= */
             <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
               <img
                 src={previewUrl}
@@ -465,10 +416,6 @@ export default function Scan({
               >
                 <X className="w-4 h-4 text-rose-300" />
               </button>
-              <div className="absolute bottom-3.5 left-3.5 z-20 bg-indigo-950/90 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-emerald-400/40 flex items-center gap-2 shadow-xl">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>Photo captured · Click &ldquo;Analyse Shelf&rdquo; to start AI detection</span>
-              </div>
             </div>
           ) : (
             /* ================= STATE 4: IDLE STATE WITH GLOWING APERTURE ================= */
@@ -483,8 +430,6 @@ export default function Scan({
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600/40 via-indigo-500/30 to-cyan-500/30 text-cyan-300 group-hover:scale-105 transition-all flex items-center justify-center shadow-2xl shadow-indigo-500/30 border border-cyan-400/40">
                   <Camera className="w-10 h-10 stroke-[1.8] text-cyan-300 group-hover:text-white transition-colors" />
                 </div>
-                {/* Rotating Dashed Accent Ring */}
-                <div className="absolute -inset-2.5 rounded-3xl border-2 border-dashed border-indigo-400/40 group-hover:border-cyan-400/60 animate-spin-slow pointer-events-none"></div>
               </div>
 
               <p className="font-extrabold text-white text-lg sm:text-2xl mb-1.5 tracking-tight drop-shadow-md">
