@@ -267,3 +267,90 @@ html.dark .border-amber-200 {
   background-image: radial-gradient(rgba(56, 189, 248, 0.22) 1.2px, transparent 1.2px);
   background-size: 20px 20px;
 }
+
+/* ==========================================================================
+   Full Camera Box Animation & Rich Non-Black Sci-Fi Background
+   ========================================================================== */
+
+@keyframes camera-box-glow {
+  0%, 100% {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.18), inset 0 0 20px rgba(99, 102, 241, 0.08);
+  }
+  33% {
+    border-color: rgba(56, 189, 248, 0.55);
+    box-shadow: 0 0 32px rgba(56, 189, 248, 0.24), inset 0 0 25px rgba(56, 189, 248, 0.1);
+  }
+  66% {
+    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 28px rgba(168, 85, 247, 0.2), inset 0 0 22px rgba(168, 85, 247, 0.08);
+  }
+}
+
+@keyframes orb-float-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(30px, -20px) scale(1.18);
+    opacity: 0.6;
+  }
+}
+
+@keyframes orb-float-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-35px, 25px) scale(0.95);
+    opacity: 0.55;
+  }
+}
+
+@keyframes scan-sweep {
+  0% {
+    top: 0%;
+    opacity: 0.9;
+  }
+  50% {
+    top: 96%;
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0.9;
+  }
+}
+
+@keyframes hud-corner-pulse {
+  0%, 100% {
+    opacity: 0.75;
+    filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.6));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.95));
+  }
+}
+
+.animate-camera-box {
+  animation: camera-box-glow 5s ease-in-out infinite;
+}
+
+.animate-orb-1 {
+  animation: orb-float-1 7s ease-in-out infinite;
+}
+
+.animate-orb-2 {
+  animation: orb-float-2 9s ease-in-out infinite;
+}
+
+.animate-scan-sweep {
+  animation: scan-sweep 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-hud-pulse {
+  animation: hud-corner-pulse 2.5s ease-in-out infinite;
+}
