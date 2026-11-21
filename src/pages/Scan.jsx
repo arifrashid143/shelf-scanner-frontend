@@ -344,213 +344,247 @@ export default function Scan({
       </div>
 
       {/* ========================================================================= */}
-      {/* FULL-WIDTH CAMERA BOX WITH CLEAN VIEW & RICH NON-BLACK BACKGROUND        */}
+      {/* CAMERA BOX WITH MODERN PERIMETER BORDER BEAM ANIMATION                    */}
       {/* ========================================================================= */}
-      <div className="w-full flex-1 min-h-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-xl flex flex-col justify-between overflow-hidden relative">
-        {/* Full-Width Viewfinder Area with Rich Indigo Sapphire Background (NOT BLACK) */}
-        <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[460px] md:min-h-[520px] rounded-xl overflow-hidden bg-gradient-to-br from-[#0c142c] via-[#151c44] to-[#0f1d38] flex items-center justify-center border border-indigo-500/30 shadow-2xl">
-          {/* Luminous Ambient Glow Orbs in Rich Violet & Cyan (NOT BLACK) */}
-          <div className="absolute -top-16 -left-16 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none animate-orb-1"></div>
-          <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none animate-orb-2"></div>
-          <div className="absolute inset-0 cool-scan-grid opacity-30 pointer-events-none"></div>
+      <div className="relative w-full flex-1 min-h-0 rounded-2xl overflow-hidden p-[2px] shadow-2xl flex flex-col justify-between">
+        {/* Animated Traveling Border Beam Comet around the whole box */}
+        <div className="absolute -inset-[150%] animate-border-beam pointer-events-none z-0">
+          <div
+            className="w-full h-full"
+            style={{
+              background: 'conic-gradient(from 0deg, transparent 0deg, transparent 270deg, #38bdf8 315deg, #818cf8 345deg, transparent 360deg)',
+            }}
+          />
+        </div>
 
-          {isAnalyzing ? (
-            /* ================= STATE 1: ANALYZING STATE ================= */
-            <div className="relative w-full h-full min-h-0 flex flex-col items-center justify-center p-8 text-center space-y-4 z-20">
-              <div className="w-20 h-20 rounded-2xl bg-indigo-600/30 border border-indigo-400/50 text-indigo-300 flex items-center justify-center shadow-xl shadow-indigo-500/30">
-                <Loader2 className="w-10 h-10 animate-spin text-cyan-300" />
-              </div>
+        {/* Inner Card Container */}
+        <div className="relative z-1 w-full h-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-[calc(1rem-2px)] p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
+          {/* Viewfinder with Rich Twilight Sapphire & Indigo Background (NOT BLACK) */}
+          <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[460px] md:min-h-[520px] rounded-xl overflow-hidden bg-gradient-to-br from-[#0d1636] via-[#172252] to-[#0f1d3d] flex items-center justify-center border border-indigo-500/30 shadow-inner">
+            {/* Luminous Ambient Floating Glows */}
+            <div className="absolute -top-16 -left-16 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none animate-orb-1"></div>
+            <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none animate-orb-2"></div>
+            <div className="absolute inset-0 cool-scan-grid opacity-30 pointer-events-none"></div>
 
-              <div className="max-w-md">
-                <h3 className="font-extrabold text-white text-base sm:text-lg">Analyzing shelf scan with AI...</h3>
-                <p className="text-xs sm:text-sm text-cyan-300 mt-1.5 font-medium">
-                  {analysisStatus || 'Computer vision engine detecting products, counts, and gaps'}
-                </p>
-              </div>
+            {/* Viewfinder Edge-Scanning Track Animation (Top Rim Scanner Beam) */}
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-indigo-500/20 z-15 pointer-events-none overflow-hidden">
+              <div className="absolute top-0 w-44 h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_10px_#38bdf8] animate-edge-scan"></div>
             </div>
-          ) : isCameraActive ? (
-            /* ================= STATE 2: CLEAN LIVE CAMERA STREAM (NO OVERLAYS BLOCKING VIEW) ================= */
-            <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-contain sm:object-cover relative z-10"
-              />
 
-              {/* Minimal Clean Camera Controls (Top-Right Only, Clean & Unobtrusive) */}
-              <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
+            {/* Minimalist 1px Corner Brackets (Breathing Glow, Clean & Non-Obtrusive) */}
+            <div className="absolute inset-4 sm:inset-6 z-15 pointer-events-none animate-corner-breathe">
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-cyan-400/80 rounded-tl-lg"></div>
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-cyan-400/80 rounded-tr-lg"></div>
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-cyan-400/80 rounded-bl-lg"></div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-cyan-400/80 rounded-br-lg"></div>
+            </div>
+
+            {isAnalyzing ? (
+              /* ================= STATE 1: ANALYZING STATE ================= */
+              <div className="relative w-full h-full min-h-0 flex flex-col items-center justify-center p-8 text-center space-y-4 z-20">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-2xl bg-indigo-600/30 border border-indigo-400/50 text-indigo-300 flex items-center justify-center shadow-xl shadow-indigo-500/30">
+                    <Loader2 className="w-10 h-10 animate-spin text-cyan-300" />
+                  </div>
+                  {/* Subtle Radar Ripple */}
+                  <div className="absolute inset-0 rounded-2xl border border-cyan-400/50 animate-radar-ripple pointer-events-none"></div>
+                </div>
+
+                <div className="max-w-md">
+                  <h3 className="font-extrabold text-white text-base sm:text-lg">Analyzing shelf scan with AI...</h3>
+                  <p className="text-xs sm:text-sm text-cyan-300 mt-1.5 font-medium">
+                    {analysisStatus || 'Computer vision engine detecting products, counts, and gaps'}
+                  </p>
+                </div>
+              </div>
+            ) : isCameraActive ? (
+              /* ================= STATE 2: CLEAN LIVE CAMERA STREAM ================= */
+              <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-contain sm:object-cover relative z-10"
+                />
+
+                {/* Minimal Clean Camera Controls (Top-Right Only, Clean & Unobtrusive) */}
+                <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleCameraFacing}
+                    className="p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-transform active:scale-90 cursor-pointer shadow-lg"
+                    title="Switch Camera (Front/Rear)"
+                  >
+                    <RotateCcw className="w-4 h-4 text-cyan-300" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-colors cursor-pointer shadow-lg"
+                    title="Close Camera"
+                  >
+                    <X className="w-4 h-4 text-rose-300" />
+                  </button>
+                </div>
+              </div>
+            ) : previewUrl ? (
+              /* ================= STATE 3: CLEAN PHOTO PREVIEW ================= */
+              <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                <img
+                  src={previewUrl}
+                  alt="Shelf Scan Preview"
+                  className="w-full h-full object-contain relative z-10"
+                />
+
                 <button
                   type="button"
-                  onClick={toggleCameraFacing}
-                  className="p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-transform active:scale-90 cursor-pointer shadow-lg"
-                  title="Switch Camera (Front/Rear)"
-                >
-                  <RotateCcw className="w-4 h-4 text-cyan-300" />
-                </button>
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-colors cursor-pointer shadow-lg"
-                  title="Close Camera"
+                  onClick={handleClearImage}
+                  className="absolute top-3.5 right-3.5 z-20 p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-all cursor-pointer shadow-lg"
+                  title="Remove image"
                 >
                   <X className="w-4 h-4 text-rose-300" />
                 </button>
               </div>
-            </div>
-          ) : previewUrl ? (
-            /* ================= STATE 3: CLEAN PHOTO PREVIEW ================= */
-            <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-              <img
-                src={previewUrl}
-                alt="Shelf Scan Preview"
-                className="w-full h-full object-contain relative z-10"
-              />
-
-              <button
-                type="button"
-                onClick={handleClearImage}
-                className="absolute top-3.5 right-3.5 z-20 p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-all cursor-pointer shadow-lg"
-                title="Remove image"
+            ) : (
+              /* ================= STATE 4: IDLE STATE WITH CONCENTRIC RADAR RIPPLES ================= */
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onClick={() => galleryInputRef.current?.click()}
+                className="relative w-full h-full min-h-0 p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all group z-10 overflow-hidden"
               >
-                <X className="w-4 h-4 text-rose-300" />
-              </button>
-            </div>
-          ) : (
-            /* ================= STATE 4: IDLE STATE WITH GLOWING APERTURE ================= */
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onClick={() => galleryInputRef.current?.click()}
-              className="relative w-full h-full min-h-0 p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all group z-10 overflow-hidden"
-            >
-              {/* Glowing Aperture Icon */}
-              <div className="relative mb-5">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600/40 via-indigo-500/30 to-cyan-500/30 text-cyan-300 group-hover:scale-105 transition-all flex items-center justify-center shadow-2xl shadow-indigo-500/30 border border-cyan-400/40">
-                  <Camera className="w-10 h-10 stroke-[1.8] text-cyan-300 group-hover:text-white transition-colors" />
+                {/* Glowing Aperture Icon with Expanding Radar Waves */}
+                <div className="relative mb-6">
+                  {/* Expanding Holographic Radar Rings */}
+                  <div className="absolute -inset-4 rounded-full border border-cyan-400/30 animate-radar-ripple pointer-events-none"></div>
+                  <div className="absolute -inset-8 rounded-full border border-indigo-400/20 animate-radar-ripple [animation-delay:1.2s] pointer-events-none"></div>
+
+                  <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600/40 via-indigo-500/30 to-cyan-500/30 text-cyan-300 group-hover:scale-105 transition-all flex items-center justify-center shadow-2xl shadow-indigo-500/30 border border-cyan-400/40">
+                    <Camera className="w-10 h-10 stroke-[1.8] text-cyan-300 group-hover:text-white transition-colors" />
+                  </div>
+                </div>
+
+                <p className="font-extrabold text-white text-lg sm:text-2xl mb-1.5 tracking-tight drop-shadow-md">
+                  AI Vision Shelf Scanner
+                </p>
+                <p className="text-xs sm:text-sm text-cyan-200/80 mb-6 max-w-md font-medium">
+                  Align shelf straight in frame with live camera, or upload a photo to detect products, counts, and gaps.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-3 relative z-20">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      startCamera()
+                    }}
+                    className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 active:scale-95 text-white font-bold px-6 py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/40 border border-cyan-300/40"
+                  >
+                    <Camera className="w-4 h-4 text-white" />
+                    <span>Launch Live Camera</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      galleryInputRef.current?.click()
+                    }}
+                    className="bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm border border-cyan-400/30 transition-all flex items-center gap-2 cursor-pointer backdrop-blur-md"
+                  >
+                    <ImageIcon className="w-4 h-4 text-cyan-300" />
+                    <span>Browse gallery</span>
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
 
-              <p className="font-extrabold text-white text-lg sm:text-2xl mb-1.5 tracking-tight drop-shadow-md">
-                AI Vision Shelf Scanner
-              </p>
-              <p className="text-xs sm:text-sm text-cyan-200/80 mb-6 max-w-md font-medium">
-                Align shelf straight in frame with live camera, or upload a photo to detect products, counts, and gaps.
-              </p>
-
-              <div className="flex flex-wrap items-center justify-center gap-3 relative z-20">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    startCamera()
-                  }}
-                  className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 active:scale-95 text-white font-bold px-6 py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/40 border border-cyan-300/40"
-                >
-                  <Camera className="w-4 h-4 text-white" />
-                  <span>Launch Live Camera</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    galleryInputRef.current?.click()
-                  }}
-                  className="bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm border border-cyan-400/30 transition-all flex items-center gap-2 cursor-pointer backdrop-blur-md"
-                >
-                  <ImageIcon className="w-4 h-4 text-cyan-300" />
-                  <span>Browse gallery</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Action Bar */}
-        <div className="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          {isCameraActive ? (
-            <>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Align shelf in frame and click &ldquo;Take Photo&rdquo;.
-              </span>
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={capturePhoto}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all"
-                >
-                  <Camera className="w-4 h-4 text-white" />
-                  <span>Take Photo</span>
-                </button>
-              </div>
-            </>
-          ) : previewUrl ? (
-            <>
-              <div className="flex items-center gap-2 truncate">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                <span className="text-xs text-slate-700 dark:text-slate-300 font-bold truncate max-w-[200px]">
-                  {selectedFile?.name || 'shelf_capture.jpg'}
+          {/* Bottom Action Bar */}
+          <div className="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            {isCameraActive ? (
+              <>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Align shelf in frame and click &ldquo;Take Photo&rdquo;.
                 </span>
-                <span className="text-[11px] text-slate-400 shrink-0">· Ready</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleClearImage()
-                    startCamera()
-                  }}
-                  disabled={isAnalyzing}
-                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
-                >
-                  Retake Photo
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAnalyzeClick}
-                  disabled={isAnalyzing}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>Analyzing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 text-white" />
-                      <span>Analyse Shelf</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-                JPG, PNG or WEBP up to 20 MB · Real-time AI vision detection
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled
-                  className="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold text-xs sm:text-sm border border-slate-200/80 dark:border-slate-800 cursor-not-allowed flex items-center gap-2 select-none opacity-60"
-                  title="Capture or upload a shelf photo first"
-                >
-                  <Sparkles className="w-4 h-4 text-slate-400" />
-                  <span>Analyse</span>
-                </button>
-              </div>
-            </>
-          )}
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all"
+                  >
+                    <Camera className="w-4 h-4 text-white" />
+                    <span>Take Photo</span>
+                  </button>
+                </div>
+              </>
+            ) : previewUrl ? (
+              <>
+                <div className="flex items-center gap-2 truncate">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold truncate max-w-[200px]">
+                    {selectedFile?.name || 'shelf_capture.jpg'}
+                  </span>
+                  <span className="text-[11px] text-slate-400 shrink-0">· Ready</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleClearImage()
+                      startCamera()
+                    }}
+                    disabled={isAnalyzing}
+                    className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                  >
+                    Retake Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAnalyzeClick}
+                    disabled={isAnalyzing}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-white" />
+                        <span>Analyse Shelf</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                  JPG, PNG or WEBP up to 20 MB · Real-time AI vision detection
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled
+                    className="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold text-xs sm:text-sm border border-slate-200/80 dark:border-slate-800 cursor-not-allowed flex items-center gap-2 select-none opacity-60"
+                    title="Capture or upload a shelf photo first"
+                  >
+                    <Sparkles className="w-4 h-4 text-slate-400" />
+                    <span>Analyse</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

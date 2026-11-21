@@ -354,3 +354,115 @@ html.dark .border-amber-200 {
 .animate-hud-pulse {
   animation: hud-corner-pulse 2.5s ease-in-out infinite;
 }
+
+/* ==========================================================================
+   AI Shelf Scanner Modern Animations (Border Beam, Edge Scan, Radar Ripple)
+   ========================================================================== */
+
+@keyframes border-beam {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes edge-scan-horizontal {
+  0% {
+    left: 0%;
+    opacity: 0.3;
+  }
+  50% {
+    left: 75%;
+    opacity: 1;
+  }
+  100% {
+    left: 0%;
+    opacity: 0.3;
+  }
+}
+
+@keyframes radar-ripple {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes corner-bracket-breathe {
+  0%, 100% {
+    opacity: 0.45;
+    filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.4));
+  }
+  50% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));
+  }
+}
+
+@keyframes orb-float-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(30px, -20px) scale(1.18);
+    opacity: 0.6;
+  }
+}
+
+@keyframes orb-float-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-35px, 25px) scale(0.95);
+    opacity: 0.55;
+  }
+}
+
+.animate-border-beam {
+  animation: border-beam 5s linear infinite;
+}
+
+.animate-edge-scan {
+  animation: edge-scan-horizontal 3s ease-in-out infinite;
+}
+
+.animate-radar-ripple {
+  animation: radar-ripple 2.6s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.animate-corner-breathe {
+  animation: corner-bracket-breathe 3s ease-in-out infinite;
+}
+
+.animate-orb-1 {
+  animation: orb-float-1 7s ease-in-out infinite;
+}
+
+.animate-orb-2 {
+  animation: orb-float-2 9s ease-in-out infinite;
+}
+
+.cool-scan-grid {
+  background-image: 
+    linear-gradient(to right, rgba(99, 102, 241, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.12) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.cool-scan-dots {
+  background-image: radial-gradient(rgba(56, 189, 248, 0.22) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
