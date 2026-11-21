@@ -44,9 +44,9 @@ export default function Orders({
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 statusFilter === tab
-                  ? 'bg-[#5956c6] text-white shadow-xs'
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
                   : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
               }`}
             >
@@ -129,9 +129,9 @@ export default function Orders({
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   statusFilter === tab
-                    ? 'bg-[#5956c6] text-white shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 font-bold'
                     : 'bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >

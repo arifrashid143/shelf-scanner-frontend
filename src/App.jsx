@@ -125,8 +125,8 @@ function MainApp() {
     'Apex Retail'
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
-  // Consistent background matching dashboard photo theme
-  const getPageBg = () => 'bg-[#EDEDED]'
+  // Consistent crisp background
+  const getPageBg = () => 'bg-[#F8FAFC]'
 
   const [currentTab, setCurrentTab] = useState('dashboard')
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -934,14 +934,33 @@ function MainApp() {
       )}
 
       {/* Global Top Navbar spanning full width */}
-      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-white/10 shadow-2xs select-none">
-        {/* Left: Brand Logo */}
-        <div className="flex items-center gap-2">
-          <img
-            src={logoImg}
-            alt="Shelf Scanner"
-            className="w-8 h-8 rounded-md object-contain shrink-0 shadow-2xs"
-          />
+      <header className="h-14 w-full bg-slate-900 text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-slate-800 shadow-sm select-none">
+        {/* Left: Brand Logo & Title */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex items-center justify-center">
+            <img
+              src={logoImg}
+              alt="Shelf Scanner"
+              className="w-8 h-8 rounded-lg object-contain shrink-0 shadow-sm ring-1 ring-white/10"
+            />
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="font-extrabold text-sm tracking-tight text-white">ApexShelf</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+              AI Vision
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Live AI Status Indicator */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs shadow-2xs">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-slate-300 font-semibold text-[11px]">AI Vision Engine</span>
+          <span className="text-slate-500 font-medium text-[10px]">·</span>
+          <span className="text-emerald-400 font-bold text-[11px]">Ready</span>
         </div>
 
         {/* Right: User Profile Avatar with dropdown */}
@@ -949,27 +968,27 @@ function MainApp() {
           <button
             type="button"
             onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 hover:from-indigo-500 hover:to-violet-400 text-white font-black text-xs sm:text-sm flex items-center justify-center shadow-sm transition-transform active:scale-95 cursor-pointer focus:outline-none ring-2 ring-slate-800"
             aria-label="User profile menu"
             aria-expanded={isProfileMenuOpen}
           >
             <span>{initial}</span>
             {/* Active online green indicator dot on bottom right */}
             <span
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#3F4168]"
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900"
               title="Online"
             />
           </button>
 
           {isProfileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-md border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
+            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-xl border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
               {/* Top Section: User Avatar & Details */}
-              <div className="p-4 sm:p-5 flex items-center gap-3.5">
+              <div className="p-4 sm:p-5 flex items-center gap-3.5 bg-gradient-to-b from-slate-50 to-white">
                 <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-[#d8c4d9] text-[#4a3952] ring-4 ring-[#ecd8ec]/60 flex items-center justify-center font-black text-lg shadow-xs">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white ring-4 ring-indigo-50 flex items-center justify-center font-black text-lg shadow-sm">
                     {initial}
                   </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#52b757] ring-2 ring-white" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight truncate">
@@ -978,7 +997,7 @@ function MainApp() {
                   <p className="text-xs font-mono text-slate-400 truncate mt-0.5">
                     {user?.email || 'user@retail.com'}
                   </p>
-                  <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
+                  <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/80">
                     {isAdmin ? 'Store Admin' : 'Store Associate'} · {tenantName}
                   </span>
                 </div>
@@ -995,9 +1014,9 @@ function MainApp() {
                     setIsProfileMenuOpen(false)
                     logout()
                   }}
-                  className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer group text-left"
                 >
-                  <div className="w-9 h-9 rounded-md bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 group-hover:bg-rose-100 transition-colors">
                     <LogOut className="w-4 h-4 text-rose-600" />
                   </div>
                   <span className="text-sm font-bold text-rose-600">
@@ -1026,8 +1045,8 @@ function MainApp() {
         </div>
 
         {/* Right Column Content Area */}
-        <div className="flex-1 flex flex-col h-full min-w-0 bg-[#EDEDED] overflow-hidden">
-          <main className="flex-1 h-full min-h-0 overflow-y-auto px-2 sm:px-2.5 md:px-3 pt-2 md:pt-2.5 pb-14 md:pb-1.5 w-full flex flex-col">
+        <div className="flex-1 flex flex-col h-full min-w-0 bg-[#F8FAFC] overflow-hidden">
+          <main className="flex-1 h-full min-h-0 overflow-y-auto px-2 sm:px-3 md:px-4 pt-2.5 md:pt-3 pb-14 md:pb-2 w-full flex flex-col">
             {dataError && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">

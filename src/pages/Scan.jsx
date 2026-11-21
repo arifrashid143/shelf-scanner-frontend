@@ -435,7 +435,7 @@ export default function Scan({
                 type="button"
                 onClick={handleAnalyzeClick}
                 disabled={isAnalyzing}
-                className="flex-2 py-2.5 px-4 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-95 text-white font-bold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="flex-2 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-sm shadow-indigo-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
               >
                 {isAnalyzing ? (
                   <>
@@ -738,7 +738,7 @@ export default function Scan({
                       type="button"
                       onClick={handleAnalyzeClick}
                       disabled={isAnalyzing}
-                      className="px-5 py-2 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-95 text-white font-bold text-xs sm:text-sm shadow-xs flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                      className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-sm shadow-indigo-500/25 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                     >
                       {isAnalyzing ? (
                         <>

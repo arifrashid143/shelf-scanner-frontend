@@ -170,7 +170,7 @@ export default function Inventory({
         {isAdmin && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-md text-xs sm:text-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm shadow-sm shadow-indigo-500/25 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             Add new product
@@ -627,7 +627,7 @@ export default function Inventory({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-[#5956c6] hover:bg-[#4d4ab5] text-white rounded-md shadow-xs cursor-pointer"
+                  className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm shadow-indigo-500/20 cursor-pointer transition-all"
                 >
                   Save Product
                 </button>

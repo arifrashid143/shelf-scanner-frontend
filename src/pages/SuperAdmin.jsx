@@ -322,11 +322,11 @@ export default function SuperAdmin({ user, onLogout }) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#EDEDED] font-sans text-slate-900 antialiased flex flex-col">
+    <div className="min-h-screen w-full bg-[#F8FAFC] font-sans text-slate-900 antialiased flex flex-col">
       {/* Toast Alert */}
       {toastMessage && (
         <div
-          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
+          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
             toastMessage.type === 'error'
               ? 'bg-rose-900 border-rose-700'
               : toastMessage.type === 'success'
@@ -340,22 +340,28 @@ export default function SuperAdmin({ user, onLogout }) {
                 ? 'bg-rose-400'
                 : toastMessage.type === 'success'
                 ? 'bg-emerald-400'
-                : 'bg-blue-400'
+                : 'bg-indigo-400'
             }`}
           ></span>
           {toastMessage.text}
         </div>
       )}
 
-      {/* ==================== TOP HEADER (MATCHING OTHER PAGES) ==================== */}
-      <header className="h-14 w-full bg-[#3F4168] text-white shrink-0 z-30 flex items-center justify-between px-2.5 sm:px-3 border-b border-white/10 shadow-2xs select-none sticky top-0">
+      {/* ==================== TOP HEADER ==================== */}
+      <header className="h-14 w-full bg-slate-900 text-white shrink-0 z-30 flex items-center justify-between px-3 sm:px-5 border-b border-slate-800 shadow-sm select-none sticky top-0">
         {/* Left: Brand Logo */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <img
             src={logoImg}
             alt="Shelf Scanner"
-            className="w-8 h-8 rounded-md object-contain shrink-0 shadow-2xs"
+            className="w-8 h-8 rounded-lg object-contain shrink-0 shadow-sm ring-1 ring-white/10"
           />
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="font-extrabold text-sm tracking-tight text-white">ApexShelf</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+              Superadmin
+            </span>
+          </div>
         </div>
 
         {/* Right: User Profile Avatar with dropdown */}
@@ -363,28 +369,28 @@ export default function SuperAdmin({ user, onLogout }) {
           <button
             type="button"
             onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            className="relative w-8 h-8 rounded-full bg-[#d8c4d9] hover:bg-[#cdb6cf] text-[#4a3952] font-black text-xs sm:text-sm flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 hover:from-indigo-500 hover:to-violet-400 text-white font-black text-xs sm:text-sm flex items-center justify-center shadow-sm transition-transform active:scale-95 cursor-pointer focus:outline-none ring-2 ring-slate-800"
             aria-label="User profile menu"
             aria-expanded={isProfileMenuOpen}
           >
             <span>{userInitial}</span>
             {/* Active online green indicator dot on bottom right */}
             <span
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#52b757] ring-2 ring-[#3F4168]"
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900"
               title="Online"
             />
           </button>
 
-          {/* Profile Dropdown Menu (Matching Provided Design) */}
+          {/* Profile Dropdown Menu */}
           {isProfileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-md border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
+            <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-xl border border-slate-200/90 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 text-slate-900">
               {/* Top Section: User Avatar & Details */}
-              <div className="p-4 sm:p-5 flex items-center gap-3.5">
+              <div className="p-4 sm:p-5 flex items-center gap-3.5 bg-gradient-to-b from-slate-50 to-white">
                 <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-[#d8c4d9] text-[#4a3952] ring-4 ring-[#ecd8ec]/60 flex items-center justify-center font-black text-lg shadow-xs">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white ring-4 ring-indigo-50 flex items-center justify-center font-black text-lg shadow-sm">
                     {userInitial}
                   </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#52b757] ring-2 ring-white" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight truncate">

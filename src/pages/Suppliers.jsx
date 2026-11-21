@@ -154,7 +154,7 @@ export default function Suppliers({ isAdmin, onShowToast }) {
               setFormError('')
               setIsAddModalOpen(true)
             }}
-            className="px-3.5 py-1.5 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer self-start sm:self-auto"
+            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm shadow-indigo-500/20 cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Register Supplier</span>
@@ -656,7 +656,7 @@ export default function Suppliers({ isAdmin, onShowToast }) {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-1.5 text-xs font-bold bg-[#5956c6] hover:bg-[#4d4ab5] text-white rounded-md shadow-xs cursor-pointer disabled:opacity-60"
+                  className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm shadow-indigo-500/20 cursor-pointer disabled:opacity-60 transition-all"
                 >
                   {saving ? 'Saving...' : 'Register Vendor'}
                 </button>

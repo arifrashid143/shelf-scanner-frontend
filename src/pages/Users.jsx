@@ -352,7 +352,7 @@ export default function Users({ isAdmin, currentUser, onShowToast }) {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-semibold px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-md text-xs sm:text-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm shadow-sm shadow-indigo-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <UserPlus className="w-4 h-4 stroke-[2.5]" />
               <span>Create user</span>
@@ -426,7 +426,7 @@ export default function Users({ isAdmin, currentUser, onShowToast }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name or email..."
-            className="w-full pl-9 pr-3.5 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5956c6]/20 focus:border-[#5956c6] transition-all"
+            className="w-full pl-9 pr-3.5 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
           />
         </div>
 
@@ -849,7 +849,7 @@ export default function Users({ isAdmin, currentUser, onShowToast }) {
                 <button
                   type="submit"
                   disabled={creating}
-                  className="bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-98 text-white font-bold px-5 py-2 rounded-md text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold px-5 py-2 rounded-xl text-xs sm:text-sm shadow-sm shadow-indigo-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {creating ? (
                     <>
@@ -1024,7 +1024,7 @@ export default function Users({ isAdmin, currentUser, onShowToast }) {
                 <button
                   type="submit"
                   disabled={updating}
-                  className="bg-[#5956c6] hover:bg-[#4d4ab5] text-white font-bold px-5 py-2 rounded-md text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl text-xs sm:text-sm shadow-sm shadow-indigo-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {updating ? (
                     <>

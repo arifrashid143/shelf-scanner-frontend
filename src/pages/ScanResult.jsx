@@ -508,9 +508,9 @@ export default function ScanResult({
 
       {/* AI Auto-Generated Purchase Order Banner */}
       {(scanData?.auto_po_id || lowStockCandidates.length > 0) && (
-        <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white rounded-md border border-blue-200/90 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-indigo-50/90 via-blue-50/50 to-white rounded-xl border border-indigo-200/90 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-md bg-[#5956c6] text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-indigo-500/20">
               <ShoppingCart className="w-5 h-5" />
             </div>
             <div>
@@ -519,7 +519,7 @@ export default function ScanResult({
                   AI Auto-Generated Purchase Order
                 </h3>
                 {scanData?.auto_po_id && (
-                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200">
+                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
                     #{scanData.auto_po_id}
                   </span>
                 )}
@@ -532,7 +532,7 @@ export default function ScanResult({
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('orders')}
-            className="px-4 py-2 rounded-md bg-[#5956c6] hover:bg-[#4d4ab5] active:scale-95 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-xs shrink-0 self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-sm shadow-indigo-500/20 shrink-0 self-start sm:self-auto"
           >
             <span>View on Purchase Orders page</span>
             <ArrowRight className="w-4 h-4" />

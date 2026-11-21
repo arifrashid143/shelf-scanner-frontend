@@ -23,7 +23,7 @@ export default function OrderDetail({
         <button
           type="button"
           onClick={onBack}
-          className="px-4 py-2 bg-[#5956c6] text-white font-bold rounded-md text-xs hover:bg-[#4d4ab5] transition-all cursor-pointer"
+          className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs hover:bg-indigo-700 shadow-sm shadow-indigo-500/20 transition-all cursor-pointer"
         >
           Back to Orders
         </button>

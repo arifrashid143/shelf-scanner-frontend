@@ -315,7 +315,7 @@ export default function Analytics({ onShowToast, onNavigateToOrders }) {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#5956c6]/10 text-[#5956c6] border border-[#5956c6]/20">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                         +Reorder {recommendedQty}
                       </span>
                       <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">
