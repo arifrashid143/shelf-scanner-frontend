@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -13,6 +15,11 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+  }
+
+  html.dark body {
+    background-color: #090d16;
+    color: #f1f5f9;
   }
 
   /* Sleek custom scrollbars for independent table and panel scrolling */

@@ -16,7 +16,7 @@ import Shelves from './pages/Shelves'
 import Suppliers from './pages/Suppliers'
 import Analytics from './pages/Analytics'
 import logoImg from './assets/logo.png'
-import { Loader2, LogOut } from 'lucide-react'
+import { Loader2, LogOut, Sun, Moon, Monitor } from 'lucide-react'
 
 function normalizeOrder(order) {
   if (!order) return null
@@ -126,7 +126,52 @@ function MainApp() {
   const initial = displayName.charAt(0).toUpperCase() || 'P'
 
   // Consistent crisp background
-  const getPageBg = () => 'bg-[#F8FAFC]'
+  const getPageBg = () => 'bg-[#F8FAFC] dark:bg-slate-950 dark:text-slate-100'
+
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('shelf_theme') || 'light'
+    } catch {
+      return 'light'
+    }
+  })
+
+  useEffect(() => {
+    const updateDomTheme = (mode) => {
+      const isDark =
+        mode === 'dark' ||
+        (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      if (isDark) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    }
+
+    updateDomTheme(theme)
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => {
+      try {
+        if ((localStorage.getItem('shelf_theme') || 'light') === 'system') {
+          updateDomTheme('system')
+        }
+      } catch {
+        // ignore
+      }
+    }
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [theme])
+
+  const handleThemeChange = (mode) => {
+    setTheme(mode)
+    try {
+      localStorage.setItem('shelf_theme', mode)
+    } catch {
+      // ignore
+    }
+  }
 
   const [currentTab, setCurrentTab] = useState('dashboard')
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -933,47 +978,88 @@ function MainApp() {
         </div>
       )}
 
-      {/* Mobile Top Header (Hidden on Desktop where logo & profile are in sidebar navbar) */}
-      <header className="md:hidden h-12 w-full bg-white border-b border-slate-200/90 shrink-0 z-30 flex items-center justify-between px-3 select-none">
+      {/* Mobile Top Header (Hidden on Desktop where logo & settings are in sidebar navbar) */}
+      <header className="md:hidden h-12 w-full bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 shrink-0 z-30 flex items-center justify-between px-3 select-none">
         {/* Left: Brand Logo & Title */}
         <div className="flex items-center gap-2">
           <img
             src={logoImg}
             alt="ApexShelf"
-            className="w-7 h-7 rounded-lg object-contain shrink-0 shadow-2xs ring-1 ring-slate-200/90 bg-white"
+            className="w-7 h-7 rounded-lg object-contain shrink-0 shadow-2xs ring-1 ring-slate-200/90 dark:ring-slate-700 bg-white"
           />
-          <span className="font-extrabold text-sm tracking-tight text-slate-900">ApexShelf</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+          <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white">ApexShelf</span>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800">
             Visual AI
           </span>
         </div>
 
-        {/* Right: User Profile Avatar with dropdown */}
+        {/* Right: User Settings / Profile Avatar with dropdown */}
         <div className="relative shrink-0 flex items-center" ref={profileMenuRef}>
           <button
             type="button"
             onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            className="relative w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black text-xs flex items-center justify-center shadow-2xs cursor-pointer focus:outline-none ring-1.5 ring-slate-200"
-            aria-label="User profile menu"
+            className="relative w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black text-xs flex items-center justify-center shadow-2xs cursor-pointer focus:outline-none ring-1.5 ring-slate-200 dark:ring-slate-700"
+            aria-label="User settings menu"
             aria-expanded={isProfileMenuOpen}
           >
             <span>{initial}</span>
             <span
-              className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white"
+              className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900"
               title="Online"
             />
           </button>
 
           {isProfileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-slate-200/90 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 text-slate-900">
-              <div className="p-3 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900 truncate">{displayName}</p>
-                <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 text-slate-900 dark:text-slate-100">
+              <div className="p-3 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
+                <p className="text-[11px] font-mono text-slate-400 dark:text-slate-400 truncate mt-0.5">
                   {user?.email || 'user@retail.com'}
                 </p>
-                <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800">
                   {isAdmin ? 'Store Admin' : 'Store Associate'} · {tenantName}
                 </span>
+              </div>
+              {/* Theme Modes for Mobile */}
+              <div className="p-2.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => handleThemeChange('light')}
+                    className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      theme === 'light'
+                        ? 'bg-white text-indigo-700 shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Sun className="w-3 h-3" />
+                    <span>Light</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleThemeChange('dark')}
+                    className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      theme === 'dark'
+                        ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Moon className="w-3 h-3" />
+                    <span>Dark</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleThemeChange('system')}
+                    className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      theme === 'system'
+                        ? 'bg-white dark:bg-indigo-600 text-indigo-700 dark:text-white shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Monitor className="w-3 h-3" />
+                    <span>Auto</span>
+                  </button>
+                </div>
               </div>
               <div className="p-1.5">
                 <button
@@ -982,7 +1068,7 @@ function MainApp() {
                     setIsProfileMenuOpen(false)
                     logout()
                   }}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-xs font-bold text-left"
+                  className="w-full flex items-center gap-2 p-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer text-xs font-bold text-left"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign out</span>
@@ -1005,6 +1091,8 @@ function MainApp() {
             onLogout={logout}
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={toggleSidebar}
+            theme={theme}
+            onThemeChange={handleThemeChange}
           />
         </div>
 
