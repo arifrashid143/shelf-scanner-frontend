@@ -301,7 +301,8 @@ export default function Scan({
           <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none truncate">
             New scan
           </h1>
-          <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800">
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800">
+            <Sparkles className="w-3 h-3 text-indigo-500" />
             AI Vision Scanner
           </span>
         </div>
@@ -325,7 +326,7 @@ export default function Scan({
             </div>
           )}
 
-          {/* RECENT SCANS BUTTON (Opens Modal instead of taking up screen space) */}
+          {/* RECENT SCANS BUTTON */}
           <button
             type="button"
             onClick={() => setIsRecentScansModalOpen(true)}
@@ -343,106 +344,167 @@ export default function Scan({
       </div>
 
       {/* ========================================================================= */}
-      {/* FULL WIDTH CAMERA & SCANNING CARD (Takes ALL Width of the Content Area)   */}
+      {/* FULL WIDTH CAMERA & SCANNING CARD (Takes ALL Width of Content Area)       */}
       {/* ========================================================================= */}
-      <div className="w-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between overflow-hidden">
-        {/* Full-Width Viewfinder Area */}
-        <div className="relative w-full flex-1 min-h-[360px] sm:min-h-[440px] md:min-h-[500px] rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-800 shadow-inner">
+      <div className="w-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-2xs flex flex-col justify-between overflow-hidden">
+        {/* Full-Width Viewfinder Area with Cool Background & Laser Scan Animation */}
+        <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[460px] md:min-h-[520px] rounded-xl overflow-hidden bg-[#050811] flex items-center justify-center border border-slate-800/90 shadow-2xl">
+          {/* Ambient Sci-Fi Background Glows (Always Present) */}
+          <div className="absolute inset-0 cool-scan-grid opacity-30 pointer-events-none"></div>
+          <div className="absolute top-1/6 left-1/4 w-80 sm:w-96 h-80 sm:h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none animate-scanner-pulse"></div>
+          <div className="absolute bottom-1/6 right-1/4 w-80 sm:w-96 h-80 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none animate-scanner-pulse"></div>
+
           {isAnalyzing ? (
-            /* Analyzing State Overlay */
-            <div className="w-full h-full min-h-0 flex flex-col items-center justify-center p-8 text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center animate-pulse shadow-lg">
-                <Loader2 className="w-8 h-8 animate-spin" />
+            /* ================= STATE 1: ANALYZING STATE WITH SCAN ANIMATION ================= */
+            <div className="relative w-full h-full min-h-0 flex flex-col items-center justify-center p-8 text-center space-y-4 z-20">
+              {/* Faster Laser Beam Sweeping during AI inference */}
+              <div className="absolute inset-x-0 z-10 pointer-events-none animate-scan-laser-fast flex flex-col items-center">
+                <div className="w-full h-16 sm:h-24 bg-gradient-to-b from-transparent via-cyan-500/10 to-cyan-500/25"></div>
+                <div className="w-full h-[2.5px] bg-gradient-to-r from-transparent via-cyan-400 via-indigo-300 to-transparent shadow-[0_0_15px_#38bdf8,0_0_30px_#818cf8]"></div>
+                <div className="w-24 h-1 bg-cyan-300 rounded-full blur-[1px] -mt-0.5 shadow-[0_0_8px_#38bdf8]"></div>
               </div>
+
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                  <Loader2 className="w-10 h-10 animate-spin text-cyan-400" />
+                </div>
+                <div className="absolute -inset-2 rounded-2xl border border-dashed border-cyan-400/40 animate-spin-slow pointer-events-none"></div>
+              </div>
+
               <div className="max-w-md">
                 <h3 className="font-extrabold text-white text-base sm:text-lg">Analyzing shelf scan with AI...</h3>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
+                <p className="text-xs sm:text-sm text-cyan-300/80 mt-1.5 font-medium">
                   {analysisStatus || 'Computer vision engine detecting products, counts, and gaps'}
                 </p>
               </div>
             </div>
           ) : isCameraActive ? (
-            /* Live Full-Width Camera Stream */
-            <div className="relative w-full h-full bg-black flex items-center justify-center">
+            /* ================= STATE 2: LIVE CAMERA WITH LASER SCAN ANIMATION & HUD ================= */
+            <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-contain sm:object-cover"
+                className="w-full h-full object-contain sm:object-cover relative z-1"
               />
 
+              {/* LASER SCANNING ANIMATION: Smooth Continuous Laser Beam Sweep */}
+              <div className="absolute inset-x-0 z-10 pointer-events-none animate-scan-laser flex flex-col items-center">
+                <div className="w-full h-16 sm:h-28 bg-gradient-to-b from-transparent via-indigo-500/10 to-indigo-500/30"></div>
+                <div className="w-full h-[2.5px] bg-gradient-to-r from-transparent via-cyan-400 via-indigo-300 to-transparent shadow-[0_0_15px_#38bdf8,0_0_35px_#818cf8]"></div>
+                <div className="w-28 h-1 bg-cyan-300 rounded-full blur-[1px] -mt-0.5 shadow-[0_0_10px_#38bdf8]"></div>
+              </div>
+
+              {/* Futuristic HUD Corner Reticles */}
+              <div className="absolute inset-4 sm:inset-10 z-10 pointer-events-none">
+                {/* Top-Left Corner */}
+                <div className="absolute top-0 left-0 w-8 h-8 sm:w-12 sm:h-12 border-t-2 border-l-2 border-cyan-400/90 rounded-tl-lg shadow-[0_0_12px_rgba(56,189,248,0.5)]"></div>
+                {/* Top-Right Corner */}
+                <div className="absolute top-0 right-0 w-8 h-8 sm:w-12 sm:h-12 border-t-2 border-r-2 border-cyan-400/90 rounded-tr-lg shadow-[0_0_12px_rgba(56,189,248,0.5)]"></div>
+                {/* Bottom-Left Corner */}
+                <div className="absolute bottom-0 left-0 w-8 h-8 sm:w-12 sm:h-12 border-b-2 border-l-2 border-cyan-400/90 rounded-bl-lg shadow-[0_0_12px_rgba(56,189,248,0.5)]"></div>
+                {/* Bottom-Right Corner */}
+                <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-12 sm:h-12 border-b-2 border-r-2 border-cyan-400/90 rounded-br-lg shadow-[0_0_12px_rgba(56,189,248,0.5)]"></div>
+
+                {/* Center Target Reticle & Dashed Ring */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border border-dashed border-cyan-400/30 flex items-center justify-center animate-spin-slow">
+                    <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#38bdf8]"></div>
+                  </div>
+                </div>
+
+                {/* Bottom Shelf Guide Hint */}
+                <div className="absolute bottom-2 inset-x-0 flex justify-center">
+                  <span className="text-white/60 text-[11px] font-mono font-semibold px-3 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10">
+                    ALIGN SHELF HORIZONTALLY IN VIEW
+                  </span>
+                </div>
+              </div>
+
               {/* Top Live Camera Badge */}
-              <div className="absolute top-3.5 left-3.5 bg-rose-600/90 text-white text-[11px] font-bold px-3 py-1 rounded-lg backdrop-blur-xs flex items-center gap-2 shadow-md">
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                <span>LIVE CAMERA</span>
+              <div className="absolute top-3.5 left-3.5 z-20 bg-slate-950/85 backdrop-blur-md border border-cyan-500/40 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                </span>
+                <span className="tracking-wider text-cyan-300 font-mono">LIVE AI VISION</span>
               </div>
 
               {/* Camera Header Actions */}
-              <div className="absolute top-3.5 right-3.5 flex items-center gap-2">
+              <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
                 <button
                   type="button"
                   onClick={toggleCameraFacing}
-                  className="p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-xs transition-transform active:scale-90 cursor-pointer"
+                  className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-white border border-white/20 backdrop-blur-xs transition-transform active:scale-90 cursor-pointer shadow-md"
                   title="Switch Camera (Front/Rear)"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-4 h-4 text-cyan-300" />
                 </button>
                 <button
                   type="button"
                   onClick={stopCamera}
-                  className="p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-xs transition-colors cursor-pointer"
+                  className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-white border border-white/20 backdrop-blur-xs transition-colors cursor-pointer shadow-md"
                   title="Close Camera"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-
-              {/* Crosshair Viewfinder Guide */}
-              <div className="absolute inset-8 sm:inset-14 border border-dashed border-white/25 rounded-xl pointer-events-none flex items-center justify-center">
-                <div className="text-white/40 text-xs font-semibold px-3 py-1 rounded bg-black/40 backdrop-blur-xs">
-                  Fit shelf row inside frame
-                </div>
-              </div>
             </div>
           ) : previewUrl ? (
-            /* Captured / Uploaded Photo Preview */
-            <div className="relative w-full h-full bg-slate-950 flex items-center justify-center">
+            /* ================= STATE 3: PHOTO PREVIEW WITH HUD FRAME ================= */
+            <div className="relative w-full h-full bg-[#050811] flex items-center justify-center overflow-hidden">
               <img
                 src={previewUrl}
                 alt="Shelf Scan Preview"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain relative z-1"
               />
+
+              {/* Corner Reticles Frame */}
+              <div className="absolute inset-4 sm:inset-8 z-10 pointer-events-none">
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-emerald-400/80 rounded-tl-lg shadow-[0_0_8px_rgba(52,211,153,0.4)]"></div>
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-emerald-400/80 rounded-tr-lg shadow-[0_0_8px_rgba(52,211,153,0.4)]"></div>
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-emerald-400/80 rounded-bl-lg shadow-[0_0_8px_rgba(52,211,153,0.4)]"></div>
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-emerald-400/80 rounded-br-lg shadow-[0_0_8px_rgba(52,211,153,0.4)]"></div>
+              </div>
+
               <button
                 type="button"
                 onClick={handleClearImage}
-                className="absolute top-3.5 right-3.5 p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-xs transition-all cursor-pointer"
+                className="absolute top-3.5 right-3.5 z-20 p-2 rounded-xl bg-black/70 hover:bg-black/90 text-white border border-white/20 backdrop-blur-xs transition-all cursor-pointer"
                 title="Remove image"
               >
                 <X className="w-4 h-4" />
               </button>
-              <div className="absolute bottom-3.5 left-3.5 bg-slate-900/90 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 flex items-center gap-2">
+              <div className="absolute bottom-3.5 left-3.5 z-20 bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-2 shadow-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                 <span>Photo captured · Click &ldquo;Analyse Shelf&rdquo; to start AI detection</span>
               </div>
             </div>
           ) : (
-            /* Initial State: Drag and drop or Choose Camera / Gallery */
+            /* ================= STATE 4: IDLE / COOL SCI-FI BG WITH APERTURE ================= */
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onClick={() => galleryInputRef.current?.click()}
-              className="w-full h-full min-h-0 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-900/50 transition-all group"
+              className="relative w-full h-full min-h-0 p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all group z-10 overflow-hidden"
             >
-              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 group-hover:scale-105 transition-all flex items-center justify-center mb-4 shadow-sm border border-indigo-500/20">
-                <Camera className="w-8 h-8 stroke-[1.8]" />
+              {/* Glowing Aperture Icon */}
+              <div className="relative mb-5">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600/30 via-indigo-500/20 to-cyan-500/20 text-cyan-300 group-hover:scale-105 transition-all flex items-center justify-center shadow-xl shadow-indigo-500/20 border border-indigo-400/30">
+                  <Camera className="w-10 h-10 stroke-[1.8] text-cyan-300 group-hover:text-white transition-colors" />
+                </div>
+                {/* Rotating Dashed Accent Ring */}
+                <div className="absolute -inset-2 rounded-3xl border border-dashed border-indigo-500/30 group-hover:border-cyan-400/50 animate-spin-slow pointer-events-none"></div>
               </div>
-              <p className="font-extrabold text-white text-base sm:text-lg mb-1">
-                Fit shelf straight on in frame, or choose an option
+
+              <p className="font-extrabold text-white text-lg sm:text-xl mb-1.5 tracking-tight">
+                AI Vision Shelf Scanner
               </p>
-              <p className="text-xs sm:text-sm text-slate-400 mb-6 max-w-sm">
-                Drag and drop a shelf photo here, or use live camera / file picker
+              <p className="text-xs sm:text-sm text-slate-400 mb-6 max-w-md font-medium">
+                Align shelf straight in frame with live camera, or upload a photo to detect products, counts, and gaps.
               </p>
+
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
@@ -450,10 +512,10 @@ export default function Scan({
                     e.stopPropagation()
                     startCamera()
                   }}
-                  className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-indigo-600/30"
+                  className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 active:scale-95 text-white font-bold px-6 py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/30 border border-indigo-400/30"
                 >
-                  <Camera className="w-4 h-4 text-white" />
-                  <span>Open Full Camera</span>
+                  <Camera className="w-4 h-4 text-cyan-300" />
+                  <span>Launch Live Camera</span>
                 </button>
                 <button
                   type="button"
@@ -559,7 +621,7 @@ export default function Scan({
       </div>
 
       {/* ========================================================================= */}
-      {/* RECENT SCANS MODAL (Displayed on Button Click, NOT on main camera page)  */}
+      {/* RECENT SCANS MODAL                                                        */}
       {/* ========================================================================= */}
       {isRecentScansModalOpen && (
         <div

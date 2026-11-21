@@ -200,3 +200,70 @@ html.dark .border-amber-100,
 html.dark .border-amber-200 {
   border-color: rgba(245, 158, 11, 0.3) !important;
 }
+
+/* ==========================================================================
+   AI Shelf Scanner Animation & Cool Background Utilities
+   ========================================================================== */
+
+@keyframes scanner-laser {
+  0% {
+    top: 0%;
+    opacity: 0.85;
+  }
+  50% {
+    top: 96%;
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0.85;
+  }
+}
+
+@keyframes scanner-pulse {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-scan-laser {
+  animation: scanner-laser 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-scan-laser-fast {
+  animation: scanner-laser 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-scanner-pulse {
+  animation: scanner-pulse 4s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+.cool-scan-grid {
+  background-image: 
+    linear-gradient(to right, rgba(99, 102, 241, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.12) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.cool-scan-dots {
+  background-image: radial-gradient(rgba(56, 189, 248, 0.22) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
