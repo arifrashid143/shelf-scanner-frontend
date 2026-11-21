@@ -12,6 +12,8 @@ import {
   Check,
   MoreVertical,
   Copy,
+  Clock,
+  ArrowRight,
 } from 'lucide-react'
 
 export default function Scan({
@@ -32,18 +34,8 @@ export default function Scan({
   const [configuredShelves, setConfiguredShelves] = useState([])
   const [selectedShelfId, setSelectedShelfId] = useState('')
 
-  useEffect(() => {
-    api
-      .getTenantShelves()
-      .then((res) => {
-        const raw = Array.isArray(res) ? res : res?.items || res?.shelves || []
-        setConfiguredShelves(raw)
-        if (raw.length > 0) {
-          setSelectedShelfId(raw[0].id)
-        }
-      })
-      .catch(() => {})
-  }, [])
+  // Recent Scans Modal State
+  const [isRecentScansModalOpen, setIsRecentScansModalOpen] = useState(false)
 
   // Actions Modal State (Three Dots)
   const [actionModalScan, setActionModalScan] = useState(null)
@@ -60,8 +52,21 @@ export default function Scan({
 
   const galleryInputRef = useRef(null)
   const streamRef = useRef(null)
-  const mobileVideoRef = useRef(null)
-  const desktopVideoRef = useRef(null)
+  const videoRef = useRef(null)
+
+  // Fetch configured shelves on mount
+  useEffect(() => {
+    api
+      .getTenantShelves()
+      .then((res) => {
+        const raw = Array.isArray(res) ? res : res?.items || res?.shelves || []
+        setConfiguredShelves(raw)
+        if (raw.length > 0) {
+          setSelectedShelfId(raw[0].id)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Clean up camera stream on unmount
   useEffect(() => {
@@ -79,11 +84,8 @@ export default function Scan({
       streamRef.current.getTracks().forEach((track) => track.stop())
       streamRef.current = null
     }
-    if (mobileVideoRef.current) {
-      mobileVideoRef.current.srcObject = null
-    }
-    if (desktopVideoRef.current) {
-      desktopVideoRef.current.srcObject = null
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
     }
     setIsCameraActive(false)
   }
@@ -120,15 +122,11 @@ export default function Scan({
       streamRef.current = stream
       setIsCameraActive(true)
 
-      // Bind stream to video elements on next render frame
+      // Bind stream to video element on next frame
       setTimeout(() => {
-        if (mobileVideoRef.current) {
-          mobileVideoRef.current.srcObject = stream
-          mobileVideoRef.current.play().catch(() => {})
-        }
-        if (desktopVideoRef.current) {
-          desktopVideoRef.current.srcObject = stream
-          desktopVideoRef.current.play().catch(() => {})
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play().catch(() => {})
         }
       }, 50)
     } catch (err) {
@@ -180,14 +178,9 @@ export default function Scan({
     }
   }
 
-  // Step 1: Capture frame from active video stream into File + Preview (Separated from Analyse)
+  // Capture frame from active video stream into File + Preview
   const capturePhoto = () => {
-    const video =
-      (desktopVideoRef.current && desktopVideoRef.current.videoWidth)
-        ? desktopVideoRef.current
-        : (mobileVideoRef.current && mobileVideoRef.current.videoWidth)
-        ? mobileVideoRef.current
-        : null
+    const video = videoRef.current
 
     if (!video || !video.videoWidth) {
       setErrorMsg('Camera stream is not ready. Please wait a moment and try again.')
@@ -225,7 +218,7 @@ export default function Scan({
     }
   }
 
-  // File picker handler (Gallery / File Explorer) -> loads preview for user review before analyzing
+  // File picker handler (Gallery / File Explorer)
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -247,7 +240,7 @@ export default function Scan({
     stopCamera()
   }
 
-  // Drag and drop handlers -> loads preview for user review before analyzing
+  // Drag and drop handlers
   const handleDrop = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -266,7 +259,7 @@ export default function Scan({
     e.stopPropagation()
   }
 
-  // Step 2: User explicitly clicks "Analyse Shelf" to start AI vision processing
+  // User explicitly clicks "Analyse Shelf" to start AI vision processing
   const handleAnalyzeClick = async () => {
     if (!selectedFile && !previewUrl) {
       setErrorMsg('Please capture or choose a shelf photo before analyzing.')
@@ -276,7 +269,7 @@ export default function Scan({
   }
 
   return (
-    <div className="h-full flex-1 flex flex-col min-h-0 w-full">
+    <div className="h-full flex-1 flex flex-col min-h-0 w-full space-y-3">
       {/* Hidden file input for Gallery / File Browser */}
       <input
         type="file"
@@ -287,7 +280,7 @@ export default function Scan({
       />
 
       {errorMsg && (
-        <div className="p-3.5 mb-3 rounded-md bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in shrink-0">
+        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 flex items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in shrink-0">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
             <span>{errorMsg}</span>
@@ -295,700 +288,480 @@ export default function Scan({
           <button
             type="button"
             onClick={() => setErrorMsg('')}
-            className="p-1 text-rose-500 hover:text-rose-700 font-bold cursor-pointer"
+            className="p-1 text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 font-bold cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* ===================== MOBILE LAYOUT ===================== */}
-      <div className="md:hidden space-y-3 flex-1 flex flex-col min-h-0">
-        <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none shrink-0">
-          New scan
-        </h1>
-
-        {/* Mobile Viewfinder: Live Camera OR Image Preview OR Placeholder */}
-        <div className="relative bg-slate-950 rounded-md aspect-[4/3] flex items-center justify-center text-center shadow-lg border border-slate-800 overflow-hidden shrink-0">
-          {isCameraActive ? (
-            <div className="relative w-full h-full bg-black">
-              <video
-                ref={mobileVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-3 left-3 bg-blue-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-xs flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                LIVE CAMERA
-              </div>
-              <div className="absolute top-3 right-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={toggleCameraFacing}
-                  className="p-2 rounded-md bg-slate-900/80 text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
-                  title="Switch Camera"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="p-2 rounded-md bg-slate-900/80 text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
-                  title="Close Camera"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ) : previewUrl ? (
-            <div className="relative w-full h-full">
-              <img
-                src={previewUrl}
-                alt="Selected Shelf"
-                className="w-full h-full object-contain bg-slate-950"
-              />
-              <button
-                type="button"
-                onClick={handleClearImage}
-                className="absolute top-3 right-3 p-1.5 rounded-md bg-slate-900/80 text-white hover:bg-slate-900 border border-white/20 transition-all cursor-pointer"
-                title="Remove photo"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-1 rounded-md border border-white/20">
-                Photo captured · Tap &ldquo;Analyse Shelf&rdquo; below
-              </div>
-            </div>
-          ) : (
-            <div className="w-full h-full border-2 border-dashed border-blue-400/60 rounded-md m-3 flex flex-col items-center justify-center p-4">
-              <Camera className="w-8 h-8 text-blue-400 mb-2 stroke-[1.8]" />
-              <p className="text-white/90 text-sm font-semibold tracking-wide">
-                Fit shelf straight on in frame
-              </p>
-              <div className="flex items-center gap-2 mt-3">
-                <button
-                  type="button"
-                  onClick={() => galleryInputRef.current?.click()}
-                  className="bg-white/10 hover:bg-white/20 text-white font-bold px-3 py-1.5 rounded-md text-xs border border-white/20 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  Gallery
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startCamera()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-md text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  Open Camera
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Loading Overlay */}
-          {isAnalyzing && (
-            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center text-white p-4 space-y-3 z-10">
-              <Loader2 className="w-9 h-9 text-blue-500 animate-spin" />
-              <p className="font-bold text-sm">{analysisStatus || 'Analyzing shelf objects…'}</p>
-              <p className="text-xs text-slate-400">Computer Vision Object Detection in progress</p>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile Camera Controls: SEPARATE Take Photo vs. Analyse Button */}
-        <div className="pt-1 flex items-center justify-between gap-3 shrink-0">
-          {isCameraActive ? (
-            <>
-              <button
-                type="button"
-                onClick={stopCamera}
-                className="flex-1 py-2.5 px-3 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={capturePhoto}
-                className="flex-1 py-2.5 px-3 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Camera className="w-4 h-4 text-white" />
-                <span>Take Photo</span>
-              </button>
-            </>
-          ) : previewUrl ? (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  handleClearImage()
-                  startCamera()
-                }}
-                disabled={isAnalyzing}
-                className="flex-1 py-2.5 px-3 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-              >
-                Retake
-              </button>
-              <button
-                type="button"
-                onClick={handleAnalyzeClick}
-                disabled={isAnalyzing}
-                className="flex-2 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-sm shadow-indigo-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 text-white" />
-                    <span>Analyse</span>
-                  </>
-                )}
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="w-full py-2.5 px-4 rounded-md bg-slate-100 text-slate-400 border border-slate-200/80 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
-            >
-              <Sparkles className="w-4 h-4 text-slate-400" />
-              <span>Analyse</span>
-            </button>
-          )}
-        </div>
-
-        {/* Mobile Recent Scans Table */}
-        <div className="bg-white rounded-md border border-slate-200/90 p-3.5 shadow-2xs flex-1 min-h-0 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
-            <div className="flex items-center gap-2">
-              <ScanIcon className="w-3.5 h-3.5 text-blue-600" />
-              <h2 className="text-xs font-bold text-slate-900">Recent Scans</h2>
-            </div>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-              {recentScans.length} {recentScans.length === 1 ? 'scan' : 'scans'}
-            </span>
-          </div>
-
-          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pt-2 space-y-2">
-            {isLoading ? (
-              <div className="py-8 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-1.5">
-                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-                <span>Loading recent scans...</span>
-              </div>
-            ) : recentScans.length === 0 ? (
-              <div className="py-6 text-center text-slate-400 text-xs">
-                No recent scans recorded yet.
-              </div>
-            ) : (
-              recentScans.map((scan) => {
-                const gapsCount = scan.empty_gaps_count ?? scan.gaps ?? 0
-                const itemsCount = scan.total_detected_count ?? scan.items ?? 0
-
-                return (
-                  <div
-                    key={scan.id}
-                    onClick={() => onSelectScan && onSelectScan(scan)}
-                    className="p-2.5 rounded-md border border-slate-100 hover:border-slate-200 hover:bg-slate-50/80 active:scale-98 transition-all cursor-pointer flex items-center justify-between gap-2"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      {/* Photo Thumbnail */}
-                      <div className="w-10 h-8 rounded bg-slate-100 border border-slate-200/80 overflow-hidden shrink-0 flex items-center justify-center bg-slate-900/5">
-                        {scan.annotated_image_url || scan.raw_image_url ? (
-                          <img
-                            src={`https://ai-vs-scanner-be.aiiotgeeks.tech${(scan.annotated_image_url || scan.raw_image_url).startsWith('/') ? '' : '/'}${scan.annotated_image_url || scan.raw_image_url}`}
-                            alt="Shelf thumbnail"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none'
-                            }}
-                          />
-                        ) : (
-                          <ScanIcon className="w-3.5 h-3.5 text-slate-400" />
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-slate-900 text-xs truncate">
-                          {scan.shelf || scan.shelf_id || 'Shelf Section'}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400">
-                          <span>{scan.time || scan.date || 'Today'}</span>
-                          <span>·</span>
-                          <span>{itemsCount} items</span>
-                          {gapsCount > 0 && (
-                            <>
-                              <span>·</span>
-                              <span className="text-rose-600 font-bold">{gapsCount} gaps</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 flex items-center">
-                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                        <Check className="w-2.5 h-2.5 text-emerald-600 stroke-[2.5]" />
-                        Verified
-                      </span>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ===================== DESKTOP LAYOUT (Appears fully in screen, Y = 72px baseline) ===================== */}
-      <div className="hidden md:flex flex-col flex-1 min-h-0 space-y-2.5 w-full">
-        {/* Header matching exact Sidebar logo height */}
-        <div className="flex items-center justify-between shrink-0 h-10">
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none">
+      {/* ===================== TOP HEADER & CONTROLS ===================== */}
+      <div className="flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none truncate">
             New scan
           </h1>
+          <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800">
+            AI Vision Scanner
+          </span>
+        </div>
 
-          {/* Configured Shelf Selector */}
+        <div className="flex items-center gap-2">
+          {/* Target Shelf Selector */}
           {configuredShelves.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 text-xs shadow-2xs">
-              <span className="text-slate-400 font-medium">Target Shelf:</span>
+            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs shadow-2xs">
+              <span className="text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">Target Shelf:</span>
               <select
                 value={selectedShelfId}
                 onChange={(e) => setSelectedShelfId(e.target.value)}
-                className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
+                className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
               >
                 {configuredShelves.map((s) => (
-                  <option key={s.id} value={s.id}>
+                  <option key={s.id} value={s.id} className="dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                     {s.name} {s.aisle ? `(Aisle ${s.aisle})` : ''}
                   </option>
                 ))}
               </select>
             </div>
           )}
-        </div>
 
-        {/* 2-Column Grid filling 100% of available height within the viewport */}
-        <div className="flex-1 min-h-0 grid grid-cols-12 gap-2.5 items-stretch">
-          {/* Left Column (7 cols): Camera / Preview / Upload Card */}
-          <div className="col-span-12 lg:col-span-7 xl:col-span-7 bg-white rounded-md border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between h-full min-h-0 overflow-hidden">
-            {/* Viewfinder Area */}
-            <div className="flex-1 min-h-0 flex flex-col justify-center relative">
-              {isAnalyzing ? (
-                /* Analyzing State */
-                <div className="w-full h-full min-h-0 flex flex-col items-center justify-center p-8 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-md bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center animate-pulse shadow-xs">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                  </div>
-                  <div className="max-w-md">
-                    <h3 className="font-black text-slate-900 text-base">Analyzing shelf scan with AI...</h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {analysisStatus || 'Computer vision engine detecting products, counts, and gaps'}
-                    </p>
-                  </div>
-                </div>
-              ) : isCameraActive ? (
-                /* Live Camera Stream Interface */
-                <div className="relative w-full h-full min-h-0 rounded-md overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center shadow-inner">
-                  <video
-                    ref={desktopVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-contain"
-                  />
-                  {/* Top Live Camera Overlay Bar */}
-                  <div className="absolute top-3.5 left-3.5 bg-blue-600/90 text-white text-[11px] font-bold px-3 py-1 rounded-md backdrop-blur-xs flex items-center gap-1.5 shadow-xs">
-                    <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                    LIVE CAMERA
-                  </div>
-                  <div className="absolute top-3.5 right-3.5 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={toggleCameraFacing}
-                      className="p-2 rounded-md bg-slate-900/80 hover:bg-slate-900 text-white border border-white/20 transition-all cursor-pointer"
-                      title="Switch Camera (Front/Rear)"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={stopCamera}
-                      className="p-2 rounded-md bg-slate-900/80 hover:bg-slate-900 text-white border border-white/20 transition-all cursor-pointer"
-                      title="Close Camera"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ) : previewUrl ? (
-                /* Captured / Uploaded Photo Preview */
-                <div className="relative w-full h-full min-h-0 rounded-md overflow-hidden border border-slate-200 bg-slate-950 flex items-center justify-center">
-                  <img
-                    src={previewUrl}
-                    alt="Shelf Scan Preview"
-                    className="w-full h-full object-contain"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleClearImage}
-                    className="absolute top-3.5 right-3.5 p-2 rounded-md bg-slate-900/80 hover:bg-slate-900 text-white border border-white/20 transition-all cursor-pointer"
-                    title="Remove image"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <div className="absolute bottom-3.5 left-3.5 bg-slate-900/85 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1.5 rounded-md border border-white/20 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span>Photo captured · Click &ldquo;Analyse Shelf&rdquo; to start AI detection</span>
-                  </div>
-                </div>
-              ) : (
-                /* Initial State: Drag and drop or Choose Camera / Gallery */
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onClick={() => galleryInputRef.current?.click()}
-                  className="w-full h-full min-h-0 border-2 border-dashed border-blue-400/80 rounded-md p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-blue-50/20 transition-colors"
-                >
-                  <div className="w-14 h-14 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center mb-3.5 shadow-2xs">
-                    <Camera className="w-7 h-7 stroke-[1.8]" />
-                  </div>
-                  <p className="font-bold text-slate-900 text-sm sm:text-base mb-1">
-                    Drag and drop a shelf photo, or choose an option
-                  </p>
-                  <p className="text-xs text-slate-400 mb-5">JPG, PNG or WEBP up to 20 MB</p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        galleryInputRef.current?.click()
-                      }}
-                      className="bg-white border border-slate-200/90 hover:bg-slate-50 text-slate-700 font-bold px-4 py-2 rounded-md text-xs transition-colors flex items-center gap-2 cursor-pointer shadow-2xs active:scale-98"
-                    >
-                      <ImageIcon className="w-4 h-4 text-slate-500" />
-                      Browse gallery
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        startCamera()
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-md text-xs transition-colors flex items-center gap-2 cursor-pointer shadow-xs active:scale-98"
-                    >
-                      <Camera className="w-4 h-4 text-white" />
-                      Open Camera
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Action Bar: SEPARATED Take Photo vs. Analyse Button */}
-            <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between shrink-0">
-              {isCameraActive ? (
-                <>
-                  <span className="text-xs text-slate-500 font-medium truncate">
-                    Align shelf in frame and click &ldquo;Take Photo&rdquo;.
-                  </span>
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={stopCamera}
-                      className="px-4 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={capturePhoto}
-                      className="px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-xs flex items-center gap-2 cursor-pointer transition-all"
-                    >
-                      <Camera className="w-4 h-4 text-white" />
-                      <span>Take Photo</span>
-                    </button>
-                  </div>
-                </>
-              ) : previewUrl ? (
-                <>
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span className="text-xs text-slate-700 font-semibold truncate max-w-[200px]">
-                      {selectedFile?.name || 'shelf_capture.jpg'}
-                    </span>
-                    <span className="text-[11px] text-slate-400 shrink-0">· Ready</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleClearImage()
-                        startCamera()
-                      }}
-                      disabled={isAnalyzing}
-                      className="px-3.5 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer"
-                    >
-                      Retake Photo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAnalyzeClick}
-                      disabled={isAnalyzing}
-                      className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-sm shadow-indigo-500/25 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin text-white" />
-                          <span>Analyzing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 text-white" />
-                          <span>Analyse</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span className="text-xs text-slate-400 font-medium">
-                    No photo captured yet. Choose an option to start.
-                  </span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      disabled
-                      className="px-5 py-2 rounded-md bg-slate-100 text-slate-400 font-bold text-xs sm:text-sm border border-slate-200/80 cursor-not-allowed flex items-center gap-2 select-none opacity-60"
-                      title="Capture or upload a shelf photo first"
-                    >
-                      <Sparkles className="w-4 h-4 text-slate-400" />
-                      <span>Analyse</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column (5 cols): Recent Scans Table */}
-          <div className="col-span-12 lg:col-span-5 xl:col-span-5 bg-white rounded-md border border-slate-200/90 shadow-2xs flex flex-col h-full min-h-0 overflow-hidden">
-            {/* Table Card Header */}
-            <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100/80">
-                  <ScanIcon className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none">
-                    Recent Scans
-                  </h2>
-                </div>
-              </div>
-              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/80">
-                {recentScans.length} {recentScans.length === 1 ? 'scan' : 'scans'}
+          {/* RECENT SCANS BUTTON (Opens Modal instead of taking up screen space) */}
+          <button
+            type="button"
+            onClick={() => setIsRecentScansModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-bold text-xs shadow-2xs transition-all cursor-pointer group"
+          >
+            <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 group-hover:rotate-12 transition-transform" />
+            <span>Recent Scans</span>
+            {recentScans.length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                {recentScans.length}
               </span>
-            </div>
-
-            {/* Table Body with In-Table Scrolling */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto no-scrollbar">
-              {isLoading ? (
-                <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 text-xs gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                  <span>Loading scan history...</span>
-                </div>
-              ) : recentScans.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 text-xs">
-                  <div className="w-12 h-12 rounded-md bg-slate-50 text-slate-400 flex items-center justify-center mb-2.5 border border-slate-100">
-                    <ScanIcon className="w-6 h-6 stroke-[1.8]" />
-                  </div>
-                  <p className="font-bold text-slate-700 text-xs">No recent scans recorded</p>
-                  <p className="text-[11px] text-slate-400 mt-1 max-w-[220px]">
-                    Capture or upload a shelf photo to run your first visual AI scan.
-                  </p>
-                </div>
-              ) : (
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-50 border-b border-slate-200/80 sticky top-0 z-10 text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider shadow-2xs">
-                    <tr>
-                      <th className="px-4 py-2.5 bg-slate-50">Shelf / ID</th>
-                      <th className="px-3 py-2.5 bg-slate-50 text-center">Items &amp; Gaps</th>
-                      <th className="px-3 py-2.5 bg-slate-50 text-right">Time</th>
-                      <th className="px-4 py-2.5 bg-slate-50 text-right">Status</th>
-                      <th className="px-3 py-2.5 bg-slate-50 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {recentScans.map((scan) => {
-                      const gapsCount = scan.empty_gaps_count ?? scan.gaps ?? 0
-                      const itemsCount = scan.total_detected_count ?? scan.items ?? 0
-
-                      return (
-                        <tr
-                          key={scan.id}
-                          onClick={() => onSelectScan && onSelectScan(scan)}
-                          className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                          title="Click to view scan results and visual detections"
-                        >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              {/* Photo Thumbnail */}
-                              <div className="w-10 h-8 rounded bg-slate-100 border border-slate-200/80 overflow-hidden shrink-0 flex items-center justify-center bg-slate-900/5">
-                                {scan.annotated_image_url || scan.raw_image_url ? (
-                                  <img
-                                    src={`https://ai-vs-scanner-be.aiiotgeeks.tech${(scan.annotated_image_url || scan.raw_image_url).startsWith('/') ? '' : '/'}${scan.annotated_image_url || scan.raw_image_url}`}
-                                    alt="Shelf preview"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none'
-                                    }}
-                                  />
-                                ) : (
-                                  <ScanIcon className="w-4 h-4 text-slate-400" />
-                                )}
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[130px] sm:max-w-[170px]">
-                                  {scan.shelf || scan.shelf_id || 'Shelf Section'}
-                                </span>
-                                <span className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
-                                  {scan.id}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-3 py-3 text-center">
-                            <div className="inline-flex items-center gap-1.5">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
-                                {itemsCount} {itemsCount === 1 ? 'item' : 'items'}
-                              </span>
-                              {gapsCount > 0 ? (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
-                                  {gapsCount} {gapsCount === 1 ? 'gap' : 'gaps'}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                                  0 gaps
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          <td className="px-3 py-3 text-right">
-                            <span className="text-slate-500 font-medium whitespace-nowrap text-[11px]">
-                              {scan.time || scan.date || 'Today'}
-                            </span>
-                          </td>
-
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                                <Check className="w-3 h-3 text-emerald-600 stroke-[2.5]" />
-                                Verified
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setActionModalScan(scan)
-                                }}
-                                className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer"
-                                title={`Actions for scan ${scan.id}`}
-                                aria-label={`Actions for scan ${scan.id}`}
-                              >
-                                <MoreVertical className="w-3.5 h-3.5 stroke-[2]" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* ==================== SCAN ACTIONS MODAL (THREE DOTS MENU) ==================== */}
-      {actionModalScan && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white rounded-md max-w-sm w-full border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95">
+      {/* ========================================================================= */}
+      {/* FULL WIDTH CAMERA & SCANNING CARD (Takes ALL Width of the Content Area)   */}
+      {/* ========================================================================= */}
+      <div className="w-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between overflow-hidden">
+        {/* Full-Width Viewfinder Area */}
+        <div className="relative w-full flex-1 min-h-[360px] sm:min-h-[440px] md:min-h-[500px] rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-800 shadow-inner">
+          {isAnalyzing ? (
+            /* Analyzing State Overlay */
+            <div className="w-full h-full min-h-0 flex flex-col items-center justify-center p-8 text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center animate-pulse shadow-lg">
+                <Loader2 className="w-8 h-8 animate-spin" />
+              </div>
+              <div className="max-w-md">
+                <h3 className="font-extrabold text-white text-base sm:text-lg">Analyzing shelf scan with AI...</h3>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
+                  {analysisStatus || 'Computer vision engine detecting products, counts, and gaps'}
+                </p>
+              </div>
+            </div>
+          ) : isCameraActive ? (
+            /* Live Full-Width Camera Stream */
+            <div className="relative w-full h-full bg-black flex items-center justify-center">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-contain sm:object-cover"
+              />
+
+              {/* Top Live Camera Badge */}
+              <div className="absolute top-3.5 left-3.5 bg-rose-600/90 text-white text-[11px] font-bold px-3 py-1 rounded-lg backdrop-blur-xs flex items-center gap-2 shadow-md">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span>LIVE CAMERA</span>
+              </div>
+
+              {/* Camera Header Actions */}
+              <div className="absolute top-3.5 right-3.5 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleCameraFacing}
+                  className="p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-xs transition-transform active:scale-90 cursor-pointer"
+                  title="Switch Camera (Front/Rear)"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-xs transition-colors cursor-pointer"
+                  title="Close Camera"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Crosshair Viewfinder Guide */}
+              <div className="absolute inset-8 sm:inset-14 border border-dashed border-white/25 rounded-xl pointer-events-none flex items-center justify-center">
+                <div className="text-white/40 text-xs font-semibold px-3 py-1 rounded bg-black/40 backdrop-blur-xs">
+                  Fit shelf row inside frame
+                </div>
+              </div>
+            </div>
+          ) : previewUrl ? (
+            /* Captured / Uploaded Photo Preview */
+            <div className="relative w-full h-full bg-slate-950 flex items-center justify-center">
+              <img
+                src={previewUrl}
+                alt="Shelf Scan Preview"
+                className="w-full h-full object-contain"
+              />
+              <button
+                type="button"
+                onClick={handleClearImage}
+                className="absolute top-3.5 right-3.5 p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-xs transition-all cursor-pointer"
+                title="Remove image"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-3.5 left-3.5 bg-slate-900/90 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Photo captured · Click &ldquo;Analyse Shelf&rdquo; to start AI detection</span>
+              </div>
+            </div>
+          ) : (
+            /* Initial State: Drag and drop or Choose Camera / Gallery */
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={() => galleryInputRef.current?.click()}
+              className="w-full h-full min-h-0 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-900/50 transition-all group"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 group-hover:scale-105 transition-all flex items-center justify-center mb-4 shadow-sm border border-indigo-500/20">
+                <Camera className="w-8 h-8 stroke-[1.8]" />
+              </div>
+              <p className="font-extrabold text-white text-base sm:text-lg mb-1">
+                Fit shelf straight on in frame, or choose an option
+              </p>
+              <p className="text-xs sm:text-sm text-slate-400 mb-6 max-w-sm">
+                Drag and drop a shelf photo here, or use live camera / file picker
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    startCamera()
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-indigo-600/30"
+                >
+                  <Camera className="w-4 h-4 text-white" />
+                  <span>Open Full Camera</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    galleryInputRef.current?.click()
+                  }}
+                  className="bg-white/10 hover:bg-white/15 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm border border-white/20 transition-all flex items-center gap-2 cursor-pointer backdrop-blur-xs"
+                >
+                  <ImageIcon className="w-4 h-4 text-slate-300" />
+                  <span>Browse gallery</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Action Bar */}
+        <div className="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          {isCameraActive ? (
+            <>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Align shelf in frame and click &ldquo;Take Photo&rdquo;.
+              </span>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all"
+                >
+                  <Camera className="w-4 h-4 text-white" />
+                  <span>Take Photo</span>
+                </button>
+              </div>
+            </>
+          ) : previewUrl ? (
+            <>
+              <div className="flex items-center gap-2 truncate">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                <span className="text-xs text-slate-700 dark:text-slate-300 font-bold truncate max-w-[200px]">
+                  {selectedFile?.name || 'shelf_capture.jpg'}
+                </span>
+                <span className="text-[11px] text-slate-400 shrink-0">· Ready</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleClearImage()
+                    startCamera()
+                  }}
+                  disabled={isAnalyzing}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                >
+                  Retake Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAnalyzeClick}
+                  disabled={isAnalyzing}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-white" />
+                      <span>Analyse Shelf</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                JPG, PNG or WEBP up to 20 MB · Real-time AI vision detection
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled
+                  className="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold text-xs sm:text-sm border border-slate-200/80 dark:border-slate-800 cursor-not-allowed flex items-center gap-2 select-none opacity-60"
+                  title="Capture or upload a shelf photo first"
+                >
+                  <Sparkles className="w-4 h-4 text-slate-400" />
+                  <span>Analyse</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* RECENT SCANS MODAL (Displayed on Button Click, NOT on main camera page)  */}
+      {/* ========================================================================= */}
+      {isRecentScansModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in"
+          onClick={() => setIsRecentScansModalOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-100">
+            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-900/50">
                   <ScanIcon className="w-5 h-5 stroke-[2]" />
                 </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-900 truncate">
-                    {actionModalScan.shelf || actionModalScan.shelf_id || 'Shelf Section'}
-                  </h3>
-                  <p className="text-[11px] font-mono text-slate-400 truncate">
-                    {actionModalScan.id}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                      Recent Scans
+                    </h3>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {recentScans.length} {recentScans.length === 1 ? 'scan' : 'scans'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    Click any scan to inspect parallel photos, detected counts, and gaps
                   </p>
                 </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsRecentScansModalOpen(false)}
+                className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body: Scans List / Table */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 scrollbar-thin">
+              {isLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center text-center text-slate-400 text-xs gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+                  <span>Loading scan history...</span>
+                </div>
+              ) : recentScans.length === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center text-center text-slate-400 text-xs space-y-2">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-1">
+                    <ScanIcon className="w-6 h-6 stroke-[1.8]" />
+                  </div>
+                  <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No recent scans recorded</p>
+                  <p className="text-xs text-slate-400 max-w-xs">
+                    Take a shelf photo with the camera to run your first visual scan.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {recentScans.map((scan) => {
+                    const gapsCount = scan.empty_gaps_count ?? scan.gaps ?? 0
+                    const itemsCount = scan.total_detected_count ?? scan.items ?? 0
+                    const thumbUrl = scan.annotated_image_url || scan.raw_image_url
+
+                    return (
+                      <div
+                        key={scan.id}
+                        onClick={() => {
+                          setIsRecentScansModalOpen(false)
+                          if (onSelectScan) onSelectScan(scan)
+                        }}
+                        className="p-3 rounded-xl border border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                      >
+                        {/* Thumbnail & Shelf Info */}
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-12 h-10 rounded-lg bg-slate-900/10 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
+                            {thumbUrl ? (
+                              <img
+                                src={`https://ai-vs-scanner-be.aiiotgeeks.tech${thumbUrl.startsWith('/') ? '' : '/'}${thumbUrl}`}
+                                alt="Shelf thumbnail"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            ) : (
+                              <ScanIcon className="w-4 h-4 text-slate-400" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                {scan.shelf || scan.shelf_id || 'Shelf Section'}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-400 truncate">
+                                {scan.id}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400">
+                              <span>{scan.time || scan.date || 'Today'}</span>
+                              <span>·</span>
+                              <span className="font-semibold text-slate-600 dark:text-slate-300">
+                                {itemsCount} items
+                              </span>
+                              {gapsCount > 0 ? (
+                                <>
+                                  <span>·</span>
+                                  <span className="text-rose-600 font-bold">{gapsCount} gaps</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>·</span>
+                                  <span className="text-emerald-600 font-semibold">0 gaps</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Status & Action */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            <Check className="w-3 h-3 stroke-[2.5]" />
+                            Verified
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setActionModalScan(scan)
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                            title="More options"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                          <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 px-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsRecentScansModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== THREE-DOTS ACTIONS MODAL ==================== */}
+      {actionModalScan && (
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  {actionModalScan.shelf || actionModalScan.shelf_id || 'Shelf Section'}
+                </h3>
+                <p className="text-[11px] font-mono text-slate-400 truncate">
+                  {actionModalScan.id}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setActionModalScan(null)}
-                className="w-7 h-7 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
-                aria-label="Close modal"
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Scan Meta Badges */}
-            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/80 text-slate-700">
-                  {actionModalScan.total_detected_count ?? actionModalScan.items ?? 0} items
-                </span>
-                {(actionModalScan.empty_gaps_count ?? actionModalScan.gaps ?? 0) > 0 ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                    {actionModalScan.empty_gaps_count ?? actionModalScan.gaps ?? 0} gaps
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    0 gaps
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] font-medium text-slate-500">
-                {actionModalScan.time || actionModalScan.date || 'Today'}
-              </span>
-            </div>
-
-            {/* Options List */}
             <div className="p-3 space-y-1.5">
-              {/* Option 1: View Scan Results */}
               <button
                 type="button"
                 onClick={() => {
                   const targetScan = actionModalScan
                   setActionModalScan(null)
+                  setIsRecentScansModalOpen(false)
                   if (onSelectScan) onSelectScan(targetScan)
                 }}
-                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
                   <ScanIcon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
-                    View Scan Results & Detections
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">
+                    View Scan Results & Parallel Photos
                   </p>
                   <p className="text-[11px] text-slate-400">
                     Inspect AI bounding boxes, shelf counts, and gaps
@@ -996,7 +769,6 @@ export default function Scan({
                 </div>
               </button>
 
-              {/* Option 2: Copy Scan ID */}
               <button
                 type="button"
                 onClick={() => {
@@ -1006,13 +778,13 @@ export default function Scan({
                     setActionModalScan(null)
                   }
                 }}
-                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-200 group"
+                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0">
                   <Copy className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-900 group-hover:text-slate-800">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">
                     Copy Scan ID
                   </p>
                   <p className="text-[11px] font-mono text-slate-400 truncate">
@@ -1022,12 +794,11 @@ export default function Scan({
               </button>
             </div>
 
-            {/* Modal Footer */}
-            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+            <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => setActionModalScan(null)}
-                className="px-3.5 py-1.5 rounded-md border border-slate-200 hover:bg-white text-slate-600 font-semibold text-xs cursor-pointer transition-colors"
+                className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs cursor-pointer transition-colors"
               >
                 Close
               </button>
@@ -1038,25 +809,9 @@ export default function Scan({
 
       {/* Local Toast Alert */}
       {toastMessage && (
-        <div
-          className={`fixed top-4 right-4 z-50 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-md shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-2 ${
-            toastMessage.type === 'error'
-              ? 'bg-rose-900 border-rose-700'
-              : toastMessage.type === 'success'
-              ? 'bg-emerald-900 border-emerald-700'
-              : 'bg-slate-900 border-slate-700'
-          }`}
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${
-              toastMessage.type === 'error'
-                ? 'bg-rose-400'
-                : toastMessage.type === 'success'
-                ? 'bg-emerald-400'
-                : 'bg-blue-400'
-            }`}
-          ></span>
-          {toastMessage.text}
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs flex items-center gap-2 border border-slate-800 animate-in fade-in slide-in-from-bottom-2">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage.text}</span>
         </div>
       )}
     </div>
