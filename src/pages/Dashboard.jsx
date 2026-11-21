@@ -31,12 +31,6 @@ export default function Dashboard({
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const displayName = user?.full_name || user?.name || (isAdmin ? 'Store Admin' : 'Store Associate')
-  const tenantName =
-    user?.tenant_name ||
-    user?.tenant?.name ||
-    user?.store_name ||
-    user?.company_name ||
-    'Apex Retail'
 
   const pendingOrders = useMemo(
     () =>
@@ -91,12 +85,9 @@ export default function Dashboard({
       {/* Top Greeting Header Row + New scan button */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight leading-none truncate">
+          <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none truncate">
             {greeting}, {displayName}
           </h1>
-          <span className="hidden sm:inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80 shrink-0">
-            {tenantName}
-          </span>
         </div>
 
         <button
