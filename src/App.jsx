@@ -508,14 +508,15 @@ function MainApp() {
             }
           }
 
-          const [detail, detections] = await Promise.all([
-            api.getScanById(res.id).catch(() => null),
-            api.getScanDetections(res.id).catch(() => null),
-          ])
-          fullScan = {
-            ...fullScan,
-            ...(detail || {}),
-            ...(detections || {}),
+          // Only fetch detections sub-resource if not already returned in scan data
+          if (!Array.isArray(fullScan?.detections) || fullScan.detections.length === 0) {
+            const detections = await api.getScanDetections(res.id).catch(() => null)
+            if (detections) {
+              fullScan = {
+                ...fullScan,
+                ...(detections || {}),
+              }
+            }
           }
         } catch (e) {
           console.warn('Scan detail fetch fallback:', e.message)
