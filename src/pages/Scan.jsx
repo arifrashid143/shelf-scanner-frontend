@@ -27,7 +27,6 @@ export default function Scan({
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const scanMode = 'check' // Default check mode
   const shelfName = 'Shelf Section 1' // Default shelf section
-  const [analysisStatus, setAnalysisStatus] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
   // Configured Shelves from API
@@ -155,7 +154,6 @@ export default function Scan({
   const triggerAnalyze = async (fileToUpload, localPreview) => {
     setIsAnalyzing(true)
     setErrorMsg('')
-    setAnalysisStatus('Uploading photo to AI shelf vision engine (POST /api/scans)...')
 
     const selectedShelf = configuredShelves.find((s) => s.id === selectedShelfId)
     const finalShelfName = selectedShelf?.name || shelfName.trim() || 'Shelf Section 1'
@@ -174,7 +172,6 @@ export default function Scan({
       setErrorMsg(err.message || 'Failed to analyze shelf photo. Please try again.')
     } finally {
       setIsAnalyzing(false)
-      setAnalysisStatus('')
     }
   }
 
@@ -376,9 +373,6 @@ export default function Scan({
 
                 <div className="max-w-md">
                   <h3 className="font-extrabold text-white text-base sm:text-lg">Analyzing shelf scan with AI...</h3>
-                  <p className="text-xs sm:text-sm text-cyan-300 mt-1.5 font-medium">
-                    {analysisStatus || 'Computer vision engine detecting products, counts, and gaps'}
-                  </p>
                 </div>
               </div>
             ) : isCameraActive ? (

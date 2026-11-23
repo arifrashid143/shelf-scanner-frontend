@@ -552,17 +552,15 @@ export default function ScanResult({
                   }}
                 />
               ) : rawUrl ? (
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <img
-                    src={rawUrl}
-                    alt="Shelf capture"
-                    className="w-full h-full object-contain opacity-60"
-                  />
-                  <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-slate-300 space-y-2">
-                    <Sparkles className="w-8 h-8 text-indigo-400 animate-pulse" />
-                    <p className="font-bold text-sm text-white">AI Annotation processing / overlay</p>
-                  </div>
-                </div>
+                <img
+                  src={rawUrl}
+                  alt="Shelf capture"
+                  className="w-full h-full object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]"
+                  onClick={() => setZoomedImage({ url: rawUrl, title: 'AI Detected Image' })}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
               ) : (
                 <div className="p-8 text-center text-slate-400 space-y-2">
                   <Sparkles className="w-10 h-10 mx-auto text-slate-600" />
@@ -589,12 +587,12 @@ export default function ScanResult({
             )}
 
             {/* Expand fullscreen button */}
-            {((activePhotoTab === 'ai' && annotatedUrl) || (activePhotoTab === 'raw' && rawUrl)) && (
+            {((activePhotoTab === 'ai' && (annotatedUrl || rawUrl)) || (activePhotoTab === 'raw' && rawUrl)) && (
               <button
                 type="button"
                 onClick={() =>
                   setZoomedImage({
-                    url: activePhotoTab === 'ai' ? annotatedUrl : rawUrl,
+                    url: activePhotoTab === 'ai' ? (annotatedUrl || rawUrl) : rawUrl,
                     title: activePhotoTab === 'ai' ? 'AI Detected Image' : 'Original Shelf Photo',
                   })
                 }
