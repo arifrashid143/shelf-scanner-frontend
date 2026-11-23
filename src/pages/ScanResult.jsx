@@ -74,164 +74,161 @@ export default function ScanResult({
     ? scanData.unregistered_products.map((p) => ({ label: p, detected_count: 1 }))
     : []
 
-  // Build counts mapping from rawProducts or apiDetections or uncatalogedSummary
-  const detectedCountsByProductId = {}
-  const detectedCountsByName = {}
-
-  if (rawProducts.length > 0) {
-    rawProducts.forEach((p) => {
-      if (p.product_id != null) detectedCountsByProductId[String(p.product_id)] = p.detected_count ?? 0
-      if (p.name) detectedCountsByName[p.name.toLowerCase().trim()] = p.detected_count ?? 0
-    })
-  }
+  // 1. Group individual detections from AI Detection API
+  const detectionsByLabelOrId = {}
 
   if (hasApiDetections) {
     apiDetections.forEach((d) => {
       if (d.is_empty_gap) return
-      if (d.product_id != null) {
-        const idStr = String(d.product_id)
-        detectedCountsByProductId[idStr] = (detectedCountsByProductId[idStr] || 0) + 1
+
+      const cleanLabel = (d.label || 'Detected Item').replace(/\[.*?\]/g, '').trim()
+      const pId = d.product_id != null ? String(d.product_id) : null
+      const key = pId ? `id_${pId}` : `label_${cleanLabel.toLowerCase()}`
+
+      if (!detectionsByLabelOrId[key]) {
+        detectionsByLabelOrId[key] = {
+          product_id: pId,
+          label: cleanLabel,
+          count: 0,
+          confidences: [],
+        }
       }
-      if (d.label) {
-        const cleanLabel = d.label.replace(/\[.*?\]/g, '').toLowerCase().trim()
-        detectedCountsByName[cleanLabel] = (detectedCountsByName[cleanLabel] || 0) + 1
+      detectionsByLabelOrId[key].count += 1
+      if (typeof d.confidence === 'number' && d.confidence > 0) {
+        detectionsByLabelOrId[key].confidences.push(d.confidence)
       }
     })
   }
 
+  // 2. Incorporate rawProducts (from scanData.product_counts or scanData.products)
+  if (rawProducts.length > 0) {
+    rawProducts.forEach((p) => {
+      const count = p.detected_count ?? 0
+      if (count <= 0) return // Only detected items!
+
+      const pId = p.product_id != null ? String(p.product_id) : null
+      const cleanName = (p.name || p.label || 'Item').replace(/\[.*?\]/g, '').trim()
+      const key = pId ? `id_${pId}` : `label_${cleanName.toLowerCase()}`
+
+      if (!detectionsByLabelOrId[key]) {
+        detectionsByLabelOrId[key] = {
+          product_id: pId,
+          label: cleanName,
+          sku: p.sku,
+          category: p.category,
+          count: count,
+          confidences: [],
+          is_low_stock: p.is_low_stock,
+        }
+      } else {
+        detectionsByLabelOrId[key].count = Math.max(detectionsByLabelOrId[key].count, count)
+        if (p.sku) detectionsByLabelOrId[key].sku = p.sku
+        if (p.category) detectionsByLabelOrId[key].category = p.category
+        if (p.is_low_stock !== undefined) detectionsByLabelOrId[key].is_low_stock = p.is_low_stock
+      }
+
+      if (typeof p.confidence === 'number') {
+        detectionsByLabelOrId[key].confidences.push(p.confidence)
+      } else if (Array.isArray(p.confidences)) {
+        detectionsByLabelOrId[key].confidences.push(...p.confidences)
+      }
+    })
+  }
+
+  // 3. Incorporate uncataloged summary if not already present
   if (uncatalogedSummary.length > 0) {
     uncatalogedSummary.forEach((u) => {
-      if (u.label) {
-        const clean = u.label.toLowerCase().trim()
-        if (!detectedCountsByName[clean]) {
-          detectedCountsByName[clean] = u.detected_count || 1
+      const count = u.detected_count || 1
+      if (count <= 0) return
+      const cleanLabel = (u.label || 'Object').replace(/\[.*?\]/g, '').trim()
+      const key = `label_${cleanLabel.toLowerCase()}`
+
+      if (!detectionsByLabelOrId[key]) {
+        detectionsByLabelOrId[key] = {
+          product_id: null,
+          label: cleanLabel,
+          count: count,
+          confidences: typeof u.confidence === 'number' ? [u.confidence] : [],
+          is_uncataloged: true,
         }
+      } else {
+        detectionsByLabelOrId[key].count = Math.max(detectionsByLabelOrId[key].count, count)
       }
     })
   }
 
-  // Synonym keywords mapping for shelf object recognition
-  const synonymMapping = {
-    soda: ['soda', 'bottle', 'can', 'beverage', 'drink', 'spices', 'coke', 'pepsi', 'sprite', 'fanta'],
-    milk: ['milk', 'carton', 'package', 'dairy', 'cereal'],
-    candy: ['candy', 'package', 'bag', 'chocolate', 'chips', 'jelly', 'beans'],
-    beans: ['beans', 'package', 'bag', 'candy', 'chocolate', 'chips'],
+  // Helper index for enriching detected items with store inventory metadata (SKU, formal category)
+  const inventoryById = {}
+  const inventoryByName = {}
+  inventory.forEach((item) => {
+    const id = item.productId || item.id
+    if (id != null) inventoryById[String(id)] = item
+    if (item.name) inventoryByName[item.name.toLowerCase().trim()] = item
+  })
+
+  // 4. Construct final detectedProducts array strictly from detected entries (count > 0)
+  const detectedProducts = Object.values(detectionsByLabelOrId)
+    .filter((entry) => entry.count > 0)
+    .map((entry, idx) => {
+      let matchedInv = null
+      if (entry.product_id && inventoryById[entry.product_id]) {
+        matchedInv = inventoryById[entry.product_id]
+      } else if (inventoryByName[entry.label.toLowerCase()]) {
+        matchedInv = inventoryByName[entry.label.toLowerCase()]
+      } else {
+        const found = Object.keys(inventoryByName).find((k) =>
+          k.includes(entry.label.toLowerCase()) || entry.label.toLowerCase().includes(k)
+        )
+        if (found) matchedInv = inventoryByName[found]
+      }
+
+      const displayName = matchedInv?.name || entry.label
+      const capName = displayName.charAt(0).toUpperCase() + displayName.slice(1)
+      const sku =
+        entry.sku ||
+        matchedInv?.sku ||
+        (entry.product_id ? `SKU-${entry.product_id}` : `AI-DET-${entry.label.toUpperCase().replace(/\s+/g, '-')}`)
+      const category = entry.category || matchedInv?.category || (entry.is_uncataloged ? 'Computer Vision' : 'Detected Object')
+
+      let avgConf = null
+      if (entry.confidences.length > 0) {
+        const sum = entry.confidences.reduce((a, b) => a + (b > 1 ? b / 100 : b), 0)
+        avgConf = Math.round((sum / entry.confidences.length) * 100)
+      } else if (avgConfidence != null) {
+        avgConf = avgConfidence
+      }
+
+      return {
+        id: entry.product_id || `det_${idx}`,
+        product_id: entry.product_id,
+        name: capName,
+        sku: sku,
+        category: category,
+        detected_count: entry.count,
+        confidence: avgConf,
+        is_low_stock: !!entry.is_low_stock,
+        is_uncataloged: !!entry.is_uncataloged || !matchedInv,
+      }
+    })
+
+  if (detectedProducts.length === 0 && itemsCounted > 0) {
+    detectedProducts.push({
+      id: 'general_detection',
+      name: 'Detected Shelf Items',
+      sku: 'AI-SHELF-DETECTED',
+      category: 'Computer Vision',
+      detected_count: itemsCounted,
+      confidence: avgConfidence,
+      is_low_stock: false,
+      is_uncataloged: true,
+    })
   }
 
-  // Match inventory products against detected counts
-  const matchedInventoryProducts = inventory.map((invItem) => {
-    const prodId = String(invItem.productId || invItem.id)
-    const nameKey = (invItem.name || '').toLowerCase().trim()
-
-    let detectedCount = 0
-    if (detectedCountsByProductId[prodId] !== undefined) {
-      detectedCount = detectedCountsByProductId[prodId]
-    } else if (detectedCountsByName[nameKey] !== undefined) {
-      detectedCount = detectedCountsByName[nameKey]
-    } else {
-      // Direct substring match
-      const matchingKey = Object.keys(detectedCountsByName).find(
-        (k) => nameKey.includes(k) || k.includes(nameKey)
-      )
-      if (matchingKey) {
-        detectedCount = detectedCountsByName[matchingKey]
-      } else {
-        // Synonym-based shelf recognition fallback
-        const synonyms = synonymMapping[nameKey] || []
-        for (const syn of synonyms) {
-          if (detectedCountsByName[syn] !== undefined) {
-            detectedCount = detectedCountsByName[syn]
-            break
-          }
-        }
-      }
-    }
-
-    const minThreshold = invItem.minThreshold ?? invItem.min_stock_threshold ?? 0
-    const maxCapacity = invItem.target ?? invItem.max_shelf_capacity ?? 0
-    const isLow = minThreshold > 0 ? detectedCount < minThreshold : false
-    const isMissing = detectedCount === 0
-
-    return {
-      product_id: invItem.productId || invItem.id,
-      sku: invItem.sku || `SKU-${invItem.id}`,
-      name: invItem.name,
-      category: invItem.category || 'General',
-      detected_count: detectedCount,
-      current_stock: invItem.current !== undefined ? invItem.current : 0,
-      min_stock_threshold: minThreshold,
-      max_shelf_capacity: maxCapacity,
-      unit_price: invItem.price || 0,
-      cost_price: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : 0),
-      is_low_stock: isLow,
-      is_missing: isMissing,
-      reorder_recommended_qty:
-        maxCapacity > detectedCount
-          ? maxCapacity - detectedCount
-          : minThreshold > detectedCount
-          ? minThreshold - detectedCount
-          : 0,
-    }
-  })
-
-  // Explicit uncataloged detections list from AI vision (so no detected items are hidden)
-  const uncatalogedProducts = uncatalogedSummary.map((item, idx) => {
-    const labelClean = (item.label || 'Item').replace(/\[.*?\]/g, '').trim()
-    const capLabel = labelClean.charAt(0).toUpperCase() + labelClean.slice(1)
-    const count = item.detected_count || 1
-    return {
-      product_id: `ai_uncataloged_${idx}`,
-      sku: `AI-DET-${labelClean.toUpperCase().replace(/\s+/g, '-')}`,
-      name: `${capLabel} (AI Vision Detected)`,
-      category: 'Computer Vision',
-      detected_count: count,
-      current_stock: count,
-      min_stock_threshold: 5,
-      max_shelf_capacity: Math.max(10, count),
-      unit_price: 2.5,
-      cost_price: 1.5,
-      is_low_stock: false,
-      is_missing: false,
-      is_uncataloged: true,
-      reorder_recommended_qty: 0,
-    }
-  })
-
-  // Fallback: If inventory is empty but rawProducts exists
-  const fallbackRawProducts = rawProducts.map((p) => {
-    const minThresh = p.min_stock_threshold ?? 0
-    const maxCap = p.max_shelf_capacity ?? 0
-    const detected = p.detected_count !== undefined ? p.detected_count : 0
-    return {
-      product_id: p.product_id,
-      sku: p.sku || `SKU-${p.product_id}`,
-      name: p.name || `Product #${p.product_id}`,
-      category: p.category || 'General',
-      detected_count: detected,
-      current_stock: detected,
-      min_stock_threshold: minThresh,
-      max_shelf_capacity: maxCap,
-      unit_price: p.unit_price || p.price || 0,
-      cost_price: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 0),
-      is_low_stock: p.is_low_stock || (minThresh > 0 && detected < minThresh),
-      is_missing: detected === 0,
-      reorder_recommended_qty: p.reorder_recommended_qty || (maxCap > detected ? maxCap - detected : 0),
-    }
-  })
-
-  // Combined detected products list
-  const detectedProducts =
-    inventory.length > 0
-      ? [...matchedInventoryProducts, ...uncatalogedProducts]
-      : fallbackRawProducts.length > 0
-      ? [...fallbackRawProducts, ...uncatalogedProducts]
-      : uncatalogedProducts
-
-  // Items identified for replenishment (low stock or zero detected)
+  // Items identified for replenishment (strictly from backend detection data)
   const lowStockCandidates =
     rawLowStock.length > 0
       ? rawLowStock
-      : detectedProducts.filter((p) => p.is_low_stock || p.detected_count === 0)
+      : detectedProducts.filter((p) => p.is_low_stock)
 
   return (
     <div className="space-y-3 w-full max-w-[1550px] pb-24 text-slate-900 dark:text-slate-100">
@@ -344,9 +341,15 @@ export default function ScanResult({
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Low-stock SKUs</p>
-          <p className="text-2xl sm:text-3xl font-black text-amber-500 tracking-tight">{lowStockCandidates.length}</p>
-          <p className="text-[11px] text-amber-400 mt-0.5">Below threshold</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            {lowStockCandidates.length > 0 ? 'Low-stock Items' : 'Detected SKUs'}
+          </p>
+          <p className={`text-2xl sm:text-3xl font-black tracking-tight ${lowStockCandidates.length > 0 ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+            {lowStockCandidates.length > 0 ? lowStockCandidates.length : detectedProducts.length}
+          </p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+            {lowStockCandidates.length > 0 ? 'Below shelf threshold' : 'Identified on shelf'}
+          </p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
@@ -515,10 +518,10 @@ export default function ScanResult({
         <div className="flex items-center justify-between pb-1">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Products Detected on Shelf</h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Real-time object recognition and shelf capacity analytics</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Real-time object recognition from AI Detection API</p>
           </div>
           <span className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-md">
-            {detectedProducts.length} Recognized SKUs
+            {detectedProducts.length} Detected Items
           </span>
         </div>
 
@@ -526,48 +529,58 @@ export default function ScanResult({
           <table className="w-full text-left text-xs sm:text-sm min-w-[500px]">
             <thead className="sticky top-0 bg-white dark:bg-slate-900 z-10 shadow-2xs">
               <tr className="text-xs text-slate-400 font-medium border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                <th className="py-3 font-medium bg-white dark:bg-slate-900">Product / SKU</th>
-                <th className="py-3 font-medium bg-white dark:bg-slate-900">Category</th>
-                <th className="py-3 font-medium bg-white dark:bg-slate-900">Shelf Count</th>
-                <th className="py-3 font-medium bg-white dark:bg-slate-900">Min Threshold</th>
-                <th className="py-3 font-medium bg-white dark:bg-slate-900">Max Capacity</th>
-                <th className="py-3 font-medium text-right bg-white dark:bg-slate-900">Status</th>
+                <th className="py-3 font-medium bg-white dark:bg-slate-900">Detected Product / Object</th>
+                <th className="py-3 font-medium bg-white dark:bg-slate-900">Category / Type</th>
+                <th className="py-3 font-medium text-center bg-white dark:bg-slate-900">Detected Quantity</th>
+                <th className="py-3 font-medium text-center bg-white dark:bg-slate-900">AI Confidence</th>
+                <th className="py-3 font-medium text-right bg-white dark:bg-slate-900">Detection Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {detectedProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-slate-400 text-xs">
+                  <td colSpan="5" className="py-8 text-center text-slate-400 text-xs">
                     No products detected in this scan.
                   </td>
                 </tr>
               ) : (
                 detectedProducts.map((p) => (
-                  <tr key={p.sku} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                  <tr key={p.sku || p.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="py-3 font-bold text-slate-900 dark:text-white">
                       <div>{p.name}</div>
                       <div className="text-[11px] font-normal text-slate-400 dark:text-slate-500 font-mono">{p.sku}</div>
                     </td>
-                    <td className="py-3 text-slate-600 dark:text-slate-300">{p.category}</td>
-                    <td className="py-3 font-extrabold text-slate-900 dark:text-white text-sm">{p.detected_count}</td>
-                    <td className="py-3 text-slate-500 dark:text-slate-400">{p.min_stock_threshold}</td>
-                    <td className="py-3 text-slate-500 dark:text-slate-400">{p.max_shelf_capacity}</td>
+                    <td className="py-3 text-slate-600 dark:text-slate-300">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                        {p.category}
+                      </span>
+                    </td>
+                    <td className="py-3 font-extrabold text-slate-900 dark:text-white text-sm text-center">
+                      <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200/50 dark:border-indigo-800/50">
+                        {p.detected_count}
+                      </span>
+                    </td>
+                    <td className="py-3 text-center">
+                      {p.confidence != null ? (
+                        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/50">
+                          {p.confidence}%
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
+                    </td>
                     <td className="py-3 text-right">
-                      {p.is_uncataloged ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                          <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" /> AI Detected ({p.detected_count})
-                        </span>
-                      ) : p.detected_count === 0 ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
-                          <AlertTriangle className="w-3 h-3 text-red-600 dark:text-red-400" /> Out of Stock (0)
-                        </span>
-                      ) : p.is_low_stock ? (
+                      {p.is_low_stock ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                           <AlertTriangle className="w-3 h-3 text-rose-600 dark:text-rose-400" /> Low Stock ({p.detected_count})
                         </span>
+                      ) : p.is_uncataloged ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" /> AI Detected
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                          <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> In Stock ({p.detected_count})
+                          <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> AI Verified
                         </span>
                       )}
                     </td>

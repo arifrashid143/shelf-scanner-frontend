@@ -650,7 +650,7 @@ function MainApp() {
             const minThreshold = invItem.minThreshold ?? invItem.min_stock_threshold ?? 5
             const maxCapacity = invItem.target ?? invItem.max_shelf_capacity ?? 10
 
-            if (detectedCount < minThreshold || detectedCount === 0) {
+            if (detectedCount > 0 && detectedCount < minThreshold) {
               const reorderQty =
                 maxCapacity > detectedCount
                   ? maxCapacity - detectedCount
