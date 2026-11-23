@@ -271,7 +271,7 @@ export default function Scan({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full space-y-2.5 pb-24 md:pb-4">
+    <div className="flex-1 flex flex-col min-h-0 w-full space-y-2.5 pb-20 md:pb-0">
       {/* Hidden file input for Gallery / File Browser */}
       <input
         type="file"
@@ -346,40 +346,22 @@ export default function Scan({
       </div>
 
       {/* ========================================================================= */}
-      {/* CAMERA BOX WITH MODERN PERIMETER BORDER BEAM ANIMATION                    */}
+      {/* PROFESSIONAL CAMERA WORKSPACE (CLEAN, NO LEAKING OVERFLOW, NO GIMMICKS)   */}
       {/* ========================================================================= */}
-      <div className="relative w-full flex-1 min-h-0 rounded-2xl p-[2px] shadow-2xl flex flex-col justify-between">
-        {/* Animated Traveling Border Beam Comet around the whole box */}
-        <div className="absolute -inset-[150%] animate-border-beam pointer-events-none z-0 overflow-hidden rounded-2xl">
-          <div
-            className="w-full h-full"
-            style={{
-              background: 'conic-gradient(from 0deg, transparent 0deg, transparent 270deg, #38bdf8 315deg, #818cf8 345deg, transparent 360deg)',
-            }}
-          />
-        </div>
+      <div className="relative w-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
+        {/* Viewfinder: Focused Camera Stage */}
+        <div className="relative w-full flex-1 min-h-[220px] xs:min-h-[260px] sm:min-h-0 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-800/90 shadow-inner">
+          {/* Subtle Ambient Depth */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0c132c]/90 via-[#101b3b]/70 to-[#0c132c]/90 pointer-events-none"></div>
+          <div className="absolute inset-0 cool-scan-grid opacity-20 pointer-events-none"></div>
 
-        {/* Inner Card Container */}
-        <div className="relative z-[1] w-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-[calc(1rem-2px)] p-3 sm:p-4 flex flex-col justify-between">
-          {/* Viewfinder with Rich Twilight Sapphire & Indigo Background (NOT BLACK) */}
-          <div className="relative w-full flex-1 min-h-[220px] xs:min-h-[260px] sm:min-h-[380px] md:min-h-[480px] rounded-xl overflow-hidden bg-gradient-to-br from-[#0d1636] via-[#172252] to-[#0f1d3d] flex items-center justify-center border border-indigo-500/30 shadow-inner">
-            {/* Luminous Ambient Floating Glows */}
-            <div className="absolute -top-16 -left-16 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none animate-orb-1"></div>
-            <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none animate-orb-2"></div>
-            <div className="absolute inset-0 cool-scan-grid opacity-30 pointer-events-none"></div>
-
-            {/* Viewfinder Edge-Scanning Track Animation (Top Rim Scanner Beam) */}
-            <div className="absolute top-0 inset-x-0 h-[2px] bg-indigo-500/20 z-15 pointer-events-none overflow-hidden">
-              <div className="absolute top-0 w-44 h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_10px_#38bdf8] animate-edge-scan"></div>
-            </div>
-
-            {/* Minimalist 1px Corner Brackets (Breathing Glow, Clean & Non-Obtrusive) */}
-            <div className="absolute inset-4 sm:inset-6 z-15 pointer-events-none animate-corner-breathe">
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-cyan-400/80 rounded-tl-lg"></div>
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-cyan-400/80 rounded-tr-lg"></div>
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-cyan-400/80 rounded-bl-lg"></div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-cyan-400/80 rounded-br-lg"></div>
-            </div>
+          {/* Clean Camera Focus Framing Brackets (Pro Precision Crosshairs) */}
+          <div className="absolute inset-4 sm:inset-6 z-10 pointer-events-none">
+            <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-white/50 rounded-tl-md"></div>
+            <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-white/50 rounded-tr-md"></div>
+            <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-white/50 rounded-bl-md"></div>
+            <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-white/50 rounded-br-md"></div>
+          </div>
 
             {isAnalyzing ? (
               /* ================= STATE 1: ANALYZING STATE ================= */
@@ -636,7 +618,6 @@ export default function Scan({
             )}
           </div>
         </div>
-      </div>
 
       {/* ========================================================================= */}
       {/* RECENT SCANS MODAL                                                        */}
