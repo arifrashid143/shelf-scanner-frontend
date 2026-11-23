@@ -182,17 +182,19 @@ export default function Scan({
   const capturePhoto = () => {
     const video = videoRef.current
 
-    if (!video || !video.videoWidth) {
+    if (!video || (!video.videoWidth && !video.clientWidth)) {
       setErrorMsg('Camera stream is not ready. Please wait a moment and try again.')
       return
     }
 
     try {
+      const width = video.videoWidth || video.clientWidth || 1280
+      const height = video.videoHeight || video.clientHeight || 720
       const canvas = document.createElement('canvas')
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
+      canvas.width = width
+      canvas.height = height
       const ctx = canvas.getContext('2d')
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      ctx.drawImage(video, 0, 0, width, height)
 
       canvas.toBlob(
         (blob) => {
@@ -269,7 +271,7 @@ export default function Scan({
   }
 
   return (
-    <div className="h-full flex-1 flex flex-col min-h-0 w-full space-y-3">
+    <div className="flex-1 flex flex-col min-h-0 w-full space-y-2.5 pb-24 md:pb-4">
       {/* Hidden file input for Gallery / File Browser */}
       <input
         type="file"
@@ -346,9 +348,9 @@ export default function Scan({
       {/* ========================================================================= */}
       {/* CAMERA BOX WITH MODERN PERIMETER BORDER BEAM ANIMATION                    */}
       {/* ========================================================================= */}
-      <div className="relative w-full flex-1 min-h-0 rounded-2xl overflow-hidden p-[2px] shadow-2xl flex flex-col justify-between">
+      <div className="relative w-full flex-1 min-h-0 rounded-2xl p-[2px] shadow-2xl flex flex-col justify-between">
         {/* Animated Traveling Border Beam Comet around the whole box */}
-        <div className="absolute -inset-[150%] animate-border-beam pointer-events-none z-0">
+        <div className="absolute -inset-[150%] animate-border-beam pointer-events-none z-0 overflow-hidden rounded-2xl">
           <div
             className="w-full h-full"
             style={{
@@ -358,9 +360,9 @@ export default function Scan({
         </div>
 
         {/* Inner Card Container */}
-        <div className="relative z-1 w-full h-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-[calc(1rem-2px)] p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
+        <div className="relative z-[1] w-full flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-[calc(1rem-2px)] p-3 sm:p-4 flex flex-col justify-between">
           {/* Viewfinder with Rich Twilight Sapphire & Indigo Background (NOT BLACK) */}
-          <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[460px] md:min-h-[520px] rounded-xl overflow-hidden bg-gradient-to-br from-[#0d1636] via-[#172252] to-[#0f1d3d] flex items-center justify-center border border-indigo-500/30 shadow-inner">
+          <div className="relative w-full flex-1 min-h-[220px] xs:min-h-[260px] sm:min-h-[380px] md:min-h-[480px] rounded-xl overflow-hidden bg-gradient-to-br from-[#0d1636] via-[#172252] to-[#0f1d3d] flex items-center justify-center border border-indigo-500/30 shadow-inner">
             {/* Luminous Ambient Floating Glows */}
             <div className="absolute -top-16 -left-16 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none animate-orb-1"></div>
             <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none animate-orb-2"></div>
@@ -409,11 +411,11 @@ export default function Scan({
                 />
 
                 {/* Minimal Clean Camera Controls (Top-Right Only, Clean & Unobtrusive) */}
-                <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
+                <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
                   <button
                     type="button"
                     onClick={toggleCameraFacing}
-                    className="p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-transform active:scale-90 cursor-pointer shadow-lg"
+                    className="p-2 sm:p-2.5 rounded-xl bg-indigo-950/85 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-transform active:scale-90 cursor-pointer shadow-lg"
                     title="Switch Camera (Front/Rear)"
                   >
                     <RotateCcw className="w-4 h-4 text-cyan-300" />
@@ -421,10 +423,24 @@ export default function Scan({
                   <button
                     type="button"
                     onClick={stopCamera}
-                    className="p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-colors cursor-pointer shadow-lg"
+                    className="p-2 sm:p-2.5 rounded-xl bg-indigo-950/85 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-colors cursor-pointer shadow-lg"
                     title="Close Camera"
                   >
                     <X className="w-4 h-4 text-rose-300" />
+                  </button>
+                </div>
+
+                {/* Floating Shutter Button Inside Viewfinder (Always accessible on mobile & small screens) */}
+                <div className="absolute bottom-3.5 sm:bottom-5 inset-x-0 z-30 flex items-center justify-center pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="pointer-events-auto p-1 rounded-full bg-white/20 hover:bg-white/35 active:scale-95 transition-all shadow-2xl border-2 border-white backdrop-blur-md cursor-pointer group"
+                    title="Take Photo"
+                  >
+                    <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-full bg-white group-hover:bg-cyan-50 flex items-center justify-center shadow-lg transition-transform active:scale-90">
+                      <Camera className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-700 stroke-[2.2]" />
+                    </div>
                   </button>
                 </div>
               </div>
@@ -440,11 +456,45 @@ export default function Scan({
                 <button
                   type="button"
                   onClick={handleClearImage}
-                  className="absolute top-3.5 right-3.5 z-20 p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-all cursor-pointer shadow-lg"
+                  className="absolute top-3 right-3 z-30 p-2 sm:p-2.5 rounded-xl bg-indigo-950/85 hover:bg-indigo-900 text-white border border-cyan-400/30 backdrop-blur-md transition-all cursor-pointer shadow-lg"
                   title="Remove image"
                 >
                   <X className="w-4 h-4 text-rose-300" />
                 </button>
+
+                {/* Floating Quick Actions Inside Preview Viewport (Instant 1-Tap Access on Any Screen) */}
+                <div className="absolute bottom-3.5 inset-x-3 z-30 flex items-center justify-center gap-2.5 pointer-events-none sm:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleClearImage()
+                      startCamera()
+                    }}
+                    disabled={isAnalyzing}
+                    className="pointer-events-auto px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white font-bold text-xs border border-white/20 backdrop-blur-md shadow-xl flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-cyan-300" />
+                    <span>Retake</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAnalyzeClick}
+                    disabled={isAnalyzing}
+                    className="pointer-events-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 active:scale-95 text-white font-bold text-xs shadow-xl shadow-indigo-600/40 flex items-center gap-2 cursor-pointer disabled:opacity-50 border border-cyan-300/40"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-white" />
+                        <span>Analyse Shelf</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             ) : (
               /* ================= STATE 4: IDLE STATE WITH CONCENTRIC RADAR RIPPLES ================= */
@@ -501,24 +551,24 @@ export default function Scan({
           </div>
 
           {/* Bottom Action Bar */}
-          <div className="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="pt-3 mt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2.5 shrink-0 relative z-20">
             {isCameraActive ? (
               <>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Align shelf in frame and click &ldquo;Take Photo&rdquo;.
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+                  Align shelf in frame and tap &ldquo;Take Photo&rdquo;.
                 </span>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 w-full xs:w-auto">
                   <button
                     type="button"
                     onClick={stopCamera}
-                    className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                    className="flex-1 xs:flex-none px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer text-center"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={capturePhoto}
-                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all"
+                    className="flex-1 xs:flex-none px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all"
                   >
                     <Camera className="w-4 h-4 text-white" />
                     <span>Take Photo</span>
@@ -527,14 +577,14 @@ export default function Scan({
               </>
             ) : previewUrl ? (
               <>
-                <div className="flex items-center gap-2 truncate">
+                <div className="flex items-center gap-2 truncate min-w-0">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold truncate max-w-[200px]">
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold truncate max-w-[180px] sm:max-w-xs">
                     {selectedFile?.name || 'shelf_capture.jpg'}
                   </span>
                   <span className="text-[11px] text-slate-400 shrink-0">· Ready</span>
                 </div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 w-full xs:w-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -542,7 +592,7 @@ export default function Scan({
                       startCamera()
                     }}
                     disabled={isAnalyzing}
-                    className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                    className="flex-1 xs:flex-none px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer text-center"
                   >
                     Retake Photo
                   </button>
@@ -550,7 +600,7 @@ export default function Scan({
                     type="button"
                     onClick={handleAnalyzeClick}
                     disabled={isAnalyzing}
-                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                    className="flex-1 xs:flex-none px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                   >
                     {isAnalyzing ? (
                       <>
