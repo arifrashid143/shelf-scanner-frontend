@@ -614,13 +614,25 @@ function MainApp() {
             if (item.product_id != null) {
               const pId = parseInt(item.product_id, 10)
               if (!isNaN(pId)) {
+                const matchedInv = inventory.find(
+                  (inv) => String(inv.productId || inv.id) === String(pId)
+                )
                 const qty =
                   item.reorder_recommended_qty ||
                   Math.max(1, (item.max_shelf_capacity || 10) - (item.detected_count || 0))
+                const unitCost = item.cost_price != null ? Number(item.cost_price) : (matchedInv?.costPrice || (matchedInv?.price ? matchedInv.price * 0.7 : 45))
                 itemsToReorder.push({
                   product_id: pId,
+                  name: item.name || item.product_name || matchedInv?.name || `Product #${pId}`,
+                  sku: item.sku || matchedInv?.sku || `SKU-${pId}`,
+                  category: item.category || matchedInv?.category || 'General',
+                  detected_count: item.detected_count ?? 0,
+                  min_stock_threshold: item.min_stock_threshold ?? matchedInv?.minThreshold ?? 5,
+                  max_shelf_capacity: item.max_shelf_capacity ?? matchedInv?.target ?? 10,
                   quantity: qty,
-                  unit_cost: item.cost_price != null ? Number(item.cost_price) : null,
+                  qty: qty,
+                  unit_cost: unitCost,
+                  unitPrice: unitCost,
                   recommended_reason: `AI detected ${item.detected_count ?? 0} on shelf (min threshold ${item.min_stock_threshold ?? 5})`,
                 })
               }
@@ -659,10 +671,19 @@ function MainApp() {
 
               const pId = parseInt(invItem.productId || invItem.id, 10)
               if (!isNaN(pId)) {
+                const unitCost = invItem.costPrice || (invItem.price ? invItem.price * 0.7 : 45)
                 itemsToReorder.push({
                   product_id: pId,
+                  name: invItem.name,
+                  sku: invItem.sku || `SKU-${pId}`,
+                  category: invItem.category || 'General',
+                  detected_count: detectedCount,
+                  min_stock_threshold: minThreshold,
+                  max_shelf_capacity: maxCapacity,
                   quantity: reorderQty,
-                  unit_cost: invItem.costPrice || (invItem.price ? invItem.price * 0.7 : null),
+                  qty: reorderQty,
+                  unit_cost: unitCost,
+                  unitPrice: unitCost,
                   recommended_reason: `AI detected ${detectedCount} on shelf (below threshold ${minThreshold})`,
                 })
               }
@@ -677,10 +698,19 @@ function MainApp() {
               const reorderQty = maxCap > detected ? maxCap - detected : Math.max(1, minThresh - detected)
               const pId = parseInt(p.product_id, 10)
               if (!isNaN(pId)) {
+                const unitCost = p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 45)
                 itemsToReorder.push({
                   product_id: pId,
+                  name: p.name || `Product #${pId}`,
+                  sku: p.sku || `SKU-${pId}`,
+                  category: p.category || 'General',
+                  detected_count: detected,
+                  min_stock_threshold: minThresh,
+                  max_shelf_capacity: maxCap,
                   quantity: reorderQty,
-                  unit_cost: p.cost_price || (p.unit_price ? p.unit_price * 0.7 : null),
+                  qty: reorderQty,
+                  unit_cost: unitCost,
+                  unitPrice: unitCost,
                   recommended_reason: `AI detected ${detected} on shelf`,
                 })
               }
@@ -721,6 +751,15 @@ function MainApp() {
         if (autoPoResponse?.id) {
           fullScan.auto_po_id = autoPoResponse.id
           fullScan.auto_po_items_count = itemsToReorder.length
+          fullScan.purchase_order = {
+            ...autoPoResponse,
+            id: autoPoResponse.id,
+            status: autoPoResponse.status || 'Draft',
+            created_at: autoPoResponse.created_at || new Date().toISOString(),
+            items: autoPoResponse.items && autoPoResponse.items.length > 0 ? autoPoResponse.items : itemsToReorder,
+            supplier: autoPoResponse.supplier || 'Apex Direct Distribution Logistics',
+            notes: autoPoResponse.notes || `AI auto-generated Purchase Order from shelf scan ${scanId || ''}`,
+          }
         }
 
         // Fetch refreshed orders list from backend and place newly generated PO at the top
@@ -884,6 +923,8 @@ function MainApp() {
             onNavigate={setCurrentTab}
             onGeneratePO={handleGeneratePO}
             onInventoryUpdated={refreshInventory}
+            onApprovePO={handleApprovePO}
+            onSelectOrder={handleSelectOrder}
           />
         )
 
