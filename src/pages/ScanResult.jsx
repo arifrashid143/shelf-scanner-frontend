@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Image as ImageIcon,
   Check,
@@ -21,6 +21,101 @@ import {
   PlusCircle,
   Loader2,
 } from 'lucide-react'
+
+// Renders scanned shelf photo cleanly by erasing any backend text watermarks (e.g. YOLO/Vision Engine banners)
+function CleanShelfImage({
+  annotatedUrl,
+  rawUrl,
+  hasDetections,
+  alt = 'Shelf scan',
+  onClick,
+  className = '',
+}) {
+  const canvasRef = useRef(null)
+  const [useFallbackImg, setUseFallbackImg] = useState(false)
+
+  // When there are no detection items, rawUrl is always the cleanest image without any watermark text
+  const shouldDirectlyUseRaw = !hasDetections || !annotatedUrl
+
+  useEffect(() => {
+    if (shouldDirectlyUseRaw || !annotatedUrl) return
+
+    let isMounted = true
+    const annotatedImg = new Image()
+    const rawImg = new Image()
+
+    let annotatedLoaded = false
+    let rawLoaded = false
+
+    const render = () => {
+      if (!isMounted || !canvasRef.current || !annotatedLoaded) return
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      const w = annotatedImg.naturalWidth || annotatedImg.width
+      const h = annotatedImg.naturalHeight || annotatedImg.height
+      if (!w || !h) return
+
+      canvas.width = w
+      canvas.height = h
+
+      // 1. Draw the AI detection image (with bounding boxes)
+      ctx.drawImage(annotatedImg, 0, 0, w, h)
+
+      // 2. Erase the top-left watermark text by patching it with clean pixels from the original raw photo
+      if (rawLoaded && rawImg.naturalWidth) {
+        const patchW = Math.min(w * 0.42, 450)
+        const patchH = Math.min(h * 0.1, 75)
+        ctx.drawImage(rawImg, 0, 0, patchW, patchH, 0, 0, patchW, patchH)
+      }
+    }
+
+    annotatedImg.onload = () => {
+      annotatedLoaded = true
+      render()
+    }
+    annotatedImg.onerror = () => {
+      if (isMounted) setUseFallbackImg(true)
+    }
+
+    if (rawUrl) {
+      rawImg.onload = () => {
+        rawLoaded = true
+        render()
+      }
+      rawImg.src = rawUrl
+    }
+
+    annotatedImg.src = annotatedUrl
+
+    return () => {
+      isMounted = false
+    }
+  }, [annotatedUrl, rawUrl, shouldDirectlyUseRaw])
+
+  if (shouldDirectlyUseRaw || useFallbackImg) {
+    return (
+      <img
+        src={rawUrl || annotatedUrl}
+        alt={alt}
+        className={className}
+        onClick={onClick}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none'
+        }}
+      />
+    )
+  }
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={className}
+      onClick={onClick}
+    />
+  )
+}
 
 export default function ScanResult({
   scanData,
@@ -613,25 +708,19 @@ export default function ScanResult({
         <div className="rounded-xl overflow-hidden border border-slate-200/90 dark:border-slate-800 bg-slate-950">
           <div className="relative bg-slate-950 aspect-[4/3] sm:aspect-[16/9] max-h-[520px] flex items-center justify-center overflow-hidden group">
             {activePhotoTab === 'ai' ? (
-              annotatedUrl ? (
-                <img
-                  src={annotatedUrl}
-                  alt="AI Annotated shelf detection"
+              (annotatedUrl || rawUrl) ? (
+                <CleanShelfImage
+                  annotatedUrl={annotatedUrl}
+                  rawUrl={rawUrl}
+                  hasDetections={itemsCounted > 0}
+                  alt="Shelf detection"
                   className="w-full h-full object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]"
-                  onClick={() => setZoomedImage({ url: annotatedUrl, title: 'AI Detected Image' })}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              ) : rawUrl ? (
-                <img
-                  src={rawUrl}
-                  alt="Shelf capture"
-                  className="w-full h-full object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]"
-                  onClick={() => setZoomedImage({ url: rawUrl, title: 'AI Detected Image' })}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
+                  onClick={() =>
+                    setZoomedImage({
+                      url: itemsCounted > 0 && annotatedUrl ? annotatedUrl : rawUrl,
+                      title: 'Shelf Detection',
+                    })
+                  }
                 />
               ) : (
                 <div className="p-8 text-center text-slate-400 space-y-2">
@@ -664,8 +753,8 @@ export default function ScanResult({
                 type="button"
                 onClick={() =>
                   setZoomedImage({
-                    url: activePhotoTab === 'ai' ? (annotatedUrl || rawUrl) : rawUrl,
-                    title: activePhotoTab === 'ai' ? 'AI Detected Image' : 'Original Shelf Photo',
+                    url: activePhotoTab === 'ai' ? (itemsCounted > 0 && annotatedUrl ? annotatedUrl : rawUrl) : rawUrl,
+                    title: activePhotoTab === 'ai' ? 'Shelf Detection' : 'Original Shelf Photo',
                   })
                 }
                 className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white/90 hover:text-white backdrop-blur-xs transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
@@ -1290,8 +1379,10 @@ export default function ScanResult({
               </button>
             </div>
             <div className="p-3 flex-1 flex items-center justify-center overflow-auto bg-slate-950">
-              <img
-                src={zoomedImage.url}
+              <CleanShelfImage
+                annotatedUrl={zoomedImage.url === annotatedUrl ? annotatedUrl : null}
+                rawUrl={rawUrl || zoomedImage.url}
+                hasDetections={itemsCounted > 0}
                 alt={zoomedImage.title}
                 className="max-h-[80vh] w-auto object-contain rounded-lg shadow-lg"
               />

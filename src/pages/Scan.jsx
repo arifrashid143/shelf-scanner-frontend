@@ -678,7 +678,7 @@ export default function Scan({
                   {recentScans.map((scan) => {
                     const gapsCount = scan.empty_gaps_count ?? scan.gaps ?? 0
                     const itemsCount = scan.total_detected_count ?? scan.items ?? 0
-                    const thumbUrl = scan.annotated_image_url || scan.raw_image_url
+                    const thumbUrl = scan.raw_image_url || scan.annotated_image_url
 
                     return (
                       <div
