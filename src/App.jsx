@@ -617,6 +617,9 @@ function MainApp() {
                 const matchedInv = inventory.find(
                   (inv) => String(inv.productId || inv.id) === String(pId)
                 )
+                // STRICT CHECK: Purchase order must only generate on current inventory products
+                if (!matchedInv) return
+
                 const qty =
                   item.reorder_recommended_qty ||
                   Math.max(1, (item.max_shelf_capacity || 10) - (item.detected_count || 0))
@@ -691,29 +694,35 @@ function MainApp() {
           })
         } else if (itemsToReorder.length === 0 && rawProductCounts.length > 0) {
           rawProductCounts.forEach((p) => {
-            const minThresh = p.min_stock_threshold ?? 5
-            const maxCap = p.max_shelf_capacity ?? 10
+            const pId = parseInt(p.product_id, 10)
+            if (isNaN(pId)) return
+            const matchedInv = inventory.find(
+              (inv) => String(inv.productId || inv.id) === String(pId) ||
+                       (p.name && inv.name && inv.name.toLowerCase().trim() === p.name.toLowerCase().trim())
+            )
+            // STRICT CHECK: Purchase order must only generate on current inventory products
+            if (!matchedInv) return
+
+            const minThresh = matchedInv.minThreshold ?? p.min_stock_threshold ?? 5
+            const maxCap = matchedInv.target ?? p.max_shelf_capacity ?? 10
             const detected = p.detected_count ?? 0
             if (detected < minThresh || detected === 0) {
               const reorderQty = maxCap > detected ? maxCap - detected : Math.max(1, minThresh - detected)
-              const pId = parseInt(p.product_id, 10)
-              if (!isNaN(pId)) {
-                const unitCost = p.cost_price || (p.unit_price ? p.unit_price * 0.7 : 45)
-                itemsToReorder.push({
-                  product_id: pId,
-                  name: p.name || `Product #${pId}`,
-                  sku: p.sku || `SKU-${pId}`,
-                  category: p.category || 'General',
-                  detected_count: detected,
-                  min_stock_threshold: minThresh,
-                  max_shelf_capacity: maxCap,
-                  quantity: reorderQty,
-                  qty: reorderQty,
-                  unit_cost: unitCost,
-                  unitPrice: unitCost,
-                  recommended_reason: `AI detected ${detected} on shelf`,
-                })
-              }
+              const unitCost = matchedInv.costPrice || p.cost_price || (matchedInv.price ? matchedInv.price * 0.7 : (p.unit_price ? p.unit_price * 0.7 : 45))
+              itemsToReorder.push({
+                product_id: pId,
+                name: matchedInv.name || p.name || `Product #${pId}`,
+                sku: matchedInv.sku || p.sku || `SKU-${pId}`,
+                category: matchedInv.category || p.category || 'General',
+                detected_count: detected,
+                min_stock_threshold: minThresh,
+                max_shelf_capacity: maxCap,
+                quantity: reorderQty,
+                qty: reorderQty,
+                unit_cost: unitCost,
+                unitPrice: unitCost,
+                recommended_reason: `AI detected ${detected} on shelf`,
+              })
             }
           })
         }
@@ -923,6 +932,7 @@ function MainApp() {
             onNavigate={setCurrentTab}
             onGeneratePO={handleGeneratePO}
             onInventoryUpdated={refreshInventory}
+            onAddProduct={handleAddProduct}
             onApprovePO={handleApprovePO}
             onSelectOrder={handleSelectOrder}
           />

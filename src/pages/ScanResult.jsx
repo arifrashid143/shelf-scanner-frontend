@@ -17,6 +17,9 @@ import {
   Lock,
   ExternalLink,
   ShieldCheck,
+  Plus,
+  PlusCircle,
+  Loader2,
 } from 'lucide-react'
 
 export default function ScanResult({
@@ -27,9 +30,22 @@ export default function ScanResult({
   onNavigate,
   onApprovePO,
   onSelectOrder,
+  onAddProduct,
+  onInventoryUpdated,
 }) {
   const [zoomedImage, setZoomedImage] = useState(null)
   const [activePhotoTab, setActivePhotoTab] = useState('ai')
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [selectedNewProd, setSelectedNewProd] = useState(null)
+  const [newProdName, setNewProdName] = useState('')
+  const [newProdCategory, setNewProdCategory] = useState('General')
+  const [newProdCurrent, setNewProdCurrent] = useState(1)
+  const [newProdThreshold, setNewProdThreshold] = useState(5)
+  const [newProdTarget, setNewProdTarget] = useState(15)
+  const [newProdPrice, setNewProdPrice] = useState(25)
+  const [isSavingProduct, setIsSavingProduct] = useState(false)
+  const [addError, setAddError] = useState('')
+  const [addedProductsMap, setAddedProductsMap] = useState({})
   const scanId = scanData?.id || scanData?.scan_id || 'Scan'
   const shelfName = scanData?.shelf_id || scanData?.shelfName || 'Shelf Section 1'
 
@@ -93,6 +109,7 @@ export default function ScanResult({
 
       const cleanLabel = (d.label || 'Detected Item').replace(/\[.*?\]/g, '').trim()
       const pId = d.product_id != null ? String(d.product_id) : null
+      const isNew = d.new_product === true || d.is_new_product === true
       const key = pId ? `id_${pId}` : `label_${cleanLabel.toLowerCase()}`
 
       if (!detectionsByLabelOrId[key]) {
@@ -101,9 +118,11 @@ export default function ScanResult({
           label: cleanLabel,
           count: 0,
           confidences: [],
+          new_product: isNew,
         }
       }
       detectionsByLabelOrId[key].count += 1
+      if (isNew) detectionsByLabelOrId[key].new_product = true
       if (typeof d.confidence === 'number' && d.confidence > 0) {
         detectionsByLabelOrId[key].confidences.push(d.confidence)
       }
@@ -118,6 +137,7 @@ export default function ScanResult({
 
       const pId = p.product_id != null ? String(p.product_id) : null
       const cleanName = (p.name || p.label || 'Item').replace(/\[.*?\]/g, '').trim()
+      const isNew = p.new_product === true || p.is_new_product === true
       const key = pId ? `id_${pId}` : `label_${cleanName.toLowerCase()}`
 
       if (!detectionsByLabelOrId[key]) {
@@ -129,12 +149,14 @@ export default function ScanResult({
           count: count,
           confidences: [],
           is_low_stock: p.is_low_stock,
+          new_product: isNew,
         }
       } else {
         detectionsByLabelOrId[key].count = Math.max(detectionsByLabelOrId[key].count, count)
         if (p.sku) detectionsByLabelOrId[key].sku = p.sku
         if (p.category) detectionsByLabelOrId[key].category = p.category
         if (p.is_low_stock !== undefined) detectionsByLabelOrId[key].is_low_stock = p.is_low_stock
+        if (isNew) detectionsByLabelOrId[key].new_product = true
       }
 
       if (typeof p.confidence === 'number') {
@@ -160,9 +182,11 @@ export default function ScanResult({
           count: count,
           confidences: typeof u.confidence === 'number' ? [u.confidence] : [],
           is_uncataloged: true,
+          new_product: true,
         }
       } else {
         detectionsByLabelOrId[key].count = Math.max(detectionsByLabelOrId[key].count, count)
+        detectionsByLabelOrId[key].new_product = true
       }
     })
   }
@@ -198,7 +222,7 @@ export default function ScanResult({
         entry.sku ||
         matchedInv?.sku ||
         (entry.product_id ? `SKU-${entry.product_id}` : `AI-DET-${entry.label.toUpperCase().replace(/\s+/g, '-')}`)
-      const category = entry.category || matchedInv?.category || (entry.is_uncataloged ? 'Computer Vision' : 'Detected Object')
+      const category = entry.category || matchedInv?.category || 'General'
 
       let avgConf = null
       if (entry.confidences.length > 0) {
@@ -207,6 +231,8 @@ export default function ScanResult({
       } else if (avgConfidence != null) {
         avgConf = avgConfidence
       }
+
+      const isNew = entry.new_product === true || entry.is_uncataloged === true || !matchedInv
 
       return {
         id: entry.product_id || `det_${idx}`,
@@ -218,6 +244,7 @@ export default function ScanResult({
         confidence: avgConf,
         is_low_stock: !!entry.is_low_stock,
         is_uncataloged: !!entry.is_uncataloged || !matchedInv,
+        new_product: isNew,
       }
     })
 
@@ -226,12 +253,69 @@ export default function ScanResult({
       id: 'general_detection',
       name: 'Detected Shelf Items',
       sku: 'AI-SHELF-DETECTED',
-      category: 'Computer Vision',
+      category: 'General',
       detected_count: itemsCounted,
       confidence: avgConfidence,
       is_low_stock: false,
       is_uncataloged: true,
+      new_product: true,
     })
+  }
+
+  // Filter detected new products that are not yet added to inventory
+  const newProductsList = detectedProducts.filter(
+    (p) =>
+      p.new_product &&
+      !addedProductsMap[p.name.toLowerCase()] &&
+      !inventory.some((inv) => inv.name && inv.name.toLowerCase().trim() === p.name.toLowerCase().trim())
+  )
+
+  const openAddModal = (prod) => {
+    setSelectedNewProd(prod)
+    setNewProdName(prod.name || 'New Product')
+    setNewProdCategory(prod.category && prod.category !== 'General' ? prod.category : 'General')
+    setNewProdCurrent(prod.detected_count || 1)
+    setNewProdThreshold(5)
+    setNewProdTarget(Math.max(15, (prod.detected_count || 1) * 2))
+    setNewProdPrice(25)
+    setAddError('')
+    setIsAddModalOpen(true)
+  }
+
+  const handleConfirmAddProduct = async (e) => {
+    e.preventDefault()
+    if (!newProdName.trim()) {
+      setAddError('Product name is required.')
+      return
+    }
+    setIsSavingProduct(true)
+    setAddError('')
+    try {
+      if (onAddProduct) {
+        await onAddProduct({
+          name: newProdName.trim(),
+          category: newProdCategory.trim() || 'General',
+          current: parseInt(newProdCurrent || 0, 10),
+          minThreshold: parseInt(newProdThreshold || 5, 10),
+          target: parseInt(newProdTarget || 15, 10),
+          price: parseFloat(newProdPrice || 0),
+          costPrice: parseFloat(newProdPrice || 0) * 0.7,
+        })
+      }
+      setAddedProductsMap((prev) => ({
+        ...prev,
+        [newProdName.trim().toLowerCase()]: true,
+        ...(selectedNewProd?.name ? { [selectedNewProd.name.toLowerCase()]: true } : {}),
+      }))
+      setIsAddModalOpen(false)
+      if (onInventoryUpdated) {
+        await onInventoryUpdated()
+      }
+    } catch (err) {
+      setAddError(err.message || 'Failed to add product to inventory.')
+    } finally {
+      setIsSavingProduct(false)
+    }
   }
 
   // Items identified for replenishment (strictly from backend detection data)
@@ -240,7 +324,7 @@ export default function ScanResult({
       ? rawLowStock
       : detectedProducts.filter((p) => p.is_low_stock)
 
-  // --- Professional Purchase Order Management ---
+  // --- Professional Purchase Order Management (STRICTLY ON CURRENT INVENTORY PRODUCTS) ---
   const initialPo = scanData?.purchase_order || (scanData?.auto_po_id ? {
     id: scanData.auto_po_id,
     status: 'Draft',
@@ -252,61 +336,48 @@ export default function ScanResult({
   const [isApprovingPo, setIsApprovingPo] = useState(false)
   const [poError, setPoError] = useState('')
 
-  // Resolve PO Line Items with fallback from lowStockCandidates if needed
+  // Resolve PO Line Items STRICTLY on current products in inventory
   const poLineItems = (() => {
-    if (Array.isArray(initialPo?.items) && initialPo.items.length > 0) {
-      return initialPo.items.map((it, idx) => {
-        const pId = it.product_id || it.id
-        const matched = inventory.find((inv) => String(inv.productId || inv.id) === String(pId))
-        const name = it.name || it.product_name || matched?.name || `Product #${pId || idx + 1}`
-        const sku = it.sku || matched?.sku || (pId ? `SKU-${pId}` : `SKU-PO-${idx + 1}`)
-        const category = it.category || matched?.category || 'General'
-        const qty = it.quantity || it.qty || 1
-        const unitPrice = it.unit_cost || it.unitPrice || it.unit_price || matched?.costPrice || (matched?.price ? matched.price * 0.7 : 45)
-        const shelfCount = it.detected_count !== undefined ? it.detected_count : (matched?.current ?? 0)
-        const minThreshold = it.min_stock_threshold !== undefined ? it.min_stock_threshold : (matched?.minThreshold ?? 5)
+    const rawCandidates = Array.isArray(initialPo?.items) && initialPo.items.length > 0
+      ? initialPo.items
+      : lowStockCandidates
 
-        return {
-          id: pId || `po_item_${idx}`,
-          product_id: pId,
-          name,
-          sku,
-          category,
-          shelf_count: shelfCount,
-          min_threshold: minThreshold,
-          qty,
-          unit_price: Number(unitPrice),
-          total: Number(unitPrice) * qty,
-        }
-      })
-    }
-
-    if (lowStockCandidates.length > 0) {
-      return lowStockCandidates.map((cand, idx) => {
+    if (rawCandidates.length > 0) {
+      const items = []
+      rawCandidates.forEach((cand, idx) => {
         const pId = cand.product_id || cand.id
-        const matched = inventory.find((inv) => String(inv.productId || inv.id) === String(pId))
-        const name = cand.name || cand.product_name || matched?.name || `Product #${pId || idx + 1}`
-        const sku = cand.sku || matched?.sku || `SKU-${pId || idx + 1}`
-        const category = cand.category || matched?.category || 'General'
-        const currentCount = cand.detected_count !== undefined ? cand.detected_count : (cand.current_stock ?? 0)
-        const minThresh = cand.min_stock_threshold ?? matched?.minThreshold ?? 5
-        const maxCap = cand.max_shelf_capacity ?? matched?.target ?? 10
-        const qty = cand.reorder_recommended_qty || Math.max(1, maxCap - currentCount)
-        const unitPrice = cand.cost_price || cand.unit_price || matched?.costPrice || (matched?.price ? matched.price * 0.7 : 45)
+        // STRICT REQUIREMENT: Product MUST currently exist in store inventory
+        const matched = inventory.find((inv) =>
+          (pId && String(inv.productId || inv.id) === String(pId)) ||
+          (cand.name && inv.name && inv.name.toLowerCase().trim() === cand.name.toLowerCase().trim())
+        )
 
-        return {
-          id: pId || `cand_${idx}`,
-          product_id: pId,
+        // Skip items that are not currently registered inventory products
+        if (!matched) return
+
+        const name = matched.name || cand.name
+        const sku = matched.sku || cand.sku || `SKU-${matched.productId || matched.id}`
+        const category = matched.category || cand.category || 'General'
+        const currentCount = cand.detected_count !== undefined ? cand.detected_count : (cand.current_stock ?? matched.current ?? 0)
+        const minThresh = cand.min_stock_threshold ?? matched.minThreshold ?? 5
+        const maxCap = cand.max_shelf_capacity ?? matched.target ?? 10
+        const qty = cand.quantity || cand.qty || cand.reorder_recommended_qty || Math.max(1, maxCap - currentCount)
+        const unitPrice = Number(cand.unit_cost || cand.unitPrice || cand.unit_price || cand.cost_price || matched.costPrice || (matched.price ? matched.price * 0.7 : 45))
+
+        items.push({
+          id: matched.productId || matched.id || `po_item_${idx}`,
+          product_id: matched.productId || matched.id,
           name,
           sku,
           category,
           shelf_count: currentCount,
           min_threshold: minThresh,
           qty,
-          unit_price: Number(unitPrice),
-          total: Number(unitPrice) * qty,
-        }
+          unit_price: unitPrice,
+          total: unitPrice * qty,
+        })
       })
+      return items
     }
 
     return []
@@ -606,6 +677,57 @@ export default function ScanResult({
         </div>
       </div>
 
+      {/* New Product Alert: Option to Add to Inventory */}
+      {newProductsList.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent rounded-2xl border border-amber-300/80 dark:border-amber-700/60 p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-amber-200/60 dark:border-amber-800/40">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                <PlusCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  New Product Detected on Shelf
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Do you want to add this product to your store inventory?
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-700">
+              {newProductsList.length} New Item{newProductsList.length > 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+            {newProductsList.map((prod) => (
+              <div
+                key={prod.id || prod.name}
+                className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-amber-200/80 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-slate-900 dark:text-white text-sm truncate">
+                    {prod.name}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {prod.detected_count} unit{prod.detected_count > 1 ? 's' : ''} detected on shelf
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => openAddModal(prod)}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-2xs active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add to Inventory</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Detected Products on Shelf Table */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-3">
         <div className="flex items-center justify-between pb-1">
@@ -666,13 +788,29 @@ export default function ScanResult({
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                           <AlertTriangle className="w-3 h-3 text-rose-600 dark:text-rose-400" /> Low Stock ({p.detected_count})
                         </span>
-                      ) : p.is_uncataloged ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                          <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" /> AI Detected
-                        </span>
+                      ) : p.new_product ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            <Sparkles className="w-3 h-3 text-amber-500" /> New Product
+                          </span>
+                          {addedProductsMap[p.name.toLowerCase()] ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                              <Check className="w-3 h-3 stroke-[2.5]" /> Added
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => openAddModal(p)}
+                              className="px-2 py-0.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] transition-all flex items-center gap-1 cursor-pointer shadow-2xs active:scale-95"
+                              title="Add to Inventory"
+                            >
+                              <Plus className="w-3 h-3" /> Add
+                            </button>
+                          )}
+                        </div>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                          <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> AI Verified
+                          <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Verified
                         </span>
                       )}
                     </td>
@@ -685,9 +823,28 @@ export default function ScanResult({
       </div>
 
       {/* ========================================================================= */}
-      {/* PROFESSIONAL AI AUTO-GENERATED PURCHASE ORDER SPECIFICATION               */}
+      {/* PROFESSIONAL PURCHASE ORDER (ONLY FOR CURRENT INVENTORY PRODUCTS)         */}
       {/* ========================================================================= */}
-      {(poId || poLineItems.length > 0) && (
+      {poLineItems.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                Purchase Order Status: Healthy
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                All current inventory products on this shelf have sufficient stock. No purchase order required.
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+            0 Replenishment Items Needed
+          </span>
+        </div>
+      ) : (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden text-slate-900 dark:text-slate-100 transition-all">
           {/* Top Document Header Bar */}
           <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
@@ -724,9 +881,9 @@ export default function ScanResult({
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1.5">
-                  <span>Source: <strong>{shelfName}</strong> AI Vision Scan</span>
+                  <span>Source: <strong>{shelfName}</strong> Shelf Scan</span>
                   <span>·</span>
-                  <span className="text-indigo-300 font-medium">Automated Shelf Replenishment</span>
+                  <span className="text-indigo-300 font-medium">Replenishment for Current Inventory Items</span>
                 </p>
               </div>
             </div>
@@ -955,6 +1112,154 @@ export default function ScanResult({
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Product to Inventory Modal */}
+      {isAddModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setIsAddModalOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full p-5 space-y-4 text-slate-900 dark:text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <PlusCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base leading-tight">Add Product to Inventory</h3>
+                  <p className="text-xs text-slate-400">Save detected shelf item into your catalog</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {addError && (
+              <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs text-rose-600 dark:text-rose-400 font-medium">
+                {addError}
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmAddProduct} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Product Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newProdName}
+                  onChange={(e) => setNewProdName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  placeholder="e.g. Energy Drink Can"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={newProdCategory}
+                    onChange={(e) => setNewProdCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    placeholder="General"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Initial Stock (Detected)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newProdCurrent}
+                    onChange={(e) => setNewProdCurrent(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Min Threshold
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newProdThreshold}
+                    onChange={(e) => setNewProdThreshold(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Max Capacity
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newProdTarget}
+                    onChange={(e) => setNewProdTarget(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Unit Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={newProdPrice}
+                    onChange={(e) => setNewProdPrice(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProduct}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  {isSavingProduct ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add to Inventory</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
