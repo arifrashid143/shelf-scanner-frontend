@@ -36,11 +36,21 @@ async function request(endpoint, options = {}) {
   }
 
   if (!response.ok) {
-    const errorMsg =
-      responseData?.detail ||
-      responseData?.message ||
-      responseData?.error ||
-      `Request failed with status ${response.status}`
+    let errorMsg = responseData?.message || responseData?.error
+    if (responseData?.detail) {
+      if (Array.isArray(responseData.detail)) {
+        errorMsg = responseData.detail
+          .map((d) => (typeof d === 'string' ? d : d.msg || d.message || JSON.stringify(d)))
+          .join(', ')
+      } else if (typeof responseData.detail === 'string') {
+        errorMsg = responseData.detail
+      } else {
+        errorMsg = JSON.stringify(responseData.detail)
+      }
+    }
+    if (!errorMsg) {
+      errorMsg = `Request failed with status ${response.status}`
+    }
     throw new ApiError(errorMsg, response.status, responseData)
   }
 

@@ -266,6 +266,7 @@ export default function ScanResult({
   const newProductsList = detectedProducts.filter(
     (p) =>
       p.new_product &&
+      p.name &&
       !addedProductsMap[p.name.toLowerCase()] &&
       !inventory.some((inv) => inv.name && inv.name.toLowerCase().trim() === p.name.toLowerCase().trim())
   )
@@ -793,7 +794,7 @@ export default function ScanResult({
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                             <Sparkles className="w-3 h-3 text-amber-500" /> New Product
                           </span>
-                          {addedProductsMap[p.name.toLowerCase()] ? (
+                          {addedProductsMap[(p.name || '').toLowerCase()] ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                               <Check className="w-3 h-3 stroke-[2.5]" /> Added
                             </span>
